@@ -4,6 +4,9 @@
 
 ### Installation
 We need to install some dependencies so that we can build and run the project. The first thing we need to install is Podman.
+Follow your OS specific instructions to install podman.
+After that, if you want to run the containers with a gpu, you'll need to install the cuda/rocm CDI 
+https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html
 
 ### Building
 We use podamn to build the app since it is a dependancy of the project and it makes building it a lot easier. This also allows us to have reproduceable builds.

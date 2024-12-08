@@ -1,9 +1,9 @@
 package main
 
 import (
-    "fmt"
+	"github.com/StoneG24/SLaMO/orchestration"
 )
 
-func main () {
-    fmt.Println("HelloWorld")
+func main() {
+	orchestration.Startup()
 }
