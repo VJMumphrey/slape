@@ -1,1 +1,6 @@
 models
+frontend/node_modules
+fronted/build
+
+.env
+frontend/.env

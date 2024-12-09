@@ -9,14 +9,7 @@ After that, if you want to run the containers with a gpu, you'll need to install
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html
 
 ### Building
-We use podamn to build the app since it is a dependancy of the project and it makes building it a lot easier. This also allows us to have reproduceable builds.
-
-To build the app run the following command
-```bash
-podman build -f ./Containerfile -t slamo:latest
-```
-
-This should dump the binary files for the project into /build. 
+We will use several Makefiles to build the project. These build the frontend and backend components into build/ for the backend and frontend inside frontend/build
 
 ### Cleanup
 Containers are very useful for making reproduceable builds but the can take up a lot of space over time. This coupled with the fact that we also have to save storage space for models means that we need to be more cognicent of that fact. Here are some tips to remove dead resources in this project.
@@ -32,5 +25,10 @@ podman container prune
 podman image prune
 podman builder prune
 ```
+
+### Dependencies
+We depend on a few outside projects. Dependencies are kept in the external folder for now.
+
+[crun](https://github.com/containers/crun)
 
 ### Reference
