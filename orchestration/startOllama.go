@@ -1,76 +1,41 @@
 package orchestration
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
-	"net/http"
-	"os"
-	"time"
+
+	"github.com/ollama/ollama/api"
 )
 
-type Request struct {
-	Model    string    `json:"model"`
-	Messages []Message `json:"messages"`
-	Stream   bool      `json:"stream"`
-}
-
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type Response struct {
-	Model              string    `json:"model"`
-	CreatedAt          time.Time `json:"created_at"`
-	Message            Message   `json:"message"`
-	Done               bool      `json:"done"`
-	TotalDuration      int64     `json:"total_duration"`
-	LoadDuration       int       `json:"load_duration"`
-	PromptEvalCount    int       `json:"prompt_eval_count"`
-	PromptEvalDuration int       `json:"prompt_eval_duration"`
-	EvalCount          int       `json:"eval_count"`
-	EvalDuration       int64     `json:"eval_duration"`
-}
-
-const defaultOllamaURL = "http://localhost:11434/api/chat"
-
-func Startup() {
-	start := time.Now()
-	msg := Message{
-		Role:    "user",
-		Content: "Why is the sky blue?",
-	}
-	req := Request{
-		Model:    "phi3.5",
-		Stream:   false,
-		Messages: []Message{msg},
-	}
-	resp, err := talkToOllama(defaultOllamaURL, req)
+func Startup(prompt string) (err error) {
+	client, err := api.ClientFromEnvironment()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+        return err
 	}
-	fmt.Println(resp.Message.Content)
-	fmt.Printf("Completed in %v", time.Since(start))
-}
 
-func talkToOllama(url string, ollamaReq Request) (*Response, error) {
-	js, err := json.Marshal(&ollamaReq)
-	if err != nil {
-		return nil, err
+	// By default, GenerateRequest is streaming.
+	req := &api.GenerateRequest{
+        Model:  "phi3.5",
+		Prompt: prompt,
 	}
-	client := http.Client{}
-	httpReq, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(js))
-	if err != nil {
-		return nil, err
+
+	ctx := context.Background()
+	respFunc := func(resp api.GenerateResponse) error {
+		// Only print the response here; GenerateResponse has a number of other
+		// interesting fields you want to examine.
+
+		// In streaming mode, responses are partial so we call fmt.Print (and not
+		// Println) in order to avoid spurious newlines being introduced. The
+		// model will insert its own newlines if it wants.
+		fmt.Print(resp.Response)
+		return nil
 	}
-	httpResp, err := client.Do(httpReq)
+
+	err = client.Generate(ctx, req, respFunc)
 	if err != nil {
-		return nil, err
+        return err
 	}
-	defer httpResp.Body.Close()
-	ollamaResp := Response{}
-	err = json.NewDecoder(httpResp.Body).Decode(&ollamaResp)
-	return &ollamaResp, err
+	fmt.Println()
+
+    return nil
 }
