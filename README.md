@@ -1,2 +1,2 @@
-# SLaMO
-Senior Design Guy
+# slape
+Small Language Model Prompt Engineering
