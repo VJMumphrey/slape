@@ -7,15 +7,15 @@ import (
 	"github.com/ollama/ollama/api"
 )
 
-func Startup(prompt string) (err error) {
+func Startup(prompt string) error {
 	client, err := api.ClientFromEnvironment()
 	if err != nil {
-        return err
+		return err
 	}
 
 	// By default, GenerateRequest is streaming.
 	req := &api.GenerateRequest{
-        Model:  "phi3.5",
+		Model:  "phi3.5",
 		Prompt: prompt,
 	}
 
@@ -33,9 +33,9 @@ func Startup(prompt string) (err error) {
 
 	err = client.Generate(ctx, req, respFunc)
 	if err != nil {
-        return err
+		return err
 	}
 	fmt.Println()
 
-    return nil
+	return nil
 }
