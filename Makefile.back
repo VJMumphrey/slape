@@ -11,7 +11,7 @@ GO_BUILD_FLAGS = -o
 
 # Output directory
 BUILD_DIR = build
-
+ 
 # The final binary name
 OUTPUT_BINARY = $(BUILD_DIR)/$(GO_PROGRAM)
 
@@ -26,7 +26,7 @@ $(BUILD_DIR):
 # Build for the native system and place the binary in the build folder
 $(OUTPUT_BINARY):
 	@echo "Building for the native system..."
-	$(GO) build $(GO_BUILD_FLAGS) $(OUTPUT_BINARY) ./cmd/main.go
+	$(GO) build $(GO_BUILD_FLAGS) $(OUTPUT_BINARY) ./cmd
 
 # Clean up the generated binary and build directory
 clean:
