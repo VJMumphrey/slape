@@ -1,7 +1,5 @@
 function Button() {
-  function handleClick() {
-    alert("good job");
-  }
+  function handleClick() {}
   return <button onClick={handleClick}>Submit</button>;
 }
 
