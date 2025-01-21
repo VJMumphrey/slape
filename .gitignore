@@ -1,9 +1,2 @@
-models
 build
-
-frontend/node_modules
-fronted/build
-.env
-frontend/.env
-
-external/crun
+models

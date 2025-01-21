@@ -1,4 +1,4 @@
-module github.com/StoneG24/SLaMO
+module github.com/StoneG24/slape
 
 go 1.23
 

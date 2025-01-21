@@ -2,87 +2,84 @@ package pod
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/containers/podman/v5/pkg/bindings"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
-	"github.com/containers/podman/v5/pkg/bindings/pods"
-	"github.com/containers/podman/v5/pkg/domain/entities/types"
 	"github.com/containers/podman/v5/pkg/specgen"
 )
 
-// rootless socket for podman
+// CreateBindingConnection creates a rootless client for podman.
+// takes in a context attribute and returns and error.
 // for rootful use '/run/podman/podman.sock'
-func CreateBindingConnection () (context.Context, error) {
+func CreateBindingConnection() (context.Context, error) {
 	conn, err := bindings.NewConnection(
-        context.Background(), 
-        "unix:///run/user/1000/podman/podman.sock",
-        )
+		context.Background(),
+		"unix:///run/user/1000/podman/podman.sock",
+	)
 	if err != nil {
-        return nil, err
+		return nil, err
 	}
 
-    return conn, nil
+	return conn, nil
 }
 
-// creates the "slamo" pod based on a spec written in the code
-// TODO: This should be converted to specfile or a kubernetes config
-// for better communication.
+// SetupPod creates the "slap-e" pod based on a spec written in the code
+/*
 func SetupPod(conn context.Context) (string, error) {
+	// TODO(v) This should be converted to specfile or a kubernetes config
+	// for better communication.
 
-    exist, err := pods.Exists(conn, "slamo", nil) 
-    if err != nil {
-        fmt.Println("Pod slamo already exists")
-        return "", err
-    }
+	exist, err := pods.Exists(conn, "slape", nil)
+	if err != nil {
+		fmt.Println("Pod slamo already exists")
+		return "", err
+	}
 
-    if exist {
-        pods.Start(conn, "slamo", nil)
-        return "", nil
-    }
+	if exist {
+		pods.Start(conn, "slamo", nil)
+		return "", nil
+	}
 
-    devices := []string{
-        "nvidia.com/gpu=all",
-    }
+	devices := []string{
+		"nvidia.com/gpu=all",
+	}
 
+	specGenerator := specgen.NewPodSpecGenerator()
+	specGenerator.PodBasicConfig.Name = "slape"
+	specGenerator.PodBasicConfig.Devices = devices
+	specGenerator.RestartPolicy = "always"
 
-    specGenerator := specgen.NewPodSpecGenerator()
-    specGenerator.PodBasicConfig.Name = "slamo"
-    specGenerator.PodBasicConfig.Devices = devices
-    specGenerator.RestartPolicy = "always"
+	podSpec := types.PodSpec{
+		PodSpecGen: *specGenerator,
+	}
 
-    podSpec := types.PodSpec {
-        PodSpecGen: *specGenerator,
-    }
+	// TODO(v) we should have a predefined spec file for clarity, ease of deployment
+	podCreateReport, err := pods.CreatePodFromSpec(conn, &podSpec)
+	if err != nil {
+		return "", err
+	}
 
-
-    // NOTE: we should have predefined specs to use for clarity, ease of deployment
-    podCreateReport, err := pods.CreatePodFromSpec(conn, &podSpec )
-    if err != nil {
-        return "", err
-    }
-
-    return podCreateReport.Id, nil
+	return podCreateReport.Id, nil
 }
+*/
 
-// create the ollama container for chatting with
-// this may also be usefull for creating an embedding model 
+// SetupOllamaContainer creates the ollama container for chatting with.
+// this may also be usefull for creating an embedding model
 // or a small model for sepeculative decoding
-// NOTE: This must be ran after the "slamo" pod is created
-func SetupOllamaContainer(conn context.Context) (string, error) {
+func DefineOllamaContainer(conn context.Context, name string) (string, error) {
 
-    specGenerator := specgen.SpecGenerator{}
-    specGenerator.Name = "chatModel"
-    specGenerator.RestartPolicy = "always"
-    specGenerator.Pod = "slamo"
-    // specGenerator.Terminal = true
-    // specGenerator.PortMappings 
+	specGenerator := specgen.NewSpecGenerator("", false)
+	specGenerator.Name = name
+	specGenerator.RestartPolicy = "always"
+	//specGenerator.Pod = "slamo"
+	specGenerator.Terminal = &[]bool{true}[0]
+	//specGenerator.PortsMapping
 
-    // TODO: look into using ExecCreate for running the modelin
-    containerReport, err := containers.CreateWithSpec(conn, &specGenerator, nil)
-    if err != nil {
-        return "", err
-    }
+	// TODO(v) look into using ExecCreate for running the model in
+	containerReport, err := containers.CreateWithSpec(conn, specGenerator, nil)
+	if err != nil {
+		return "", err
+	}
 
-    return containerReport.ID, nil
+	return containerReport.ID, nil
 }

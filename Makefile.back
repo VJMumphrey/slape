@@ -1,7 +1,7 @@
 # Makefile to build Go program for the native system and output to the build folder
 
 # Program name (change this to your actual Go file name without the .go extension)
-GO_PROGRAM = main
+GO_PROGRAM = slape
 
 # Go binary (set this to the Go executable path if needed)
 GO = go
