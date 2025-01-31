@@ -5,7 +5,7 @@ import Prompt from "./Prompt.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <div> Here's where the output will go</div>
+    <div className="output"> Here's where the output will go</div>
     <div className="fixedBottom">
       <Prompt />
     </div>
