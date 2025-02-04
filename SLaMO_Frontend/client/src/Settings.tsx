@@ -10,7 +10,7 @@ export default function Settings() {
     const radioElements = radioOptions.map((option) => {
         return (
             <div>
-                <label htmlFor={option}>{`${option}:`}</label>
+                <label htmlFor={option}>{`${option}`}</label>
                 <input type="radio" id={option} value={option} checked={ promptSetting === option} onChange={() => setPromptSetting(option)}/>
             </div>
         )

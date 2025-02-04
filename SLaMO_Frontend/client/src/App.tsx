@@ -1,12 +1,18 @@
-// I'm envisioning this as being the function/component that just houses the currently selected page.
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Prompt from "./Prompt.tsx";
+import Settings from "./Settings.tsx";
 
+// I'm envisioning this as being the function/component that just houses the currently selected page.
 export default function App() {
 
     // You'd have the logic for which page is currently selected. Still not really sure how this will work but we'll figure it out
     return (
-        <>
-            {/* Here, you'd have page*/ }
-        </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Prompt/>}/>
+        <Route path="/settings" element={<Settings/>}/>
+      </Routes>
+    </BrowserRouter>
     );
 }
 
