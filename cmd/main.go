@@ -1,5 +1,5 @@
 /*
-Package SLaP-E is a binary that starts a pod on the local computer using as socket to podman.
+Package SLaPE is a binary that starts a pod on the local computer using as socket to podman.
 
 Usage:
 
@@ -10,72 +10,140 @@ Containerized models are spawned as needed adhering to a pipeline system.
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"os"
 
-	"github.com/StoneG24/slape/cmd/orchestration"
-	"github.com/StoneG24/slape/cmd/pod"
-	"github.com/containers/podman/v5/pkg/bindings/containers"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
+	"github.com/fatih/color"
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 )
 
 var (
-    // holds all of the string container IDs 
-    // for the containers in the app
-    slapeContainers []string
+	openaiClient = openai.NewClient(
+		option.WithBaseURL("http://localhost:11434/v1/"),
+	)
 )
 
 type simple struct {
-    Prompt string `json:"prompt"`
+	Prompt string `json:"prompt"`
+}
+
+type generate struct {
+	Model  string `json:"model"`
+	Prompt string `json:"prompt"`
+	Stream string `json:"stream"`
+}
+
+type pullModel struct {
+	Model    string `json:"model"`
+	Insecure string `json:"insecure"`
+	Stream   string `json:"stream"`
 }
 
 func simplerequest(w http.ResponseWriter, req *http.Request) {
 
-    var simplePayload simple
+	var simplePayload simple
 
-    decoder := json.NewDecoder(req.Body)
+	decoder := json.NewDecoder(req.Body)
 
-    err := decoder.Decode(&simplePayload)
-    if err != nil {
-        fmt.Println(err)
-    }
+	err := decoder.Decode(&simplePayload)
+	if err != nil {
+		color.Red("%s", err)
+		return
+	}
 
-    conn, err := pod.CreateBindingConnection()
-    if err != nil {
-        fmt.Println(err)
-        return
-    }
-    
-    //podId, err := pod.SetupPod(conn)
-    //pods.Start(conn, podId, nil)
+	ctx := context.Background()
+	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		color.Red("%s", err)
+		return
+	}
+	defer apiClient.Close()
 
-    containerID, err := pod.DefineOllamaContainer(conn, "chatmodel")
-    slapeContainers = append(slapeContainers, containerID)
+	// This checks for the image before pulling
+	reader, err := apiClient.ImagePull(ctx, "ghcr.io/ggerganov/llama.cpp:server", image.PullOptions{All: false, RegistryAuth: ""})
+	if err != nil {
+		log.Println(err)
+		w.Write([]byte("Error pulling the image"))
+		return
+	}
+	io.Copy(os.Stdout, reader)
 
-    execSeshID, err := containers.ExecCreate(conn, containerID, nil)
-    err = containers.ExecStartAndAttach(conn, execSeshID, nil)
+	portSet := nat.PortSet{
+		nat.Port("8000/tcp"): struct{}{}, // map 11434 TCP port
+	}
 
-    err = containers.Start(conn, containerID, nil)
-    if err != nil {
-        fmt.Println(err)
-    }
+	portBindings := nat.PortMap{
+		"8000/tcp": []nat.PortBinding{
+			{
+				HostIP:   "0.0.0.0",
+				HostPort: "8000",
+			},
+		},
+	}
 
-    // TODO(frontend) prompt should come from the frontend socket or something
-    prompt := "how many r's are in the word strawberry"
+	// create container
+	var createResponse container.CreateResponse
+	createResponse, err = apiClient.ContainerCreate(context.Background(), &container.Config{
+		ExposedPorts: portSet,
+		//Cmd:          []string{"ollama", "run", "llama3.2:1b"},
+		Image: "ghcr.io/ggerganov/llama.cpp:server",
+	}, &container.HostConfig{
+		//Runtime: "nvidia",
+		PortBindings: portBindings,
+		Mounts: []mount.Mount{{
+			Type:     mount.TypeVolume,
+			Source:   "models",
+			Target:   "/models",
+			ReadOnly: false,
+		}},
+	}, nil, nil, "llamacpp")
+	if err != nil {
+		log.Println(err)
+		w.Write([]byte("Error creating the container"))
+		return
+	}
 
-    err = orchestration.GetSimpleAnswer(prompt)
+	// start container
+	if err := apiClient.ContainerStart(context.Background(), createResponse.ID, container.StartOptions{}); err != nil {
+		log.Println(err)
+		w.Write([]byte("Error starting the container"))
+		return
+	}
 
-    err = containers.ExecRemove(conn, execSeshID, nil)
-    err = containers.Stop(conn, containerID, nil)
+	log.Println(createResponse.ID)
 
-    // TODO json the response
-    w.Write([]byte("Your gay"))
+	// generate a response
+	chatCompletion, err := openaiClient.Chat.Completions.New(context.TODO(), openai.ChatCompletionNewParams{
+		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+			openai.UserMessage(simplePayload.Prompt),
+		}),
+		Model: openai.String("llama3.2"),
+	})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// For debugging
+	log.Println(chatCompletion.Choices[0].Message.Content)
+
+	// TODO json the response
+	w.Write([]byte(chatCompletion.Choices[0].Message.Content))
 }
 
 func main() {
 
-    http.HandleFunc("/simple", simplerequest)
+	http.HandleFunc("/simple", simplerequest)
+	color.Green("[+] Server started on :3069")
 
-    go http.ListenAndServe(":3069", nil)
-
+	http.ListenAndServe(":3069", nil)
 }
