@@ -1,15 +1,23 @@
 import {useState} from "react";
 import "./App.css";
-import MenuTabs from "./MenuTabs.tsx"
+import MenuTabs from "./MenuTabs.tsx";
+import fetch from "node-fetch";
 // Had to comment this out for my laptop :(
 // import {colors} from "../../../../../../AppData/Local/deno/npm/registry.npmjs.org/debug/4.3.7/src/browser.js";
 
 export default function Prompt() {
   const [PromptInfo, setPromptInfo] = useState(""); //used to contain the current value, and to set the new value
 
-  const handleSubmit = (event: {preventDefault: () => void}) => {
+  async function handleSubmit(event: {preventDefault: () => void}){
     event.preventDefault(); //makes sure the page doesn't reload when submitting the form
-    alert(`the prompt you entered was: ${PromptInfo}`);
+    const response = await fetch("localhost:3069/simple", {
+      method:"POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({prompt: prompt})
+    });
+    alert(response);
     setPromptInfo(""); //clears the prompt box after submission
   };
 
