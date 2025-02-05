@@ -18,10 +18,7 @@ import (
 	"os"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 	"github.com/fatih/color"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -37,27 +34,15 @@ type simple struct {
 	Prompt string `json:"prompt"`
 }
 
-type generate struct {
-	Model  string `json:"model"`
-	Prompt string `json:"prompt"`
-	Stream string `json:"stream"`
-}
-
-type pullModel struct {
-	Model    string `json:"model"`
-	Insecure string `json:"insecure"`
-	Stream   string `json:"stream"`
-}
-
 func simplerequest(w http.ResponseWriter, req *http.Request) {
 
 	var simplePayload simple
 
-	decoder := json.NewDecoder(req.Body)
-
-	err := decoder.Decode(&simplePayload)
+	err := json.NewDecoder(req.Body).Decode(&simplePayload)
 	if err != nil {
 		color.Red("%s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Error unexpected request format"))
 		return
 	}
 
@@ -69,72 +54,43 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	}
 	defer apiClient.Close()
 
-	// This checks for the image before pulling
-	reader, err := apiClient.ImagePull(ctx, "ghcr.io/ggerganov/llama.cpp:server", image.PullOptions{All: false, RegistryAuth: ""})
+	reader, err := PullImage(apiClient, ctx)
 	if err != nil {
-		log.Println(err)
+		color.Red("%s", err)
 		w.Write([]byte("Error pulling the image"))
 		return
 	}
+	// prints out the status of the download
+	// worth while for big images
 	io.Copy(os.Stdout, reader)
 
-	portSet := nat.PortSet{
-		nat.Port("8000/tcp"): struct{}{}, // map 11434 TCP port
-	}
-
-	portBindings := nat.PortMap{
-		"8000/tcp": []nat.PortBinding{
-			{
-				HostIP:   "0.0.0.0",
-				HostPort: "8000",
-			},
-		},
-	}
-
-	// create container
-	var createResponse container.CreateResponse
-	createResponse, err = apiClient.ContainerCreate(context.Background(), &container.Config{
-		ExposedPorts: portSet,
-		//Cmd:          []string{"ollama", "run", "llama3.2:1b"},
-		Image: "ghcr.io/ggerganov/llama.cpp:server",
-	}, &container.HostConfig{
-		//Runtime: "nvidia",
-		PortBindings: portBindings,
-		Mounts: []mount.Mount{{
-			Type:     mount.TypeVolume,
-			Source:   "models",
-			Target:   "/models",
-			ReadOnly: false,
-		}},
-	}, nil, nil, "llamacpp")
+	createResponse, err := CreateContainer(apiClient, "8000", "llamacpp")
 	if err != nil {
-		log.Println(err)
+		color.Red("%s", err)
 		w.Write([]byte("Error creating the container"))
 		return
 	}
 
 	// start container
 	if err := apiClient.ContainerStart(context.Background(), createResponse.ID, container.StartOptions{}); err != nil {
-		log.Println(err)
+		color.Red("%s", err)
 		w.Write([]byte("Error starting the container"))
 		return
 	}
 
+	// For debugging
 	log.Println(createResponse.ID)
 
 	// generate a response
-	chatCompletion, err := openaiClient.Chat.Completions.New(context.TODO(), openai.ChatCompletionNewParams{
-		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-			openai.UserMessage(simplePayload.Prompt),
-		}),
-		Model: openai.String("llama3.2"),
-	})
+	chatCompletion, err := GenerateCompletion(simplePayload.Prompt)
 	if err != nil {
-		panic(err.Error())
+		color.Red("%s", err)
+		w.Write([]byte("Error starting the container"))
+		return
 	}
 
 	// For debugging
-	log.Println(chatCompletion.Choices[0].Message.Content)
+	color.Green(chatCompletion.Choices[0].Message.Content)
 
 	// TODO json the response
 	w.Write([]byte(chatCompletion.Choices[0].Message.Content))
