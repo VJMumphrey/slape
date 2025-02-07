@@ -8,18 +8,24 @@ import fetch from "node-fetch";
 export default function Prompt() {
   const [PromptInfo, setPromptInfo] = useState(""); //used to contain the current value, and to set the new value
 
-  async function handleSubmit(event: {preventDefault: () => void}){
-    event.preventDefault(); //makes sure the page doesn't reload when submitting the form
-    const response = await fetch("localhost:3069/simple", {
-      method:"POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({prompt: prompt})
-    });
-    alert(response);
-    setPromptInfo(""); //clears the prompt box after submission
-  };
+  // async function handleSubmit(event: {preventDefault: () => void}){
+  //   event.preventDefault(); //makes sure the page doesn't reload when submitting the form
+  //   const response = await fetch("localhost:3069/simple", {
+  //     method:"POST",
+  //     headers: {
+  //       "Content-Type": "application/json"
+  //     },
+  //     body: JSON.stringify({prompt: prompt})
+  //   });
+  //   alert(response);
+  //   setPromptInfo(""); //clears the prompt box after submission
+  // };
+
+  async function handleSubmit(event: {preventDefault: () => void}) {
+    event.preventDefault();
+    await alert(PromptInfo);
+    setPromptInfo("");
+  }
 
   return (
     <>
