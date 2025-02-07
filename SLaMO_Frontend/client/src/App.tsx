@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Prompt from "./Prompt.tsx";
 import Settings from "./Settings.tsx";
+import Models from "./Models.tsx";
+import Logs from "./Logs.tsx";
 
 // I'm envisioning this as being the function/component that just houses the currently selected page.
 export default function App() {
@@ -11,6 +13,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Prompt/>}/>
         <Route path="/settings" element={<Settings/>}/>
+        <Route path="/models" element={<Models/>}/>
+        <Route path="/logs" element={<Logs/>}/>
       </Routes>
     </BrowserRouter>
     );

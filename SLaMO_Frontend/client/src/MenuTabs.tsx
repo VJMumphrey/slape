@@ -5,18 +5,26 @@ export default function MenuTabs() {
     // You literally just have to do this. I have no idea why.
     const navigate = useNavigate();
 
+    const promptingEventHandler = () => {
+        navigate("/");
+    };
+    
     const settingsEventHandler = () => {
         navigate("/settings");
     };
 
-    const promptingEventHandler = () => {
-        navigate("/");
+    const modelsEventHandler = () => {
+        navigate("/models")
+    }
+
+    const logsEventHandler = () => {
+        navigate("/logs")
     }
 
     return(
         <div>
-            <button>Models</button>
-            <button>Logs</button>
+            <button onClick={modelsEventHandler}>Models</button>
+            <button onClick={logsEventHandler}>Logs</button>
             <button onClick={promptingEventHandler}>Prompting</button>
             <button onClick={settingsEventHandler}>Settings</button>
         </div>

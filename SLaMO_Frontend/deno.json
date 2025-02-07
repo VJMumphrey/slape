@@ -12,6 +12,7 @@
     "@tajpouria/cors": "jsr:@tajpouria/cors@^1.2.1",
     "@types/react": "npm:@types/react@^18.3.12",
     "@vitejs/plugin-react": "npm:@vitejs/plugin-react@^4.3.3",
+    "fs": "npm:fs@^0.0.1-security",
     "node-fetch": "npm:node-fetch@^3.3.2",
     "react": "npm:react@^18.3.1",
     "react-dom": "npm:react-dom@^18.3.1",

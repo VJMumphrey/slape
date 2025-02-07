@@ -1,20 +1,40 @@
+import * as fs from "node:fs";
 import MenuTabs from "./MenuTabs.tsx";
 import { useState } from "react";
 
 export default function Settings() {
 
-    const [ promptSetting, setPromptSetting ] = useState("Automatic")
+    const [ PromptSetting, setPromptSetting ] = useState("Automatic")
+    const [ StyleSetting, setStyleSetting ] = useState("Pink")
+    const [ SettingsObject, setSettingsObject ] = useState({promptType: "", styleType: ""})
 
-    const radioOptions = ["Automatic", "Manual", "Mixed"];
+    const promptRadioOptions = ["Automatic", "Manual", "Mixed"];
+    const styleRadioOptions = ["Pink", "Dark", "Light"];
 
-    const radioElements = radioOptions.map((option) => {
+    const promptRadioElements = promptRadioOptions.map((option) => {
         return (
             <div>
                 <label htmlFor={option}>{`${option}:`}</label>
-                <input type="radio" id={option} value={option} checked={ promptSetting === option} onChange={() => {setPromptSetting(option)}}/>
+                <input type="radio" id={option} value={option} checked={ PromptSetting === option} onChange={() => {setPromptSetting(option); setSettingsObject({...SettingsObject, promptType: option});}}/>
             </div>
         )
     })
+    
+    const styleRadioElements = styleRadioOptions.map((option) => {
+        return (
+            <div>
+                <label htmlFor={option}>{`${option}:`}</label>
+                <input type="radio" id={option} value={option} checked={ StyleSetting === option} onChange={() => {setStyleSetting(option); setSettingsObject({...SettingsObject, styleType: option});}}/>
+            </div>
+        )
+    })
+
+    async function settingsButtonHandler() {
+        console.log(SettingsObject);
+
+
+
+    }
 
     return(
         <>
@@ -22,7 +42,11 @@ export default function Settings() {
             <div>
                 <h3>Settings</h3>
                 <p>Prompting Settings</p>
-                {radioElements}
+                {promptRadioElements}
+                <hr/>
+                {styleRadioElements}
+                <hr/>
+                <button onClick={settingsButtonHandler}>Display Settings</button>
             </div>
         </>
     );
