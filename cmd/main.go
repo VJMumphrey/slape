@@ -1,5 +1,5 @@
 /*
-Package SLaP-E is a binary that starts a pod on the local computer using as socket to podman.
+Package SLaPE is a binary that starts a pod on the local computer using as socket to podman.
 
 Usage:
 
@@ -10,72 +10,98 @@ Containerized models are spawned as needed adhering to a pipeline system.
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"os"
 
-	"github.com/StoneG24/slape/cmd/orchestration"
-	"github.com/StoneG24/slape/cmd/pod"
-	"github.com/containers/podman/v5/pkg/bindings/containers"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
+	"github.com/fatih/color"
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 )
 
 var (
-    // holds all of the string container IDs 
-    // for the containers in the app
-    slapeContainers []string
+	openaiClient = openai.NewClient(
+		option.WithBaseURL("http://localhost:8000/v1"),
+	)
 )
 
 type simple struct {
-    Prompt string `json:"prompt"`
+	Prompt string `json:"prompt"`
 }
 
 func simplerequest(w http.ResponseWriter, req *http.Request) {
 
-    var simplePayload simple
+	var simplePayload simple
 
-    decoder := json.NewDecoder(req.Body)
+	err := json.NewDecoder(req.Body).Decode(&simplePayload)
+	if err != nil {
+		color.Red("%s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Error unexpected request format"))
+		return
+	}
 
-    err := decoder.Decode(&simplePayload)
+	ctx := context.Background()
+	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		color.Red("%s", err)
+		return
+	}
+	defer apiClient.Close()
+
+	reader, err := PullImage(apiClient, ctx)
+	if err != nil {
+		color.Red("%s", err)
+		w.Write([]byte("Error pulling the image"))
+		return
+	}
+	// prints out the status of the download
+	// worth while for big images
+	io.Copy(os.Stdout, reader)
+
+    createResponse, err := CreateContainer(apiClient, "8000", "llamacpp", ctx)
+	if err != nil {
+		color.Yellow("%s", createResponse.Warnings)
+		color.Red("%s", err)
+		w.Write([]byte("Error creating the container"))
+		return
+	}
+
+	// start container
+    err = apiClient.ContainerStart(ctx, createResponse.ID, container.StartOptions{})
     if err != nil {
-        fmt.Println(err)
-    }
+		color.Red("%s", err)
+		w.Write([]byte("Error starting the container"))
+		return
+	}
 
-    conn, err := pod.CreateBindingConnection()
-    if err != nil {
-        fmt.Println(err)
-        return
-    }
-    
-    //podId, err := pod.SetupPod(conn)
-    //pods.Start(conn, podId, nil)
+	// For debugging
+	log.Println(createResponse.ID)
 
-    containerID, err := pod.DefineOllamaContainer(conn, "chatmodel")
-    slapeContainers = append(slapeContainers, containerID)
+	// generate a response
+	chatCompletion, err := GenerateCompletion(simplePayload.Prompt)
+	if err != nil {
+		color.Red("%s", err)
+		w.Write([]byte("Error getting generation from model"))
+		return
+	}
 
-    execSeshID, err := containers.ExecCreate(conn, containerID, nil)
-    err = containers.ExecStartAndAttach(conn, execSeshID, nil)
+	// For debugging
+	color.Green(chatCompletion.Choices[0].Message.Content)
 
-    err = containers.Start(conn, containerID, nil)
-    if err != nil {
-        fmt.Println(err)
-    }
-
-    // TODO(frontend) prompt should come from the frontend socket or something
-    prompt := "how many r's are in the word strawberry"
-
-    err = orchestration.GetSimpleAnswer(prompt)
-
-    err = containers.ExecRemove(conn, execSeshID, nil)
-    err = containers.Stop(conn, containerID, nil)
-
-    // TODO json the response
-    w.Write([]byte("Your gay"))
+	// TODO json the response
+	w.Write([]byte(chatCompletion.Choices[0].Message.Content))
 }
 
 func main() {
 
-    http.HandleFunc("/simple", simplerequest)
+	http.HandleFunc("/simple", simplerequest)
+	color.Green("[+] Server started on :3069")
 
-    go http.ListenAndServe(":3069", nil)
-
+	http.ListenAndServe(":3069", nil)
 }
