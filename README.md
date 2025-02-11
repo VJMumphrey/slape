@@ -2,6 +2,7 @@ Small Language Model Prompt Engineering
 =======
 
 ### About
+An application designed to leverage the efficiency of small language models by implementing prompt engineering, and inferencing techniques to increase their accuracy.
 
 ### Installation
 We need to install some dependencies so that we can build and run the project. The first thing we need to install is Podman.
@@ -59,7 +60,11 @@ podman container prune
 podman image prune
 ```
 ```bash
+<<<<<<< Updated upstream
 podman builder prune
+=======
+docker builder prune
+>>>>>>> Stashed changes
 ```
 
 ### Reference
