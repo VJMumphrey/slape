@@ -10,8 +10,8 @@ Follow your OS specific instructions to install podman.
 Create a folder for the models that you want to use. These should probably be *.gguf* files.
 
 #### GPU Support
-After that, if you want to run the containers with a gpu, you'll need to install the cuda/rocm CDI 
-https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html
+After that, if you want to run the containers with a gpu, you'll need to install the nvidia continer toolkit along with the appropriate drivers if needed.
+https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest
 
 Refer to the proper documentation for rocm.
 
@@ -23,22 +23,20 @@ Download and configure it by following the correct guides for your system. Their
 Once you've done that, you're going to want to make it the default runtime by editing your config file for podman. If you are using Fedora then it is already setup for you.
 
 #### Socket
-To run the app you need to turn on the podman socket. This allows the app to talk to the socket and controll its components.
-
-For rootful uses
-```bash
-systemctl start podman.socket
-```
+### Linux
+To run the app you need to turn on the docker socket. This allows the app to talk to the socket and controll its components.
 
 For non-rootful use cases
 ```bash
-systemctl start --user podman.socket
+sudo systemctl start docker
 ```
 
-To close the socket run,
+To close the socket on linux, 
 ```bash
-systemctl stop
+sudo systemctl stop docker
 ```
+### Windows
+For windows this process is managed by docker desktop.
 
 ### Building
 We will use several Makefiles to build the project. These build the frontend and backend components into build/ for the backend and frontend inside frontend/build
@@ -48,18 +46,23 @@ Containers are very useful for making reproduceable builds but the can take up a
 
 This command will tell you how much of your disk is currently being used by podman
 ```bash
-podman system df
+docker system df
 ```
 
 These commands are good for cleaning up these old resources.
 ```bash
-podman container prune
+docker container prune
 ```
 ```bash
-podman image prune
+docker image prune
 ```
 ```bash
-podman builder prune
+docker builder prune
+```
+
+# Set env variable
+```bash
+env MODEL_PATH=$(pwd)/models
 ```
 
 ### Reference

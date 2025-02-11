@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
+	"os"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
@@ -21,36 +22,42 @@ func PullImage(apiClient *client.Client, ctx context.Context) (io.ReadCloser, er
 	return reader, err
 }
 
-func CreateContainer(apiClient *client.Client, portNum string, name string) (container.CreateResponse, error) {
-	port := fmt.Sprintf("%s/tcp", portNum)
+func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context) (container.CreateResponse, error) {
 
 	portSet := nat.PortSet{
-		nat.Port(port): struct{}{}, // map 11434 TCP port
+		nat.Port("8000/tcp"): struct{}{}, // map 11434 TCP port
 	}
 
 	portBindings := nat.PortMap{
-		nat.Port(port): []nat.PortBinding{
+		nat.Port("8000/tcp"): []nat.PortBinding{
 			{
 				HostIP:   "0.0.0.0",
-				HostPort: portNum,
+				HostPort: "8000",
 			},
 		},
 	}
 
+    mountString := os.Getenv("PWD") + "/models"
+
 	// create container
-	createResponse, err := apiClient.ContainerCreate(context.Background(), &container.Config{
+	createResponse, err := apiClient.ContainerCreate(ctx, &container.Config{
 		ExposedPorts: portSet,
 		Image:        "ghcr.io/ggerganov/llama.cpp:server",
+		Cmd:          []string{"-m", "/models/Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf", "--port", "8000", "--host", "0.0.0.0", "-n", "512"},
 	}, &container.HostConfig{
 		//Runtime: "nvidia",
+		/*
+			Binds: []string{
+				"/models:/models",
+			},
+		*/
 		PortBindings: portBindings,
 		Mounts: []mount.Mount{{
-			Type:     mount.TypeVolume,
-			Source:   "models",
-			Target:   "/models",
-			ReadOnly: false,
+			Type:   mount.TypeBind,
+			Source: mountString,
+			Target: "/models",
 		}},
-	}, nil, nil, name)
+	}, nil, nil, "llamacpp")
 
 	return createResponse, err
 }
@@ -58,7 +65,7 @@ func CreateContainer(apiClient *client.Client, portNum string, name string) (con
 // This is very simple for right now but when we add structured outputs it will
 // get very complicated.
 func GenerateCompletion(prompt string) (*openai.ChatCompletion, error) {
-	chatCompletion, err := openaiClient.Chat.Completions.New(context.TODO(), openai.ChatCompletionNewParams{
+	chatCompletion, err := openaiClient.Chat.Completions.New(context.Background(), openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(prompt),
 		}),
@@ -66,4 +73,23 @@ func GenerateCompletion(prompt string) (*openai.ChatCompletion, error) {
 	})
 
 	return chatCompletion, err
+}
+
+// FindContainer finds a specific container based on the nomenclature of /name.
+// Useful making checks before
+func FindContainer(apiClient *client.Client, ctx context.Context) (types.Container, bool) {
+	status := false
+
+	containers, err := apiClient.ContainerList(ctx, container.ListOptions{All: true})
+	if err != nil {
+		panic(err)
+	}
+
+	for _, container := range containers {
+		if container.Names[len(container.Names)-1] == "/llamacpp" {
+			return container, true
+		}
+	}
+
+	return types.Container{}, status
 }

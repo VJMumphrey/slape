@@ -26,7 +26,7 @@ import (
 
 var (
 	openaiClient = openai.NewClient(
-		option.WithBaseURL("http://localhost:11434/v1/"),
+		option.WithBaseURL("http://localhost:8000/v1"),
 	)
 )
 
@@ -64,15 +64,17 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
 
-	createResponse, err := CreateContainer(apiClient, "8000", "llamacpp")
+    createResponse, err := CreateContainer(apiClient, "8000", "llamacpp", ctx)
 	if err != nil {
+		color.Yellow("%s", createResponse.Warnings)
 		color.Red("%s", err)
 		w.Write([]byte("Error creating the container"))
 		return
 	}
 
 	// start container
-	if err := apiClient.ContainerStart(context.Background(), createResponse.ID, container.StartOptions{}); err != nil {
+    err = apiClient.ContainerStart(ctx, createResponse.ID, container.StartOptions{})
+    if err != nil {
 		color.Red("%s", err)
 		w.Write([]byte("Error starting the container"))
 		return
@@ -85,7 +87,7 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	chatCompletion, err := GenerateCompletion(simplePayload.Prompt)
 	if err != nil {
 		color.Red("%s", err)
-		w.Write([]byte("Error starting the container"))
+		w.Write([]byte("Error getting generation from model"))
 		return
 	}
 
