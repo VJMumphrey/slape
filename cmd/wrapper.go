@@ -25,11 +25,11 @@ func PullImage(apiClient *client.Client, ctx context.Context) (io.ReadCloser, er
 func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context) (container.CreateResponse, error) {
 
 	portSet := nat.PortSet{
-		nat.Port("8000/tcp"): struct{}{}, // map 11434 TCP port
+		nat.Port(portNum + "/tcp"): struct{}{}, // map 11434 TCP port
 	}
 
 	portBindings := nat.PortMap{
-		nat.Port("8000/tcp"): []nat.PortBinding{
+		nat.Port(portNum + "/tcp"): []nat.PortBinding{
 			{
 				HostIP:   "0.0.0.0",
 				HostPort: "8000",
