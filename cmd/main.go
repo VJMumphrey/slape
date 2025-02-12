@@ -30,13 +30,20 @@ var (
 	)
 )
 
-type simple struct {
+// TODO may need to add omitempty
+type simpleRequest struct {
 	Prompt string `json:"prompt"`
+	Model  string `json:"model"`
+	Mode   string `json:"mode"`
+}
+
+type simpleResponse struct {
+	Answer string `json:"answer"`
 }
 
 func simplerequest(w http.ResponseWriter, req *http.Request) {
 
-	var simplePayload simple
+	var simplePayload simpleRequest
 
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)
 	if err != nil {
@@ -64,7 +71,7 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
 
-    createResponse, err := CreateContainer(apiClient, "8000", "llamacpp", ctx)
+	createResponse, err := CreateContainer(apiClient, "8000", "", ctx)
 	if err != nil {
 		color.Yellow("%s", createResponse.Warnings)
 		color.Red("%s", err)
@@ -73,8 +80,8 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// start container
-    err = apiClient.ContainerStart(ctx, createResponse.ID, container.StartOptions{})
-    if err != nil {
+	err = apiClient.ContainerStart(ctx, createResponse.ID, container.StartOptions{})
+	if err != nil {
 		color.Red("%s", err)
 		w.Write([]byte("Error starting the container"))
 		return
@@ -94,8 +101,14 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	// For debugging
 	color.Green(chatCompletion.Choices[0].Message.Content)
 
-	// TODO json the response
-	w.Write([]byte(chatCompletion.Choices[0].Message.Content))
+	respPayload := simpleResponse{
+		Answer: chatCompletion.Choices[0].Message.Content,
+	}
+
+    go apiClient.ContainerStop(ctx, createResponse.ID, container.StopOptions{})
+
+	json, err := json.Marshal(respPayload)
+	w.Write(json)
 }
 
 func main() {

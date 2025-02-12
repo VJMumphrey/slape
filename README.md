@@ -18,17 +18,26 @@ https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest
 
 Refer to the proper documentation for rocm.
 
-#### Better Memory Usage
-
-We will used crun while creating this project. It uses less memory and is faster to startup containers. This is one of the main goals for the project and so its an obvious choice.
-[crun](https://github.com/containers/crun)
-
-Download and configure it by following the correct guides for your system. Their readme should be enough.
-Once you've done that, you're going to want to make it the default runtime by editing your config file for podman. If you are using Fedora then it is already setup for you.
-
 #### Socket
 
 ### Linux
+=======
+### Building
+Currently we use make as our build system on the backend, the backend and frontend are seperate so if you want to swap out to a different frontend you can.
+```bash
+make -f Makefile.back
+```
+
+cleaning up the build with,
+```bash
+make -f Makefile.back clean
+```
+
+This makefile creates the *models* folder for all your models to be stored in. It will not clear it out. That is a manual task to done by the user.
+
+### Socket
+
+#### Linux
 
 To run the app you need to turn on the docker socket. This allows the app to talk to the socket and controll its components.
 
@@ -44,7 +53,7 @@ To close the socket on linux,
 sudo systemctl stop docker
 ```
 
-### Windows
+#### Windows
 
 For windows this process is managed by docker desktop.
 
@@ -62,7 +71,7 @@ This command will tell you how much of your disk is currently being used by podm
 docker system df
 ```
 
-These commands are good for cleaning up these old resources.
+These commands are good for cleaning up these old docker resources.
 
 ```bash
 docker container prune

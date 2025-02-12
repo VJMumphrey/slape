@@ -57,7 +57,7 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 			Source: mountString,
 			Target: "/models",
 		}},
-	}, nil, nil, "llamacpp")
+	}, nil, nil, name)
 
 	return createResponse, err
 }
