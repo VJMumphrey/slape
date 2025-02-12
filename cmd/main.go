@@ -42,13 +42,20 @@ type simpleResponse struct {
 }
 
 func simplerequest(w http.ResponseWriter, req *http.Request) {
+    w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Option", "GET, POST, OPTIONS")
+	w.Header().Set("Content-Type", "application/json")
+
+    if req.Method ==  "OPTIONS" {
+        w.WriteHeader(http.StatusOK)
+    }
 
 	var simplePayload simpleRequest
 
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)
 	if err != nil {
 		color.Red("%s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		w.Write([]byte("Error unexpected request format"))
 		return
 	}
@@ -57,6 +64,7 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		color.Red("%s", err)
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 	defer apiClient.Close()
@@ -64,6 +72,7 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	reader, err := PullImage(apiClient, ctx)
 	if err != nil {
 		color.Red("%s", err)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Error pulling the image"))
 		return
 	}
@@ -75,6 +84,7 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		color.Yellow("%s", createResponse.Warnings)
 		color.Red("%s", err)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Error creating the container"))
 		return
 	}
@@ -83,6 +93,7 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	err = apiClient.ContainerStart(ctx, createResponse.ID, container.StartOptions{})
 	if err != nil {
 		color.Red("%s", err)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Error starting the container"))
 		return
 	}
@@ -94,6 +105,7 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	chatCompletion, err := GenerateCompletion(simplePayload.Prompt)
 	if err != nil {
 		color.Red("%s", err)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Error getting generation from model"))
 		return
 	}
@@ -105,9 +117,10 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		Answer: chatCompletion.Choices[0].Message.Content,
 	}
 
-    go apiClient.ContainerStop(ctx, createResponse.ID, container.StopOptions{})
+	go apiClient.ContainerStop(ctx, createResponse.ID, container.StopOptions{})
 
 	json, err := json.Marshal(respPayload)
+	w.WriteHeader(http.StatusOK)
 	w.Write(json)
 }
 

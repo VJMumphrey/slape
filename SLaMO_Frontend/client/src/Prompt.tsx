@@ -14,7 +14,7 @@ export default function Prompt() {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({prompt: prompt})
+      body: JSON.stringify({prompt: PromptInfo})
     });
     alert(response);
     setPromptInfo(""); //clears the prompt box after submission
