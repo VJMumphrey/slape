@@ -1,4 +1,3 @@
-import * as fs from "node:fs";
 import MenuTabs from "./MenuTabs.tsx";
 import { useState } from "react";
 
