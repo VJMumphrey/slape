@@ -18,10 +18,6 @@ https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest
 
 Refer to the proper documentation for rocm.
 
-#### Socket
-
-### Linux
-=======
 ### Building
 Currently we use make as our build system on the backend, the backend and frontend are seperate so if you want to swap out to a different frontend you can.
 ```bash
