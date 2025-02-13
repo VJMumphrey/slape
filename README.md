@@ -53,10 +53,6 @@ sudo systemctl stop docker
 
 For windows this process is managed by docker desktop.
 
-### Building
-
-We will use several Makefiles to build the project. These build the frontend and backend components into build/ for the backend and frontend inside frontend/build
-
 ### Cleanup
 
 Containers are very useful for making reproduceable builds but the can take up a lot of space over time. This coupled with the fact that we also have to save storage space for models means that we need to be more cognicent of that fact. Here are some tips to remove dead resources in this project.
