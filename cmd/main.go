@@ -16,6 +16,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -41,14 +43,23 @@ type simpleResponse struct {
 	Answer string `json:"answer"`
 }
 
-func simplerequest(w http.ResponseWriter, req *http.Request) {
-    w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+// cors is used to handle cors for each HandleFunc that we create.
+func cors(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	w.Header().Set("Access-Control-Allow-Option", "GET, POST, OPTIONS")
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-    if req.Method ==  "OPTIONS" {
-        w.WriteHeader(http.StatusOK)
-    }
+	if req.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+// simplerequest is used to handle simple requests as needed.
+func simplerequest(w http.ResponseWriter, req *http.Request) {
+
+	cors(w, req)
+
+	w.Header().Set("Content-Type", "application/json")
 
 	var simplePayload simpleRequest
 
@@ -59,47 +70,6 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte("Error unexpected request format"))
 		return
 	}
-
-	ctx := context.Background()
-	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	defer apiClient.Close()
-
-	reader, err := PullImage(apiClient, ctx)
-	if err != nil {
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Error pulling the image"))
-		return
-	}
-	// prints out the status of the download
-	// worth while for big images
-	io.Copy(os.Stdout, reader)
-
-	createResponse, err := CreateContainer(apiClient, "8000", "", ctx)
-	if err != nil {
-		color.Yellow("%s", createResponse.Warnings)
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Error creating the container"))
-		return
-	}
-
-	// start container
-	err = apiClient.ContainerStart(ctx, createResponse.ID, container.StartOptions{})
-	if err != nil {
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Error starting the container"))
-		return
-	}
-
-	// For debugging
-	log.Println(createResponse.ID)
 
 	// generate a response
 	chatCompletion, err := GenerateCompletion(simplePayload.Prompt)
@@ -117,17 +87,96 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		Answer: chatCompletion.Choices[0].Message.Content,
 	}
 
-	go apiClient.ContainerStop(ctx, createResponse.ID, container.StopOptions{})
-
 	json, err := json.Marshal(respPayload)
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
 }
 
+// init function runs on startup to spin up required resoruces.
+func setup(ctx context.Context, cli *client.Client, conts *[]container.CreateResponse) (string, error) {
+	reader, err := PullImage(cli, ctx)
+	if err != nil {
+		color.Red("%s", err)
+		return "", err
+	}
+	// prints out the status of the download
+	// worth while for big images
+	io.Copy(os.Stdout, reader)
+
+	createResponse, err := CreateContainer(cli, "8000", "", ctx)
+	if err != nil {
+		color.Yellow("%s", createResponse.Warnings)
+		color.Red("%s", err)
+		return "", err
+	}
+
+    *conts = append(*conts, createResponse)
+
+	// start container
+	err = cli.ContainerStart(ctx, createResponse.ID, container.StartOptions{})
+	if err != nil {
+		color.Red("%s", err)
+		return "", err
+	}
+
+	// For debugging
+	log.Println(createResponse.ID)
+
+	return createResponse.ID, nil
+}
+
+// shutdown function runs on shutdown and cleans up app resources.
+func Shutdown(ctx context.Context, cli *client.Client, conts *[]container.CreateResponse) {
+	for _, containerGuy := range *conts {
+		cli.ContainerStop(ctx, containerGuy.ID, container.StopOptions{})
+	}
+}
+
 func main() {
+	conts := []container.CreateResponse{}
+
+	ctx := context.Background()
+	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		color.Red("%s", err)
+		return
+	}
+	defer apiClient.Close()
+
+	go setup(ctx, apiClient, &conts)
 
 	http.HandleFunc("/simple", simplerequest)
-	color.Green("[+] Server started on :3069")
 
-	http.ListenAndServe(":3069", nil)
+	// Create a new HTTP server.
+	srv := &http.Server{
+		Addr: ":3069",
+	}
+
+	// Start the server in a goroutine.
+	color.Green("[+] Server started on :3069")
+	go func() {
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("ListenAndServe(): %s", err)
+		}
+	}()
+
+	// Create a channel to listen for interrupt signals.
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+
+	// Block until a signal is received.
+	<-sigChan
+
+	// Create a context with a timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Shutdown the server.
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Shutdown(): %s", err)
+	}
+
+	Shutdown(ctx, apiClient, &conts)
+
+	log.Println("Server gracefully stopped")
 }
