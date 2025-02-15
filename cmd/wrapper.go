@@ -2,11 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
-	"path/filepath"
-	"runtime"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -40,24 +37,7 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 		},
 	}
 
-	var mountString string
-
-	if runtime.GOOS == "windows" {
-		ex, err := os.Executable()
-		if err != nil {
-			fmt.Println("Vito are less gay")
-		}
-
-		currentPath := filepath.Dir(ex)
-
-		fmt.Println(currentPath)
-
-        mountString = currentPath + "\\models"
-	}
-
-	if runtime.GOOS == "linux" {
-		mountString = os.Getenv("PWD") + "/models"
-	}
+    mountString := os.Getenv("PWD") + "/models"
 
 	// create container
 	createResponse, err := apiClient.ContainerCreate(ctx, &container.Config{
