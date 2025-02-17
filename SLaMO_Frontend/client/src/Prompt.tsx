@@ -42,6 +42,7 @@ export default function Prompt() {
             {" "}
             Enter Prompt:
             <input
+              className="prompt"
               type="text"
               value={PromptInfo}
               onChange={(e) => setPromptInfo(e.target.value)} //access the current input and updates PromptInfo (e represents the event object)
