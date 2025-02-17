@@ -11,6 +11,8 @@ type ContextBox struct{}
 
 // SimplePipeline is the smallest pipeline.
 // It contains only a model with a ContextBox.
+// This is useful giving the model access to tools.
+// like internet search
 type SimplePipeline struct{}
 
 // InitSimplePipeline creates a SimplePipeline.
