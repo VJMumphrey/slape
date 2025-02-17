@@ -37,13 +37,13 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 		},
 	}
 
-    mountString := os.Getenv("PWD") + "/models"
+	mountString := os.Getenv("PWD") + "/models"
 
 	// create container
 	createResponse, err := apiClient.ContainerCreate(ctx, &container.Config{
 		ExposedPorts: portSet,
 		Image:        "ghcr.io/ggerganov/llama.cpp:server",
-		Cmd:          []string{"-m", "/models/Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf", "--port", "8000", "--host", "0.0.0.0", "-n", "512"},
+		Cmd:          []string{"-m", "/models/Phi-3.5-mini-instruct-Q4_K_M.gguf", "--port", "8000", "--host", "0.0.0.0", "-n", "32678"},
 	}, &container.HostConfig{
 		//Runtime: "nvidia",
 		/*
@@ -64,15 +64,54 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 
 // This is very simple for right now but when we add structured outputs it will
 // get very complicated.
-func GenerateCompletion(prompt string) (*openai.ChatCompletion, error) {
-	chatCompletion, err := openaiClient.Chat.Completions.New(context.Background(), openai.ChatCompletionNewParams{
+//
+// prompt comes from a user and is the question being asked.
+// systemprompt is the systemprompt chosen based on the prompting style requested.
+func GenerateCompletion(prompt string, systemprompt string) (string, error) {
+
+	stream := openaiClient.Chat.Completions.NewStreaming(context.Background(), openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+            openai.SystemMessage(systemprompt),
 			openai.UserMessage(prompt),
 		}),
-		Model: openai.String("llama3.2"),
+		Seed:  openai.Int(0),
+		Model: openai.F(openai.ChatModelGPT4o),
 	})
 
-	return chatCompletion, err
+	// optionally, an accumulator helper can be used
+	acc := openai.ChatCompletionAccumulator{}
+
+	for stream.Next() {
+		chunk := stream.Current()
+		acc.AddChunk(chunk)
+
+		if content, ok := acc.JustFinishedContent(); ok {
+			println("Content stream finished:", content)
+		}
+
+		// if using tool calls
+		//if tool, ok := acc.JustFinishedToolCall(); ok {
+		//	println("Tool call stream finished:", tool.Index, tool.Name, tool.Arguments)
+		//}
+
+		if refusal, ok := acc.JustFinishedRefusal(); ok {
+			println("Refusal stream finished:", refusal)
+		}
+
+		// it's best to use chunks after handling JustFinished events
+		if len(chunk.Choices) > 0 {
+			println(chunk.Choices[0].Delta.Content)
+		}
+	}
+
+	if err := stream.Err(); err != nil {
+        return "", err
+	}
+
+	// After the stream is finished, acc can be used like a ChatCompletion
+    result := acc.Choices[0].Message.Content
+
+    return result, nil
 }
 
 // FindContainer finds a specific container based on the nomenclature of /name.

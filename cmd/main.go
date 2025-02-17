@@ -19,6 +19,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/StoneG24/slape/cmd/prompt"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
@@ -34,9 +35,16 @@ var (
 
 // TODO may need to add omitempty
 type simpleRequest struct {
+
+	// Prompt is the string that
+	// will be appended to the prompt
+	// string chosen.
 	Prompt string `json:"prompt"`
 	Model  string `json:"model"`
-	Mode   string `json:"mode"`
+
+	// Options are strings matching
+	// the names of prompt types
+	Mode string `json:"mode"`
 }
 
 type simpleResponse struct {
@@ -71,8 +79,28 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	var promptChoice string
+
+	switch simplePayload.Mode {
+	case "simple":
+		promptChoice = prompt.SimplePrompt
+	case "cot":
+		promptChoice = prompt.CoTPrompt
+	case "tot":
+		promptChoice = prompt.ToTPrompt
+	case "got":
+		promptChoice = prompt.GoTPrompt
+	case "thinkinghats":
+		promptChoice = prompt.SixThinkingHats
+	default:
+		promptChoice = prompt.SimplePrompt
+	}
+
+    // for debugging
+    color.Yellow(promptChoice)
+
 	// generate a response
-	chatCompletion, err := GenerateCompletion(simplePayload.Prompt)
+	chatCompletion, err := GenerateCompletion(simplePayload.Prompt, promptChoice)
 	if err != nil {
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusOK)
@@ -81,10 +109,13 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// For debugging
-	color.Green(chatCompletion.Choices[0].Message.Content)
+	//color.Green(chatCompletion.Choices[0].Message.Content)
+
+	// for debugging streaming
+	color.Green(chatCompletion)
 
 	respPayload := simpleResponse{
-		Answer: chatCompletion.Choices[0].Message.Content,
+		Answer: chatCompletion,
 	}
 
 	json, err := json.Marshal(respPayload)
@@ -110,7 +141,7 @@ func setup(ctx context.Context, cli *client.Client, conts *[]container.CreateRes
 		return "", err
 	}
 
-    *conts = append(*conts, createResponse)
+	*conts = append(*conts, createResponse)
 
 	// start container
 	err = cli.ContainerStart(ctx, createResponse.ID, container.StartOptions{})
@@ -129,7 +160,7 @@ func setup(ctx context.Context, cli *client.Client, conts *[]container.CreateRes
 func Shutdown(ctx context.Context, cli *client.Client, conts *[]container.CreateResponse) {
 	for _, containerGuy := range *conts {
 		cli.ContainerStop(ctx, containerGuy.ID, container.StopOptions{})
-        cli.ContainerRemove(ctx, containerGuy.ID, container.RemoveOptions{})
+		cli.ContainerRemove(ctx, containerGuy.ID, container.RemoveOptions{})
 	}
 }
 
