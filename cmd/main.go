@@ -17,7 +17,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime"
 	"time"
 
 	"github.com/StoneG24/slape/cmd/prompt"
@@ -34,18 +33,17 @@ var (
 	)
 )
 
-// TODO may need to add omitempty
 type simpleRequest struct {
 
 	// Prompt is the string that
 	// will be appended to the prompt
 	// string chosen.
 	Prompt string `json:"prompt"`
-	Model  string `json:"model"`
+	Model  string `json:"model ,omitempty"`
 
 	// Options are strings matching
 	// the names of prompt types
-	Mode string `json:"mode"`
+	Mode string `json:"mode ,omitempty"`
 }
 
 type simpleResponse struct {
@@ -97,8 +95,8 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		promptChoice = prompt.SimplePrompt
 	}
 
-    // for debugging
-    color.Yellow(promptChoice)
+	// for debugging
+	color.Yellow(promptChoice)
 
 	// generate a response
 	chatCompletion, err := GenerateCompletion(simplePayload.Prompt, promptChoice)
@@ -166,6 +164,31 @@ func Shutdown(ctx context.Context, cli *client.Client, conts *[]container.Create
 	}
 }
 
+// request GET for backend check to make sure llamacpp is ready for requests.
+// returns 200 ok when things are ready
+func upDog(w http.ResponseWriter, req *http.Request) {
+
+	cors(w, req)
+
+	resp, err := http.Get("http://localhost:8000/health")
+	if err != nil {
+		color.Red("%s", err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte("error while checking model load status..."))
+		return
+	}
+
+	if resp.StatusCode == http.StatusOK {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+		return
+	} else if resp.StatusCode == http.StatusServiceUnavailable {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte("loading model..."))
+		return
+	}
+}
+
 func main() {
 	conts := []container.CreateResponse{}
 
@@ -180,6 +203,7 @@ func main() {
 	go setup(ctx, apiClient, &conts)
 
 	http.HandleFunc("/simple", simplerequest)
+	http.HandleFunc("/up", upcheck)
 
 	// Create a new HTTP server.
 	srv := &http.Server{
