@@ -203,7 +203,7 @@ func main() {
 	go setup(ctx, apiClient, &conts)
 
 	http.HandleFunc("/simple", simplerequest)
-	http.HandleFunc("/up", upcheck)
+	http.HandleFunc("/up", upDog)
 
 	// Create a new HTTP server.
 	srv := &http.Server{
