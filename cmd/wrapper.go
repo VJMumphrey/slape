@@ -43,7 +43,7 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	createResponse, err := apiClient.ContainerCreate(ctx, &container.Config{
 		ExposedPorts: portSet,
 		Image:        "ghcr.io/ggerganov/llama.cpp:server",
-		Cmd:          []string{"-m", "/models/Phi-3.5-mini-instruct-Q4_K_M.gguf", "--port", "8000", "--host", "0.0.0.0", "-n", "32678"},
+		Cmd:          []string{"-m", "/models/Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf", "--port", "8000", "--host", "0.0.0.0", "-n", "32678"},
 	}, &container.HostConfig{
 		//Runtime: "nvidia",
 		/*
@@ -71,7 +71,7 @@ func GenerateCompletion(prompt string, systemprompt string) (string, error) {
 
 	stream := openaiClient.Chat.Completions.NewStreaming(context.Background(), openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-            openai.SystemMessage(systemprompt),
+			openai.SystemMessage(systemprompt),
 			openai.UserMessage(prompt),
 		}),
 		Seed:  openai.Int(0),
@@ -105,13 +105,13 @@ func GenerateCompletion(prompt string, systemprompt string) (string, error) {
 	}
 
 	if err := stream.Err(); err != nil {
-        return "", err
+		return "", err
 	}
 
 	// After the stream is finished, acc can be used like a ChatCompletion
-    result := acc.Choices[0].Message.Content
+	result := acc.Choices[0].Message.Content
 
-    return result, nil
+	return result, nil
 }
 
 // FindContainer finds a specific container based on the nomenclature of /name.
