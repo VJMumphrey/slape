@@ -43,7 +43,7 @@ type simpleRequest struct {
 
 	// Options are strings matching
 	// the names of prompt types
-	Mode string `json:"mode ,omitempty"`
+	Mode string `json:"mode"`
 }
 
 type simpleResponse struct {
