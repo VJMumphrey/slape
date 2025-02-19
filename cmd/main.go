@@ -161,6 +161,7 @@ func setup(ctx context.Context, cli *client.Client, conts *[]container.CreateRes
 func Shutdown(ctx context.Context, cli *client.Client, conts *[]container.CreateResponse) {
 	for _, containerGuy := range *conts {
 		cli.ContainerStop(ctx, containerGuy.ID, container.StopOptions{})
+
 		cli.ContainerRemove(ctx, containerGuy.ID, container.RemoveOptions{})
 	}
 }
