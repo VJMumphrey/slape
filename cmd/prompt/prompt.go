@@ -1,7 +1,5 @@
 package prompt
 
-func secuityCheck() {}
-
 // Node is a standard Node type
 // for use in thought prompting
 type Node struct{}
