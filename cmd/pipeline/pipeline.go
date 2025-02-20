@@ -4,11 +4,6 @@
 // Pipelines also dictate the structure of conversations between the models. See the following docs for more info.
 package pipeline
 
-// ContextBox is a struct that contains a
-// vector store of information usable by models.
-// The vector store is of openai spec.
-type ContextBox struct{}
-
 // SimplePipeline is the smallest pipeline.
 // It contains only a model with a ContextBox.
 // This is useful giving the model access to tools.

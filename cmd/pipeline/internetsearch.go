@@ -7,4 +7,6 @@ package pipeline
 // Then the search tool should make a request to a privacy oriented search engine.
 // Once this is done it should scrape the top five websites,
 // index the information into the vectore store file and store it in the contex box.
+// Internet search should not really be considered a tool because it can be 
+// dangerous if not used properly, hence why it is serperate.
 func InternetSearch() {}
