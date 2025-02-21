@@ -118,6 +118,12 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	}
 
 	json, err := json.Marshal(respPayload)
+	if err != nil {
+		color.Red("%s", err)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Error marshaling your response from model"))
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
 }
