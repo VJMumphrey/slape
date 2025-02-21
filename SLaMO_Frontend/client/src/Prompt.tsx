@@ -1,6 +1,7 @@
 import {useState} from "react";
 import "./App.css";
 import MenuTabs from "./MenuTabs.tsx";
+import Markdown from "react-markdown";
 
 export default function Prompt() {
   const [PromptInfo, setPromptInfo] = useState(""); //used to contain the current value, and to set the new value
@@ -13,6 +14,7 @@ export default function Prompt() {
     {name: "Tree of Thought", type: "tot"},
     {name: "Graph of Thought", type: "got"},
     {name: "Thinking Hats", type: "thinkinghats"},
+    {name: "Mixture of Experts", type: "moe"},
   ];
 
   function dropDownButton() {
@@ -64,9 +66,12 @@ export default function Prompt() {
       setResponseAnswer(
         <>
           <p className="left">{`Prompt: ${PromptInfo}`}</p>{" "}
-          <p className="left">{`Response: ${
-            JSON.parse(JSON.stringify(await response.json())).answer
-          }`}</p>
+          <p className="left">
+            Response:
+            <Markdown>
+              {`${JSON.parse(JSON.stringify(await response.json())).answer}`}
+            </Markdown>
+          </p>
         </>
       );
     }
