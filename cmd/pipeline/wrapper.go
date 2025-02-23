@@ -19,13 +19,13 @@ import (
 
 // PullImage uses the docker api to pull an image down.
 // The function also checks for the image locally before pulling.
-func PullImage(apiClient *client.Client, ctx context.Context) (io.ReadCloser, error) {
-	reader, err := apiClient.ImagePull(ctx, "ghcr.io/ggerganov/llama.cpp:server", image.PullOptions{All: false, RegistryAuth: ""})
+func PullImage(apiClient *client.Client, ctx context.Context, containerImage string) (io.ReadCloser, error) {
+	reader, err := apiClient.ImagePull(ctx, containerImage, image.PullOptions{All: false, RegistryAuth: ""})
 
 	return reader, err
 }
 
-func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string) (container.CreateResponse, error) {
+func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string, containerImage string) (container.CreateResponse, error) {
 
 	portSet := nat.PortSet{
 		nat.Port(portNum + "/tcp"): struct{}{}, // map 11434 TCP port
@@ -62,8 +62,8 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	// create container
 	createResponse, err := apiClient.ContainerCreate(ctx, &container.Config{
 		ExposedPorts: portSet,
-		Image:        "ghcr.io/ggerganov/llama.cpp:server",
-		Cmd:          []string{"-m", modelName, "--port", "8000", "--host", "0.0.0.0", "-n", "32678", "-fa"},
+		Image:        containerImage,
+		Cmd:          []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-n", "32678", "-fa"},
 	}, &container.HostConfig{
 		// TODO check for gpu, if true set to use nvidia runtime, rocm, or cdi
 		//Runtime: "nvidia",

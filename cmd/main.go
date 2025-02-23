@@ -12,7 +12,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -23,8 +22,16 @@ import (
 	"github.com/StoneG24/slape/cmd/prompt"
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
+	"github.com/jaypipes/ghw"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+)
+
+const (
+	cpuImage = "ghcr.io/ggerganov/llama.cpp:server"
+
+	cudagpuImage = "ghcr.io/ggerganov/llama.cpp:server-cuda"
+	rocmgpuImage = "ghcr.io/ggerganov/llama.cpp:server-rocm"
 )
 
 var (
@@ -63,6 +70,12 @@ func cors(w http.ResponseWriter, req *http.Request) {
 
 // simplerequest is used to handle simple requests as needed.
 func simplerequest(w http.ResponseWriter, req *http.Request) {
+	gpu, err := ghw.GPU()
+	// if there is an error continue without using a GPU
+	if err != nil {
+		color.Red("%s", err)
+		color.Yellow("Continuing without GPU...")
+	}
 
 	ctx := context.Background()
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -74,14 +87,25 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 
 	cors(w, req)
 
+	var image string
+	if len(gpu.GraphicsCards) == 0 {
+		color.Yellow("No GPUs to use, switching to cpu only")
+		image = cpuImage
+	} else {
+		// TODO Replace once they fix the image upstream
+		image = cpuImage
+	}
+
 	s := pipeline.SimplePipeline{
 		// updates after created
-		Model:      "",
-		ContextBox: pipeline.ContextBox{},
-		Tools:      pipeline.Tools{},
-		Active:     true,
+		Model:          "",
+		ContextBox:     pipeline.ContextBox{},
+		Tools:          pipeline.Tools{},
+		Active:         true,
+		ContainerImage: image,
+		DockerClient:   apiClient,
 	}
-	go s.Setup(ctx, apiClient)
+	go s.Setup(ctx)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -132,12 +156,14 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		resp, err := http.Get("http://localhost:8000/health")
 		if err != nil {
 			color.Red("%s", err)
-			continue
+			return
 		}
 
 		if resp.StatusCode == http.StatusOK {
+			color.Green("Model is Ready")
 			break
 		} else if resp.StatusCode == http.StatusServiceUnavailable {
+			color.Yellow("Model is Loading...")
 			continue
 		}
 	}
@@ -196,32 +222,16 @@ func upDog(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// CheckGPU is a helper func that is meant to find a gpu on the system.
-// If a gpu is found we should use the gpu since it will be a faster alternative to CPU.
-// This means we have to download a GPU image of llamacpp and change the runtime to nvidia or something else.
-func CheckGPU() {
-
+// CheckMemoryUsage is used to check the availble memory of a machine.
+func CheckAmountofMemory() (int64, error) {
+	memory, err := ghw.Memory()
+	if err != nil {
+		return 0, err
+	}
+	return memory.TotalUsableBytes, nil
 }
 
 func main() {
-	CheckGPU()
-
-	ctx := context.Background()
-	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		color.Red("%s", err)
-		return
-	}
-	defer apiClient.Close()
-
-	reader, err := pipeline.PullImage(apiClient, ctx)
-	if err != nil {
-		color.Red("%s", err)
-		return
-	}
-	// prints out the status of the download
-	// worth while for big images
-	io.Copy(os.Stdout, reader)
 
 	http.HandleFunc("/simple", simplerequest)
 	http.HandleFunc("/up", upDog)

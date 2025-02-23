@@ -6,23 +6,14 @@ package pipeline
 
 import (
 	"context"
+	"io"
+	"os"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/openai/openai-go"
 )
-
-type Pipeline interface {
-	// ctx, docker client
-	Setup(context.Context, *client.Client) error
-
-	// userprompt, systemprompt, maxtokens, openaiClient
-	Generate(string, string, int64, *openai.Client) (string, error)
-
-	// ctx, docker client
-	Shutdown(context.Context, *client.Client)
-}
 
 // SimplePipeline is the smallest pipeline.
 // It contains only a model with a ContextBox.
@@ -33,11 +24,24 @@ type SimplePipeline struct {
 	Model string
 	ContextBox
 	Tools
-	Active bool
+	Active         bool
+	ContainerImage string
+	DockerClient   *client.Client
 }
 
-func (s *SimplePipeline) Setup(ctx context.Context, cli *client.Client) error {
-	createResponse, err := CreateContainer(cli, "8000", "", ctx, "/models/Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf")
+func (s *SimplePipeline) Setup(ctx context.Context) error {
+
+	_, err := PullImage(s.DockerClient, ctx, s.ContainerImage)
+	if err != nil {
+		color.Red("%s", err)
+		return err
+	}
+	color.Green("Pulling Image...")
+	// prints out the status of the download
+	// worth while for big images
+	// io.Copy(os.Stdout, reader)
+
+	createResponse, err := CreateContainer(s.DockerClient, "8000", "", ctx, "Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf", s.ContainerImage)
 	if err != nil {
 		color.Yellow("%s", createResponse.Warnings)
 		color.Red("%s", err)
@@ -45,7 +49,7 @@ func (s *SimplePipeline) Setup(ctx context.Context, cli *client.Client) error {
 	}
 
 	// start container
-	err = cli.ContainerStart(context.Background(), createResponse.ID, container.StartOptions{})
+	err = (s.DockerClient).ContainerStart(context.Background(), createResponse.ID, container.StartOptions{})
 	if err != nil {
 		color.Red("%s", err)
 		return err
@@ -96,13 +100,24 @@ type ChainofModels struct {
 	Model3 string
 	ContextBox
 	Tools
-	Active bool
+	Active         bool
+	ContainerImage string
+	DockerClient   *client.Client
 }
 
 // InitChainofModels creates a ChainofModels pipeline.
 // Includes a ContextBox and all models needed in squential order.
-func (c *ChainofModels) Setup(ctx context.Context, cli *client.Client) error {
-	createResponse, err := CreateContainer(cli, "8000", "", ctx, "/models/Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf")
+func (c *ChainofModels) Setup(ctx context.Context) error {
+	reader, err := PullImage(c.DockerClient, ctx, c.ContainerImage)
+	if err != nil {
+		color.Red("%s", err)
+		return err
+	}
+	// prints out the status of the download
+	// worth while for big images
+	io.Copy(os.Stdout, reader)
+
+	createResponse, err := CreateContainer(c.DockerClient, "8000", "", ctx, "Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf", c.ContainerImage)
 	if err != nil {
 		color.Yellow("%s", createResponse.Warnings)
 		color.Red("%s", err)
@@ -163,12 +178,24 @@ type DebateofModels struct {
 	Models []string
 	ContextBox
 	Tools
-	Active bool
+	Active         bool
+	ContainerImage string
 }
 
 // InitDebateofModels creates a DebateofModels pipeline for debates.
 // Includes a ContextBox and all models needed.
-func (d *DebateofModels) Setup(ctx context.Context, cli *client.Client) {}
+func (d *DebateofModels) Setup(ctx context.Context, cli *client.Client) error {
+	reader, err := PullImage(cli, ctx, d.ContainerImage)
+	if err != nil {
+		color.Red("%s", err)
+		return err
+	}
+	// prints out the status of the download
+	// worth while for big images
+	io.Copy(os.Stdout, reader)
+
+	return nil
+}
 
 func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens int64, openaiClient *openai.Client, cli *client.Client) {
 }
