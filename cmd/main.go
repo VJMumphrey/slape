@@ -74,6 +74,15 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 
 	cors(w, req)
 
+	s := pipeline.SimplePipeline{
+		// updates after created
+		Model:      "",
+		ContextBox: pipeline.ContextBox{},
+		Tools:      pipeline.Tools{},
+		Active:     true,
+	}
+	go s.Setup(ctx, apiClient)
+
 	w.Header().Set("Content-Type", "application/json")
 
 	var simplePayload simpleRequest
@@ -116,15 +125,22 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	// for debugging
 	color.Yellow(promptChoice)
 
-	s := pipeline.SimplePipeline{
-		// updates after created
-		Model:      "",
-		ContextBox: pipeline.ContextBox{},
-		Tools:      pipeline.Tools{},
-		Active:     true,
-	}
+	// take care of upDog on our own
+	for {
+		// sleep and give server guy a break
+		time.Sleep(time.Duration(5 * time.Second))
+		resp, err := http.Get("http://localhost:8000/health")
+		if err != nil {
+			color.Red("%s", err)
+			continue
+		}
 
-	s.Setup(ctx, apiClient)
+		if resp.StatusCode == http.StatusOK {
+			break
+		} else if resp.StatusCode == http.StatusServiceUnavailable {
+			continue
+		}
+	}
 
 	// generate a response
 	result, err := s.Generate(simplePayload.Prompt, promptChoice, maxtokens, openaiClient)
@@ -134,6 +150,8 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte("Error getting generation from model"))
 		return
 	}
+
+	go s.Shutdown(ctx, apiClient)
 
 	// for debugging streaming
 	color.Green(result)

@@ -170,6 +170,7 @@ type DebateofModels struct {
 // Includes a ContextBox and all models needed.
 func (d *DebateofModels) Setup(ctx context.Context, cli *client.Client) {}
 
-func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens int64, openaiClient *openai.Client, cli *client.Client) {}
+func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens int64, openaiClient *openai.Client, cli *client.Client) {
+}
 
 func (d *DebateofModels) Shutdown(ctx context.Context, cli *client.Client) {}

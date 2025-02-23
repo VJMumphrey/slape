@@ -85,47 +85,47 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 // systemprompt is the systemprompt chosen based on the prompting style requested.
 func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion string, openaiClient openai.Client) (string, error) {
 
-    var result string
+	var result string
 
-        stream := openaiClient.Chat.Completions.NewStreaming(context.Background(), param)
+	stream := openaiClient.Chat.Completions.NewStreaming(context.Background(), param)
 
-        // optionally, an accumulator helper can be used
-        acc := openai.ChatCompletionAccumulator{}
+	// optionally, an accumulator helper can be used
+	acc := openai.ChatCompletionAccumulator{}
 
-        for stream.Next() {
-            chunk := stream.Current()
-            //w.Write([]byte(chunk.Choices[0].Delta.Content))
-            acc.AddChunk(chunk)
+	for stream.Next() {
+		chunk := stream.Current()
+		//w.Write([]byte(chunk.Choices[0].Delta.Content))
+		acc.AddChunk(chunk)
 
-            if content, ok := acc.JustFinishedContent(); ok {
-                println("Content stream finished:", content)
-            }
+		if content, ok := acc.JustFinishedContent(); ok {
+			println("Content stream finished:", content)
+		}
 
-            // if using tool calls
-            //if tool, ok := acc.JustFinishedToolCall(); ok {
-            //	println("Tool call stream finished:", tool.Index, tool.Name, tool.Arguments)
-            //}
+		// if using tool calls
+		//if tool, ok := acc.JustFinishedToolCall(); ok {
+		//	println("Tool call stream finished:", tool.Index, tool.Name, tool.Arguments)
+		//}
 
-            if refusal, ok := acc.JustFinishedRefusal(); ok {
-                println("Refusal stream finished:", refusal)
-            }
+		if refusal, ok := acc.JustFinishedRefusal(); ok {
+			println("Refusal stream finished:", refusal)
+		}
 
-            // it's best to use chunks after handling JustFinished events
-            if len(chunk.Choices) > 0 {
-                println(chunk.Choices[0].Delta.Content)
-            }
-        }
+		// it's best to use chunks after handling JustFinished events
+		if len(chunk.Choices) > 0 {
+			println(chunk.Choices[0].Delta.Content)
+		}
+	}
 
-        if err := stream.Err(); err != nil {
-            return "", err
-        }
+	if err := stream.Err(); err != nil {
+		return "", err
+	}
 
-        // After the stream is finished, acc can be used like a ChatCompletion
-        result = acc.Choices[0].Message.Content
+	// After the stream is finished, acc can be used like a ChatCompletion
+	result = acc.Choices[0].Message.Content
 
-        // Adding this
-        param.Messages.Value = append(param.Messages.Value, acc.Choices[0].Message)
-        param.Messages.Value = append(param.Messages.Value, openai.UserMessage(followupQuestion))
+	// Adding this for later
+	//param.Messages.Value = append(param.Messages.Value, acc.Choices[0].Message)
+	//param.Messages.Value = append(param.Messages.Value, openai.UserMessage(followupQuestion))
 
 	return result, nil
 }
