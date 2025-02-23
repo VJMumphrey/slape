@@ -1,7 +1,5 @@
 package prompt
 
-func secuityCheck() {}
-
 // Node is a standard Node type
 // for use in thought prompting
 type Node struct{}
@@ -49,7 +47,7 @@ var (
     If any expert realises that previous responses have connections to the current idea, they can make connections to help draw better conclusions.
     Now All experts will congregate and decide if any of the ideas and their connections are no longer worth looking into.
     Note that all ideas should stem from parent ideas and all neighboring ideas should be considered to help create new ideas.
-    Repeat this until an answer to the question can be decided.
+    Repeat this until an answer to this question can be decided.
     `
 
 	MoEPrompt = `You are intellegent mixture of experts. 
@@ -71,7 +69,7 @@ var (
     You give advice based on rehtoric and language, founded on the contructs of known english standards.
     If Expert four is unsure of question, due to lack of knowlegde, they do not answer.
 
-    Expert five: Expert five is a manager of the experts.
+    Expert five: Expert five manages the experts.
     Expert five manages the other four experts and balances all of the advice trusting in the other experts knowledge.
     Expert five then makes an answer to the question using the advice from the experts.
     If Expert five is unsure of the answer made by the other four, the manager asks the other experts to try again.

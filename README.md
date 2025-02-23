@@ -22,6 +22,7 @@ Refer to the proper documentation for rocm.
 ```bash
 go build -o slape ./cmd
 ```
+*For windows make sure your name for the binary has .exe at the end for it to run properly.
 
 ### Socket
 

@@ -1,4 +1,4 @@
-package main
+package pipeline
 
 import (
 	"context"
@@ -19,13 +19,13 @@ import (
 
 // PullImage uses the docker api to pull an image down.
 // The function also checks for the image locally before pulling.
-func PullImage(apiClient *client.Client, ctx context.Context) (io.ReadCloser, error) {
-	reader, err := apiClient.ImagePull(ctx, "ghcr.io/ggerganov/llama.cpp:server", image.PullOptions{All: false, RegistryAuth: ""})
+func PullImage(apiClient *client.Client, ctx context.Context, containerImage string) (io.ReadCloser, error) {
+	reader, err := apiClient.ImagePull(ctx, containerImage, image.PullOptions{All: false, RegistryAuth: ""})
 
 	return reader, err
 }
 
-func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context) (container.CreateResponse, error) {
+func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string, containerImage string) (container.CreateResponse, error) {
 
 	portSet := nat.PortSet{
 		nat.Port(portNum + "/tcp"): struct{}{}, // map 11434 TCP port
@@ -62,15 +62,11 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	// create container
 	createResponse, err := apiClient.ContainerCreate(ctx, &container.Config{
 		ExposedPorts: portSet,
-		Image:        "ghcr.io/ggerganov/llama.cpp:server",
-		Cmd:          []string{"-m", "/models/Phi-3.5-mini-instruct.Q4_K_M.gguf", "--port", "8000", "--host", "0.0.0.0", "-n", "32678"},
+		Image:        containerImage,
+		Cmd:          []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-n", "32678", "-fa"},
 	}, &container.HostConfig{
+		// TODO check for gpu, if true set to use nvidia runtime, rocm, or cdi
 		//Runtime: "nvidia",
-		/*
-			Binds: []string{
-				"/models:/models",
-			},
-		*/
 		PortBindings: portBindings,
 		Mounts: []mount.Mount{{
 			Type:   mount.TypeBind,
@@ -87,22 +83,18 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 //
 // prompt comes from a user and is the question being asked.
 // systemprompt is the systemprompt chosen based on the prompting style requested.
-func GenerateCompletion(prompt string, systemprompt string) (string, error) {
+func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion string, openaiClient openai.Client) (string, error) {
 
-	stream := openaiClient.Chat.Completions.NewStreaming(context.Background(), openai.ChatCompletionNewParams{
-		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(systemprompt),
-			openai.UserMessage(prompt),
-		}),
-		Seed:  openai.Int(0),
-		Model: openai.F(openai.ChatModelGPT4o),
-	})
+	var result string
+
+	stream := openaiClient.Chat.Completions.NewStreaming(context.Background(), param)
 
 	// optionally, an accumulator helper can be used
 	acc := openai.ChatCompletionAccumulator{}
 
 	for stream.Next() {
 		chunk := stream.Current()
+		//w.Write([]byte(chunk.Choices[0].Delta.Content))
 		acc.AddChunk(chunk)
 
 		if content, ok := acc.JustFinishedContent(); ok {
@@ -129,7 +121,11 @@ func GenerateCompletion(prompt string, systemprompt string) (string, error) {
 	}
 
 	// After the stream is finished, acc can be used like a ChatCompletion
-	result := acc.Choices[0].Message.Content
+	result = acc.Choices[0].Message.Content
+
+	// Adding this for later
+	//param.Messages.Value = append(param.Messages.Value, acc.Choices[0].Message)
+	//param.Messages.Value = append(param.Messages.Value, openai.UserMessage(followupQuestion))
 
 	return result, nil
 }
