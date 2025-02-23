@@ -63,7 +63,7 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	createResponse, err := apiClient.ContainerCreate(ctx, &container.Config{
 		ExposedPorts: portSet,
 		Image:        "ghcr.io/ggerganov/llama.cpp:server",
-		Cmd:          []string{"-m", "/models/Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf", "--port", "8000", "--host", "0.0.0.0", "-n", "32678"},
+		Cmd:          []string{"-m", "/models/Phi-3.5-mini-instruct.Q4_K_M.gguf", "--port", "8000", "--host", "0.0.0.0", "-n", "32678"},
 	}, &container.HostConfig{
 		//Runtime: "nvidia",
 		/*
