@@ -1,0 +1,23 @@
+{
+  "go.vetOnSave": "package", // Run 'go vet' when saving Go files in the package
+  "go.testOnSave": false, // Run tests automatically on file save
+  "go.testFlags": [
+    "-v" // Verbose test output (useful for debugging)
+  ],
+  "go.coverageDecorator": {
+    "type": "gutter" // Show coverage in the editor's gutter
+  },
+  "go.vetFlags": [
+    "-all" // Run 'go vet' with all checks enabled
+  ],
+  "files.exclude": {
+    "**/.git": true,
+    "**/.vscode": true,
+  },
+  "editor.formatOnSave": true, // Format code when saving (works with Go's formatting tools)
+  "editor.rulers": [
+    80
+  ], // Set line length ruler to 80 characters (Go code convention)
+  "editor.tabSize": 4, // Set tab size to 4 spaces (common in Go projects)
+  "editor.insertSpaces": true, // Use spaces instead of tabs
+}
