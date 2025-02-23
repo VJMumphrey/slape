@@ -1,4 +1,4 @@
-package main
+package pipeline
 
 import (
 	"context"
@@ -25,7 +25,7 @@ func PullImage(apiClient *client.Client, ctx context.Context) (io.ReadCloser, er
 	return reader, err
 }
 
-func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context) (container.CreateResponse, error) {
+func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string) (container.CreateResponse, error) {
 
 	portSet := nat.PortSet{
 		nat.Port(portNum + "/tcp"): struct{}{}, // map 11434 TCP port
@@ -63,14 +63,10 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	createResponse, err := apiClient.ContainerCreate(ctx, &container.Config{
 		ExposedPorts: portSet,
 		Image:        "ghcr.io/ggerganov/llama.cpp:server",
-		Cmd:          []string{"-m", "/models/Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf", "--port", "8000", "--host", "0.0.0.0", "-n", "32678"},
+		Cmd:          []string{"-m", modelName, "--port", "8000", "--host", "0.0.0.0", "-n", "32678", "-fa"},
 	}, &container.HostConfig{
+		// TODO check for gpu, if true set to use nvidia runtime, rocm, or cdi
 		//Runtime: "nvidia",
-		/*
-			Binds: []string{
-				"/models:/models",
-			},
-		*/
 		PortBindings: portBindings,
 		Mounts: []mount.Mount{{
 			Type:   mount.TypeBind,
@@ -87,49 +83,49 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 //
 // prompt comes from a user and is the question being asked.
 // systemprompt is the systemprompt chosen based on the prompting style requested.
-func GenerateCompletion(prompt string, systemprompt string) (string, error) {
+func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion string, openaiClient openai.Client) (string, error) {
 
-	stream := openaiClient.Chat.Completions.NewStreaming(context.Background(), openai.ChatCompletionNewParams{
-		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(systemprompt),
-			openai.UserMessage(prompt),
-		}),
-		Seed:  openai.Int(0),
-		Model: openai.F(openai.ChatModelGPT4o),
-	})
+    var result string
 
-	// optionally, an accumulator helper can be used
-	acc := openai.ChatCompletionAccumulator{}
+        stream := openaiClient.Chat.Completions.NewStreaming(context.Background(), param)
 
-	for stream.Next() {
-		chunk := stream.Current()
-		acc.AddChunk(chunk)
+        // optionally, an accumulator helper can be used
+        acc := openai.ChatCompletionAccumulator{}
 
-		if content, ok := acc.JustFinishedContent(); ok {
-			println("Content stream finished:", content)
-		}
+        for stream.Next() {
+            chunk := stream.Current()
+            //w.Write([]byte(chunk.Choices[0].Delta.Content))
+            acc.AddChunk(chunk)
 
-		// if using tool calls
-		//if tool, ok := acc.JustFinishedToolCall(); ok {
-		//	println("Tool call stream finished:", tool.Index, tool.Name, tool.Arguments)
-		//}
+            if content, ok := acc.JustFinishedContent(); ok {
+                println("Content stream finished:", content)
+            }
 
-		if refusal, ok := acc.JustFinishedRefusal(); ok {
-			println("Refusal stream finished:", refusal)
-		}
+            // if using tool calls
+            //if tool, ok := acc.JustFinishedToolCall(); ok {
+            //	println("Tool call stream finished:", tool.Index, tool.Name, tool.Arguments)
+            //}
 
-		// it's best to use chunks after handling JustFinished events
-		if len(chunk.Choices) > 0 {
-			println(chunk.Choices[0].Delta.Content)
-		}
-	}
+            if refusal, ok := acc.JustFinishedRefusal(); ok {
+                println("Refusal stream finished:", refusal)
+            }
 
-	if err := stream.Err(); err != nil {
-		return "", err
-	}
+            // it's best to use chunks after handling JustFinished events
+            if len(chunk.Choices) > 0 {
+                println(chunk.Choices[0].Delta.Content)
+            }
+        }
 
-	// After the stream is finished, acc can be used like a ChatCompletion
-	result := acc.Choices[0].Message.Content
+        if err := stream.Err(); err != nil {
+            return "", err
+        }
+
+        // After the stream is finished, acc can be used like a ChatCompletion
+        result = acc.Choices[0].Message.Content
+
+        // Adding this
+        param.Messages.Value = append(param.Messages.Value, acc.Choices[0].Message)
+        param.Messages.Value = append(param.Messages.Value, openai.UserMessage(followupQuestion))
 
 	return result, nil
 }

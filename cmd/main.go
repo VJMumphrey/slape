@@ -19,8 +19,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/StoneG24/slape/cmd/pipeline"
 	"github.com/StoneG24/slape/cmd/prompt"
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/openai/openai-go"
@@ -64,13 +64,21 @@ func cors(w http.ResponseWriter, req *http.Request) {
 // simplerequest is used to handle simple requests as needed.
 func simplerequest(w http.ResponseWriter, req *http.Request) {
 
+	ctx := context.Background()
+	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		color.Red("%s", err)
+		return
+	}
+	defer apiClient.Close()
+
 	cors(w, req)
 
 	w.Header().Set("Content-Type", "application/json")
 
 	var simplePayload simpleRequest
 
-	err := json.NewDecoder(req.Body).Decode(&simplePayload)
+	err = json.NewDecoder(req.Body).Decode(&simplePayload)
 	if err != nil {
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -79,27 +87,47 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var promptChoice string
+	var maxtokens int64
 
 	switch simplePayload.Mode {
 	case "simple":
 		promptChoice = prompt.SimplePrompt
+		maxtokens = 100
 	case "cot":
 		promptChoice = prompt.CoTPrompt
+		maxtokens = 4096
 	case "tot":
 		promptChoice = prompt.ToTPrompt
+		maxtokens = 32768
 	case "got":
 		promptChoice = prompt.GoTPrompt
+		maxtokens = 32768
+	case "moe":
+		promptChoice = prompt.MoEPrompt
+		maxtokens = 32768
 	case "thinkinghats":
 		promptChoice = prompt.SixThinkingHats
+		maxtokens = 32768
 	default:
 		promptChoice = prompt.SimplePrompt
+		maxtokens = 100
 	}
 
 	// for debugging
 	color.Yellow(promptChoice)
 
+	s := pipeline.SimplePipeline{
+		// updates after created
+		Model:      "",
+		ContextBox: pipeline.ContextBox{},
+		Tools:      pipeline.Tools{},
+		Active:     true,
+	}
+
+	s.Setup(ctx, apiClient)
+
 	// generate a response
-	chatCompletion, err := GenerateCompletion(simplePayload.Prompt, promptChoice)
+	result, err := s.Generate(simplePayload.Prompt, promptChoice, maxtokens, openaiClient)
 	if err != nil {
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusOK)
@@ -107,14 +135,11 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// For debugging
-	//color.Green(chatCompletion.Choices[0].Message.Content)
-
 	// for debugging streaming
-	color.Green(chatCompletion)
+	color.Green(result)
 
 	respPayload := simpleResponse{
-		Answer: chatCompletion,
+		Answer: result,
 	}
 
 	json, err := json.Marshal(respPayload)
@@ -126,48 +151,6 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
-}
-
-// init function runs on startup to spin up required resoruces.
-func setup(ctx context.Context, cli *client.Client, conts *[]container.CreateResponse) (string, error) {
-	reader, err := PullImage(cli, ctx)
-	if err != nil {
-		color.Red("%s", err)
-		return "", err
-	}
-	// prints out the status of the download
-	// worth while for big images
-	io.Copy(os.Stdout, reader)
-
-	createResponse, err := CreateContainer(cli, "8000", "", ctx)
-	if err != nil {
-		color.Yellow("%s", createResponse.Warnings)
-		color.Red("%s", err)
-		return "", err
-	}
-
-	*conts = append(*conts, createResponse)
-
-	// start container
-	err = cli.ContainerStart(ctx, createResponse.ID, container.StartOptions{})
-	if err != nil {
-		color.Red("%s", err)
-		return "", err
-	}
-
-	// For debugging
-	log.Println(createResponse.ID)
-
-	return createResponse.ID, nil
-}
-
-// shutdown function runs on shutdown and cleans up app resources.
-func Shutdown(ctx context.Context, cli *client.Client, conts *[]container.CreateResponse) {
-	for _, containerGuy := range *conts {
-		cli.ContainerStop(ctx, containerGuy.ID, container.StopOptions{})
-
-		cli.ContainerRemove(ctx, containerGuy.ID, container.RemoveOptions{})
-	}
 }
 
 // request GET for backend check to make sure llamacpp is ready for requests.
@@ -195,8 +178,15 @@ func upDog(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// CheckGPU is a helper func that is meant to find a gpu on the system.
+// If a gpu is found we should use the gpu since it will be a faster alternative to CPU.
+// This means we have to download a GPU image of llamacpp and change the runtime to nvidia or something else.
+func CheckGPU() {
+
+}
+
 func main() {
-	conts := []container.CreateResponse{}
+	CheckGPU()
 
 	ctx := context.Background()
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -206,7 +196,14 @@ func main() {
 	}
 	defer apiClient.Close()
 
-	go setup(ctx, apiClient, &conts)
+	reader, err := pipeline.PullImage(apiClient, ctx)
+	if err != nil {
+		color.Red("%s", err)
+		return
+	}
+	// prints out the status of the download
+	// worth while for big images
+	io.Copy(os.Stdout, reader)
 
 	http.HandleFunc("/simple", simplerequest)
 	http.HandleFunc("/up", upDog)
@@ -239,8 +236,6 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Shutdown(): %s", err)
 	}
-
-	Shutdown(ctx, apiClient, &conts)
 
 	log.Println("Server gracefully stopped")
 }
