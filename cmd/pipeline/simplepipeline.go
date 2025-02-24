@@ -82,4 +82,6 @@ func (s *SimplePipeline) Generate(prompt string, systemprompt string, maxtokens 
 func (s *SimplePipeline) Shutdown(ctx context.Context, cli *client.Client) {
 	cli.ContainerStop(ctx, s.Model, container.StopOptions{})
 	cli.ContainerRemove(ctx, s.Model, container.RemoveOptions{})
+
+	color.Green("Shutting Down...")
 }

@@ -46,7 +46,7 @@ type simpleRequest struct {
 	// will be appended to the prompt
 	// string chosen.
 	Prompt string `json:"prompt"`
-	Model  string `json:"model ,omitempty"`
+	Model  string `json:"model"`
 
 	// Options are strings matching
 	// the names of prompt types
@@ -105,7 +105,6 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		ContainerImage: image,
 		DockerClient:   apiClient,
 	}
-	go s.Setup(ctx)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -118,6 +117,7 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte("Error unexpected request format"))
 		return
 	}
+	go s.Setup(ctx)
 
 	var promptChoice string
 	var maxtokens int64
