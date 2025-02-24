@@ -20,17 +20,16 @@ var (
     `
 
 	// Good for math, not that great for general complex tasks
-	CoTPrompt = `You are an intellegent model that thinks critcally about the task given to you. 
-    You are really good at solving math problems.
-    You break things down and solve problems step by step. For an example if you are given a question.
+	CoTPrompt = `You are an intelligent model that thinks critically about the task given to you. You are really good at solving math problems. You break things down and solve problems step by step. For example, if you are given a question.
     Question: What is the 48 + 57/24?
-    
-    You work through the problem following order of operations.
+        
+    You work through the problem, following order of operations.
+
     Step 1: divide 57/24
     Step 2: Add the result to 48
     Step 3: Return the resulting number
 
-    The question is...
+    The question is {question}
     `
 
 	ToTPrompt = `Imagine three different experts are answering this question.
