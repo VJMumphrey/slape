@@ -38,43 +38,43 @@ export default function Prompt() {
   }
 
   async function handleSubmit(event: {preventDefault: () => void}) {
-    event.preventDefault();
-    const model = await fetch("http://localhost:3069/up");
+    // event.preventDefault();
+    // const model = await fetch("http://localhost:3069/up");
 
-    if (model.status !== 200) {
-      alert("model not ready");
-    } else {
-      setPromptInfo(""); //clears the prompt box after submission
-      setResponseAnswer(
-        <>
-          <p className="left">{`Prompt: ${PromptInfo}`}</p>{" "}
-          <p className="left">{`Response: Generating Response...`}</p>
-        </>
-      );
-      event.preventDefault(); //makes sure the page doesn't reload when submitting the form
-      const response = await fetch("http://localhost:3069/simple", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: PromptInfo,
-          model: "gay",
-          mode: PromptMode,
-        }),
-      });
-      setResponseAnswer(
-        <>
-          <p className="left">{`Prompt: ${PromptInfo}`}</p>{" "}
-          <p className="left">
-            Response:
-            <Markdown>
-              {`${JSON.parse(JSON.stringify(await response.json())).answer}`}
-            </Markdown>
-          </p>
-        </>
-      );
-    }
+    // if (model.status !== 200) {
+    //   alert("model not ready");
+    // } else {
+    setPromptInfo(""); //clears the prompt box after submission
+    setResponseAnswer(
+      <>
+        <p className="left">{`Prompt: ${PromptInfo}`}</p>{" "}
+        <p className="left">{`Response: Generating Response...`}</p>
+      </>
+    );
+    event.preventDefault(); //makes sure the page doesn't reload when submitting the form
+    const response = await fetch("http://localhost:3069/simple", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: PromptInfo,
+        model: "gay",
+        mode: PromptMode,
+      }),
+    });
+    setResponseAnswer(
+      <>
+        <p className="left">{`Prompt: ${PromptInfo}`}</p>{" "}
+        <p className="left">
+          Response:
+          <Markdown>
+            {`${JSON.parse(JSON.stringify(await response.json())).answer}`}
+          </Markdown>
+        </p>
+      </>
+    );
+    // }
   }
   return (
     <>

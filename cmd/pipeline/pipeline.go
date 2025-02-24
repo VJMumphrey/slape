@@ -71,7 +71,7 @@ func (s *SimplePipeline) Generate(prompt string, systemprompt string, maxtokens 
 			openai.SystemMessage(systemprompt),
 			openai.UserMessage(prompt),
 		}),
-		Seed:      openai.Int(0),
+		//Seed:      openai.Int(0),
 		Model:     openai.String("llama3.2"),
 		MaxTokens: openai.Int(maxtokens),
 	}
