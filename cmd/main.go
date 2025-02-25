@@ -28,10 +28,10 @@ import (
 )
 
 const (
-	cpuImage = "ghcr.io/ggerganov/llama.cpp:server"
+	cpuImage = "ghcr.io/ggml-org/llama.cpp:server"
 
-	cudagpuImage = "ghcr.io/ggerganov/llama.cpp:server-cuda"
-	rocmgpuImage = "ghcr.io/ggerganov/llama.cpp:server-rocm"
+	cudagpuImage = "ghcr.io/ggml-org/llama.cpp:server-cuda"
+	rocmgpuImage = "ghcr.io/ggml-org/llama.cpp:server-rocm"
 )
 
 var (
@@ -88,12 +88,15 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 	cors(w, req)
 
 	var image string
+	var gpuTrue bool
 	if len(gpu.GraphicsCards) == 0 {
 		color.Yellow("No GPUs to use, switching to cpu only")
 		image = cpuImage
+		gpuTrue = false
 	} else {
 		// TODO Replace once they fix the image upstream
-		image = cpuImage
+		image = cudagpuImage
+		gpuTrue = true
 	}
 
 	s := pipeline.SimplePipeline{
@@ -104,6 +107,7 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		Active:         true,
 		ContainerImage: image,
 		DockerClient:   apiClient,
+		GPU:            gpuTrue,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -155,8 +159,9 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		time.Sleep(time.Duration(5 * time.Second))
 		resp, err := http.Get("http://localhost:8000/health")
 		if err != nil {
+			// error kills thread and we need to just wait
 			color.Red("%s", err)
-			return
+			continue
 		}
 
 		if resp.StatusCode == http.StatusOK {
@@ -174,6 +179,7 @@ func simplerequest(w http.ResponseWriter, req *http.Request) {
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Error getting generation from model"))
+		go s.Shutdown(ctx, apiClient)
 		return
 	}
 

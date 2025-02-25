@@ -25,7 +25,7 @@ func PullImage(apiClient *client.Client, ctx context.Context, containerImage str
 	return reader, err
 }
 
-func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string, containerImage string) (container.CreateResponse, error) {
+func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string, containerImage string, gpuTrue bool) (container.CreateResponse, error) {
 
 	portSet := nat.PortSet{
 		nat.Port(portNum + "/tcp"): struct{}{}, // map 11434 TCP port
@@ -59,14 +59,21 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 		mountString = os.Getenv("PWD") + "/models"
 	}
 
+	var cmds []string
+	if gpuTrue {
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-c", "32678", "-ngl", "15"}
+	} else {
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-c", "32678"}
+	}
+
 	// create container
 	createResponse, err := apiClient.ContainerCreate(ctx, &container.Config{
 		ExposedPorts: portSet,
 		Image:        containerImage,
-		Cmd:          []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-n", "32678", "-fa"},
+		Cmd:          cmds,
 	}, &container.HostConfig{
 		// TODO check for gpu, if true set to use nvidia runtime, rocm, or cdi
-		//Runtime: "nvidia",
+		Runtime:      "nvidia",
 		PortBindings: portBindings,
 		Mounts: []mount.Mount{{
 			Type:   mount.TypeBind,

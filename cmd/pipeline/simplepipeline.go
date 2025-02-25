@@ -2,6 +2,8 @@ package pipeline
 
 import (
 	"context"
+	"io"
+	"os"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -21,11 +23,12 @@ type SimplePipeline struct {
 	Active         bool
 	ContainerImage string
 	DockerClient   *client.Client
+	GPU            bool
 }
 
 func (s *SimplePipeline) Setup(ctx context.Context) error {
 
-	_, err := PullImage(s.DockerClient, ctx, s.ContainerImage)
+	reader, err := PullImage(s.DockerClient, ctx, s.ContainerImage)
 	if err != nil {
 		color.Red("%s", err)
 		return err
@@ -33,9 +36,10 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	color.Green("Pulling Image...")
 	// prints out the status of the download
 	// worth while for big images
-	// io.Copy(os.Stdout, reader)
+	io.Copy(os.Stdout, reader)
+	defer reader.Close()
 
-	createResponse, err := CreateContainer(s.DockerClient, "8000", "", ctx, "Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf", s.ContainerImage)
+	createResponse, err := CreateContainer(s.DockerClient, "8000", "", ctx, "Phi-3.5-mini-instruct-Q4_K_M.gguf", s.ContainerImage, s.GPU)
 	if err != nil {
 		color.Yellow("%s", createResponse.Warnings)
 		color.Red("%s", err)

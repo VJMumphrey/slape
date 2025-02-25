@@ -24,6 +24,7 @@ type ChainofModels struct {
 	Active         bool
 	ContainerImage string
 	DockerClient   *client.Client
+	GPU            bool
 }
 
 // InitChainofModels creates a ChainofModels pipeline.
@@ -38,7 +39,7 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
 
-	createResponse, err := CreateContainer(c.DockerClient, "8000", "", ctx, "Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf", c.ContainerImage)
+	createResponse, err := CreateContainer(c.DockerClient, "8000", "", ctx, "Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf", c.ContainerImage, c.GPU)
 	if err != nil {
 		color.Yellow("%s", createResponse.Warnings)
 		color.Red("%s", err)
