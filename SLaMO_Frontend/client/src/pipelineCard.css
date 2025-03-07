@@ -1,0 +1,15 @@
+.pipelineDiv{
+    text-align: left;
+    background-color: rgb(10, 10, 20);
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    max-width: fit-content;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.25s;
+}
+
+.pipelineDiv:hover {
+    background-color: rgb(12, 12, 22);
+    border-color: #646cff;
+}

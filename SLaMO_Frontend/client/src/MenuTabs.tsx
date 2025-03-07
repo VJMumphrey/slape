@@ -12,8 +12,8 @@ export default function MenuTabs() {
     navigate("/settings");
   };
 
-  const modelsEventHandler = () => {
-    navigate("/models");
+  const pipelinesEventHandler = () => {
+    navigate("/pipelines");
   };
 
   const logsEventHandler = () => {
@@ -22,7 +22,7 @@ export default function MenuTabs() {
 
   return (
     <div className="top">
-      <button onClick={modelsEventHandler}>Models</button>
+      <button onClick={pipelinesEventHandler}>Pipelines</button>
       <button onClick={logsEventHandler}>Logs</button>
       <button onClick={promptingEventHandler}>Prompting</button>
       <button onClick={settingsEventHandler}>Settings</button>
