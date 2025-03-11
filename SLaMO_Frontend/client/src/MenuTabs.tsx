@@ -1,4 +1,5 @@
 import {useNavigate} from "react-router-dom";
+import "./menuTabs.css"
 
 export default function MenuTabs() {
   // You literally just have to do this. I have no idea why.
