@@ -28,14 +28,14 @@ func PullImage(apiClient *client.Client, ctx context.Context, containerImage str
 func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string, containerImage string, gpuTrue bool) (container.CreateResponse, error) {
 
 	portSet := nat.PortSet{
-		nat.Port(portNum + "/tcp"): struct{}{}, // map 11434 TCP port
+		nat.Port("8000/tcp"): struct{}{}, // map 11434 TCP port
 	}
 
 	portBindings := nat.PortMap{
-		nat.Port(portNum + "/tcp"): []nat.PortBinding{
+		nat.Port("8000/tcp"): []nat.PortBinding{
 			{
 				HostIP:   "0.0.0.0",
-				HostPort: "8000",
+				HostPort: portNum,
 			},
 		},
 	}
@@ -45,7 +45,7 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	if runtime.GOOS == "windows" {
 		ex, err := os.Executable()
 		if err != nil {
-			fmt.Println("Vito are less gay")
+			fmt.Println("idk something else")
 		}
 
 		currentPath := filepath.Dir(ex)
@@ -61,9 +61,9 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 
 	var cmds []string
 	if gpuTrue {
-		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-c", "32678", "-ngl", "15"}
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-ngl", "-1", "-fa", "--no-webui", "-c", "32768"}
 	} else {
-		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-c", "32678"}
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--no-webui", "-c", "32768"}
 	}
 
 	// create container
@@ -73,7 +73,7 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 		Cmd:          cmds,
 	}, &container.HostConfig{
 		// TODO check for gpu, if true set to use nvidia runtime, rocm, or cdi
-		Runtime:      "nvidia",
+		//Runtime:      "nvidia",
 		PortBindings: portBindings,
 		Mounts: []mount.Mount{{
 			Type:   mount.TypeBind,
@@ -104,9 +104,11 @@ func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion s
 		//w.Write([]byte(chunk.Choices[0].Delta.Content))
 		acc.AddChunk(chunk)
 
-		if content, ok := acc.JustFinishedContent(); ok {
-			println("Content stream finished:", content)
-		}
+		/*
+			if content, ok := acc.JustFinishedContent(); ok {
+				println("Content stream finished:", content)
+			}
+		*/
 
 		// if using tool calls
 		//if tool, ok := acc.JustFinishedToolCall(); ok {
