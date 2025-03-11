@@ -50,8 +50,9 @@ export default function Settings() {
     );
   });
 
-  async function settingsButtonHandler() {
-    console.log(SettingsObject);
+  function settingsButtonHandler() {
+    localStorage.setItem("PromptSetting", PromptSetting);
+    localStorage.setItem("StyleSetting", StyleSetting);
   }
 
   return (
