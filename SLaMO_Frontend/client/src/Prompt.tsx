@@ -2,6 +2,7 @@ import {useState} from "react";
 import "./App.css";
 import MenuTabs from "./MenuTabs.tsx";
 import Markdown from "react-markdown";
+import DropDownButton from "./DropDownButton.tsx";
 
 export default function Prompt() {
   const [PromptInfo, setPromptInfo] = useState(""); //used to contain the current value, and to set the new value
@@ -16,26 +17,6 @@ export default function Prompt() {
     {name: "Thinking Hats", type: "thinkinghats"},
     {name: "Mixture of Experts", type: "moe"},
   ];
-
-  function dropDownButton() {
-    return (
-      <select
-        className="inference"
-        value={PromptMode}
-        onChange={(event) => {
-          setPromptMode(event.target.value);
-        }}
-      >
-        {promptTypes.map((type) => {
-          return (
-            <option value={type.type} key={type.type}>
-              {type.name}
-            </option>
-          );
-        })}
-      </select>
-    );
-  }
 
   async function handleSubmit(event: {preventDefault: () => void}) {
     // event.preventDefault();
@@ -95,7 +76,7 @@ export default function Prompt() {
               {" "}
               Submit
             </button>
-            {dropDownButton()}
+            <DropDownButton value={PromptMode} callBack={setPromptMode} optionObject={promptTypes}/>
           </label>
         </form>
       </div>

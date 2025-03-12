@@ -1,54 +1,21 @@
+import DropDownButton from "./DropDownButton.tsx";
 import MenuTabs from "./MenuTabs.tsx";
 import {useState} from "react";
 
 export default function Settings() {
   const [PromptSetting, setPromptSetting] = useState("Automatic");
   const [StyleSetting, setStyleSetting] = useState("Pink");
-  const [SettingsObject, setSettingsObject] = useState({
-    promptType: "",
-    styleType: "",
-  });
 
-  const promptRadioOptions = ["Automatic", "Manual", "Mixed"];
-  const styleRadioOptions = ["Pink", "Dark", "Light"];
-
-  const promptRadioElements = promptRadioOptions.map((option) => {
-    return (
-      <div>
-        <label htmlFor={option}>{`${option}:`}</label>
-        <input
-          className="settings"
-          type="radio"
-          id={option}
-          value={option}
-          checked={PromptSetting === option}
-          onChange={() => {
-            setPromptSetting(option);
-            setSettingsObject({...SettingsObject, promptType: option});
-          }}
-        />
-      </div>
-    );
-  });
-
-  const styleRadioElements = styleRadioOptions.map((option) => {
-    return (
-      <div>
-        <label htmlFor={option}>{`${option}:`}</label>
-        <input
-          className="settings"
-          type="radio"
-          id={option}
-          value={option}
-          checked={StyleSetting === option}
-          onChange={() => {
-            setStyleSetting(option);
-            setSettingsObject({...SettingsObject, styleType: option});
-          }}
-        />
-      </div>
-    );
-  });
+  const promptDropDownOptions = [
+    { type: "Automatic", name: "Automatic" },
+    { type: "Manual", name: "Manual" },
+    { type: "Mixed", name: "Mixed" }
+  ];
+  const styleDropDownOptions = [
+    { type: "Pink", name: "Pink" },
+    { type: "Dark", name: "Dark" },
+    { type: "Light", name: "Light" }
+  ];
 
   function settingsButtonHandler() {
     localStorage.setItem("PromptSetting", PromptSetting);
@@ -59,11 +26,12 @@ export default function Settings() {
     <>
       <MenuTabs />
       <div>
-        <h3>Settings</h3>
-        <p>Prompting Settings</p>
-        {promptRadioElements}
+        <h2>Settings</h2>
+        <h4>Prompting Settings</h4>
+        <DropDownButton value={PromptSetting} callBack={setPromptSetting} optionObject={promptDropDownOptions}/>
         <hr />
-        {styleRadioElements}
+        <h4>Style Settings</h4>
+        <DropDownButton value={StyleSetting} callBack={setStyleSetting} optionObject={styleDropDownOptions}/>
         <hr />
         <button onClick={settingsButtonHandler}>Display Settings</button>
       </div>
