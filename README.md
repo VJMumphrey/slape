@@ -19,11 +19,10 @@ https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest
 Refer to the proper documentation for rocm.
 
 ### Building
+This command downloads everything and builds the app for you. A models folder is still needed in the folder that SLaPE is ran in.
 ```bash
-go build -o slape ./cmd
+go install github.com/StoneG24/slape@latest
 ```
-*For windows make sure your name for the binary has .exe at the end for it to run properly.
-
 ### Socket
 
 #### Linux
@@ -50,13 +49,13 @@ For windows this process is managed by docker desktop.
 
 Containers are very useful for making reproduceable builds but the can take up a lot of space over time. This coupled with the fact that we also have to save storage space for models means that we need to be more cognicent of that fact. Here are some tips to remove dead resources in this project.
 
-This command will tell you how much of your disk is currently being used by podman
+This command will tell you how much of your disk is currently being used by docker
 
 ```bash
 docker system df
 ```
 
-These commands are good for cleaning up these old docker resources.
+These commands are good for cleaning up these old docker resources. SLaPE should clean these up but, currently, if errors occur it won't.
 
 ```bash
 docker container prune
