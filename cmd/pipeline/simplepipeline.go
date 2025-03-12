@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/StoneG24/slape/internal/vars"
-	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/cmd/api"
+	"github.com/StoneG24/slape/cmd/vars"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"

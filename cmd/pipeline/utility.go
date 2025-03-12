@@ -1,7 +1,7 @@
 package pipeline
 
 import (
-	"github.com/StoneG24/slape/cmd/slape/prompt"
+	"github.com/StoneG24/slape/cmd/prompt"
 	"github.com/fatih/color"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/gpu"
