@@ -20,7 +20,7 @@ import (
 )
 
 var (
-    // change if you want to make things go faster for testing
+	// change if you want to make things go faster for testing
 	rounds = 3
 )
 
@@ -45,35 +45,38 @@ type debateRequest struct {
 	// Prompt is the string that
 	// will be appended to the prompt
 	// string chosen.
-	Prompt string   `json:"prompt"`
-	Models []string `json:"models"`
+	Prompt string `json:"prompt"`
 
 	// Options are strings matching
 	// the names of prompt types
 	Mode string `json:"mode"`
 }
 
+type debateSetupPayload struct {
+	Models []string `json:"models"`
+}
+
 type debateResponse struct {
 	Answer string `json:"answer"`
 }
 
-// DebatePipelineRequest is used to handle the request for a debate style thought process.
-func (d *DebateofModels) DebatePipelineRequest(w http.ResponseWriter, req *http.Request) {
-	ctx := context.Background()
+// DebatePipelineSetupRequest, handlerfunc expects POST method and returns nothing
+func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		color.Red("%s", err)
 		return
 	}
-	defer apiClient.Close()
+	go api.Cors(w, req)
 
-	api.Cors(w, req)
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-	w.Header().Set("Content-Type", "application/json")
+	var setupPayload chainSetupPayload
 
-	var payload debateRequest
-
-	err = json.NewDecoder(req.Body).Decode(&payload)
+	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -83,16 +86,34 @@ func (d *DebateofModels) DebatePipelineRequest(w http.ResponseWriter, req *http.
 
 	d.PickImage()
 
-	d.Models = payload.Models
+	d.Models = setupPayload.Models
 	d.DockerClient = apiClient
 	d.GPU = IsGPU()
 
-	go d.Setup(ctx)
+	go d.Setup(context.Background())
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// DebatePipelineGenerateRequest is used to handle the request for a debate style thought process.
+func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
+	ctx := context.Background()
+	api.Cors(w, req)
+
+	var payload debateRequest
+
+	err := json.NewDecoder(req.Body).Decode(&payload)
+	if err != nil {
+		color.Red("%s", err)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Write([]byte("Error unexpected request format"))
+		return
+	}
 
 	promptChoice, maxtokens := processPrompt(payload.Mode)
 
 	// generate a response
-	result, err := d.Generate(payload.Prompt, promptChoice, maxtokens, vars.OpenaiClient)
+	result, err := d.Generate(payload.Prompt, promptChoice, maxtokens)
 	if err != nil {
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusOK)
@@ -106,7 +127,7 @@ func (d *DebateofModels) DebatePipelineRequest(w http.ResponseWriter, req *http.
 	// for debugging streaming
 	color.Green(result)
 
-	respPayload := simpleResponse{
+	respPayload := debateResponse{
 		Answer: result,
 	}
 
@@ -117,6 +138,7 @@ func (d *DebateofModels) DebatePipelineRequest(w http.ResponseWriter, req *http.
 		w.Write([]byte("Error marshaling your response from model"))
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
 }
@@ -148,7 +170,7 @@ func (d *DebateofModels) Setup(ctx context.Context) error {
 	return nil
 }
 
-func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens int64, openaiClient *openai.Client) (string, error) {
+func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens int64) (string, error) {
 	var result string
 
 	for j := 0; j < rounds; j++ {
@@ -171,7 +193,7 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 				}
 			}
 
-			openaiClient = openai.NewClient(
+			openaiClient := openai.NewClient(
 				option.WithBaseURL("http://localhost:800" + strconv.Itoa(i) + "/v1"),
 			)
 
@@ -184,7 +206,7 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 					openai.UserMessage(prompt),
 				}),
 				Seed:        openai.Int(0),
-				Model:       openai.String("llama3.2"),
+				Model:       openai.String(d.Models[i]),
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}
@@ -195,7 +217,7 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 				return "", err
 			}
 
-			systemprompt = systemprompt + result
+			systemprompt = systemprompt + "\nAnswer from previous expert: " + result
 
 			color.Green("Stopping container %d...", i)
 			(d.DockerClient).ContainerStop(context.Background(), model.ID, container.StopOptions{})

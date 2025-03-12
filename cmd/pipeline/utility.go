@@ -58,11 +58,7 @@ func IsGPU() bool {
 	}
 
 	// This guy nil derefernce panics when the gpu isn't actually a graphics card
-	/*
-			if gpuInfo.GraphicsCards[0].DeviceInfo.Node.Memory != nil {
-		        return true
-			}
-	*/
+	// fmt.Println(gpuInfo.GraphicsCards[0].Node.Memory)
 
 	return false
 }

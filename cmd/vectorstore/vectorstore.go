@@ -1,9 +1,12 @@
-// Package vectorstore is used to create independant context information for each disscussion.
-// Vectorstores allow us to index information and keep relevant bits for generation.
+/*
+Package vectorstore is used to create independant context information for each disscussion.
+Vectorstores allow us to index information and keep relevant bits for generation.
+*/
 package vectorstore
 
 import (
 	"fmt"
+
 	"github.com/coder/hnsw"
 )
 

@@ -1,4 +1,6 @@
-// Package prompt contains the prompt structure of SLaPE and is used in several other components of the app.
+/*
+Package prompt contains the prompt structure of SLaPE and is used in several other components of the app.
+*/
 package prompt
 
 // Node is a standard Node type
@@ -16,9 +18,9 @@ var (
     You answer problems in a simple manner. 
     You prefer to be concise and use as little words as possible,
     while not sacrificing the accuracy and correctness of your answers,
-    prefering to not answer if you are not sure about the answer you have.
+    prefering to not answer if you are not sure about the answer you have. Return you answer in markdown format.
 
-    Return you answer in markdown format.
+    Question: {s}
     `
 
 	// CoTPrompt is for linear progression tasks where clear steps can be seen.
@@ -33,6 +35,8 @@ var (
     Step 3: Return the resulting number
 
     Return you answer in markdown format. 
+
+    Question: {s}
     `
 
 	// ToTPrompt uses a structured approach to generating human-like responses to questions or prompts.
@@ -42,8 +46,9 @@ var (
     All experts will write down 1 step of their thinking, then share it with the group.
     Then all experts will go on to the next step, etc.
     If any expert realises they're wrong at any point then they leave.
-
     Return you answer in markdown format. 
+
+    Question: {s}
     `
 
 	// GoTPrompt Graphs of thought prompting are visual representations of the relationships between different aspects of a problem or situation.
@@ -59,8 +64,9 @@ var (
     Now All experts will congregate and decide if any of the ideas and their connections are no longer worth looking into.
     Note that all ideas should stem from parent ideas and all neighboring ideas should be considered to help create new ideas.
     Repeat this until an answer to this question can be decided.
-
     Return you answer in markdown format. 
+
+    Question: {s}
     `
 
 	// MoEPrompt uses expert prompting which is a technique used in natural language processing (NLP) and machine learning (ML) to generate responses to questions or tasks that require domain knowledge or expertise.
@@ -92,13 +98,14 @@ var (
     If Expert five is unsure of the answer made by the other four, the manager asks the other experts to try again.
 
     Given a question, take the question and cycle through each expert, giving a chance to get advice until Expert five thinks the answer is correct.
-
     Return you answer in markdown format. 
+
+    Question: {s}
     `
 
 	// SixThinkingHats, It is a problem-solving technique that involves the model wearing several hats.
-    // While wearing those hats it thinks of the problem from different angles.
-    // This enables the model to think outside the box and come up with innovative solutions to problems.
+	// While wearing those hats it thinks of the problem from different angles.
+	// This enables the model to think outside the box and come up with innovative solutions to problems.
 	SixThinkingHats = `
     You are an intellegent agent that wears six thinking hats to deduce the correct information for an answer to the given question.
     Each hat gets undivided attention when speaking.
@@ -116,11 +123,12 @@ var (
     While wearing the blue hat your the conductor of the thinking process, offering a crucial overarching perspective that ensures structure and focus.
 
     Once you have enough information to solve the problem, answer the question.
-
     Return you answer in markdown format. 
+
+    Question: {s}
     `
 
-    // WIP and not supposed to be used.
+	// WIP and not supposed to be used.
 	GoEPrompt = `
     You are intellegent mixture of experts. 
     You break down tasks into small and manageable chunks.
@@ -150,5 +158,7 @@ var (
     Go through several rounds of thinking, each expert should hasrhly criticize the other experts making them think their answers are bad and need to be redone.
 
     Return you answer in markdown format. 
+
+    Question: {s}
     `
 )

@@ -39,34 +39,37 @@ type simpleRequest struct {
 	// will be appended to the prompt
 	// string chosen.
 	Prompt string `json:"prompt"`
-	Model  string `json:"model"`
 
 	// Options are strings matching
 	// the names of prompt types
 	Mode string `json:"mode"`
 }
 
+type simpleSetupPayload struct {
+	Model string `json:"model"`
+}
+
 type simpleResponse struct {
 	Answer string `json:"answer"`
 }
 
-// simplerequest is used to handle simple requests as needed.
-func (s *SimplePipeline) SimplePipelineRequest(w http.ResponseWriter, req *http.Request) {
-	ctx := context.Background()
+// SimplePipelineSetupRequest, handlerfunc expects GET method and returns nothing
+func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		color.Red("%s", err)
 		return
 	}
-	defer apiClient.Close()
-
 	go api.Cors(w, req)
 
-	w.Header().Set("Content-Type", "application/json")
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-	var simplePayload simpleRequest
+	var setupPayload simpleSetupPayload
 
-	err = json.NewDecoder(req.Body).Decode(&simplePayload)
+	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -76,11 +79,29 @@ func (s *SimplePipeline) SimplePipelineRequest(w http.ResponseWriter, req *http.
 
 	s.PickImage()
 
-	s.Model = simplePayload.Model
+	s.Model = setupPayload.Model
 	s.DockerClient = apiClient
 	s.GPU = IsGPU()
 
-	go s.Setup(ctx)
+	go s.Setup(context.Background())
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// simplerequest is used to handle simple requests as needed.
+func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
+	ctx := context.Background()
+	go api.Cors(w, req)
+
+	var simplePayload simpleRequest
+
+	err := json.NewDecoder(req.Body).Decode(&simplePayload)
+	if err != nil {
+		color.Red("%s", err)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Write([]byte("Error unexpected request format"))
+		return
+	}
 
 	promptChoice, maxtokens := processPrompt(simplePayload.Mode)
 
@@ -90,10 +111,8 @@ func (s *SimplePipeline) SimplePipelineRequest(w http.ResponseWriter, req *http.
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Error getting generation from model"))
-		err := s.Shutdown(ctx)
-		if err != nil {
-			color.Red("%s", err)
-		}
+		go s.Shutdown(ctx)
+
 		return
 	}
 
@@ -113,6 +132,7 @@ func (s *SimplePipeline) SimplePipelineRequest(w http.ResponseWriter, req *http.
 		w.Write([]byte("Error marshaling your response from model"))
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
 }
@@ -198,13 +218,13 @@ func (s *SimplePipeline) Shutdown(ctx context.Context) error {
 	err := (s.DockerClient).ContainerStop(ctx, s.container.ID, container.StopOptions{})
 	if err != nil {
 		color.Red("%s", err)
-        return  nil
+		return nil
 	}
 
 	err = (s.DockerClient).ContainerRemove(ctx, s.container.ID, container.RemoveOptions{})
 	if err != nil {
 		color.Red("%s", err)
-        return  nil
+		return nil
 	}
 
 	color.Green("Shutting Down...")

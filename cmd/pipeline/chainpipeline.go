@@ -40,39 +40,38 @@ type chainRequest struct {
 	// Prompt is the string that
 	// will be appended to the prompt
 	// string chosen.
-	Prompt string   `json:"prompt"`
-	Models []string `json:"models"`
+	Prompt string `json:"prompt"`
 
 	// Options are strings matching
 	// the names of prompt types
 	Mode string `json:"mode"`
 }
 
+type chainSetupPayload struct {
+	Models []string `json:"models"`
+}
+
 type chainResponse struct {
 	Answer string `json:"answer"`
 }
 
-// ChainPipelineRequest is used to handle requests for chain of models pipelines.
-// The json expected is
-// - prompt string, prompt from the user.
-// - models array of strings, an array of strings containing three models to use.
-// - mode string, mode of prompt struture to use.
-func (c *ChainofModels) ChainPipelineRequest(w http.ResponseWriter, req *http.Request) {
-	ctx := context.Background()
+// ChainPipeline, handlerfunc expects POST method and returns nothing
+func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		color.Red("%s", err)
 		return
 	}
-	defer apiClient.Close()
-
 	go api.Cors(w, req)
 
-	w.Header().Set("Content-Type", "application/json")
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-	var payload chainRequest
+	var setupPayload chainSetupPayload
 
-	err = json.NewDecoder(req.Body).Decode(&payload)
+	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -82,16 +81,38 @@ func (c *ChainofModels) ChainPipelineRequest(w http.ResponseWriter, req *http.Re
 
 	c.PickImage()
 
-	c.Models = payload.Models
+	c.Models = setupPayload.Models
 	c.DockerClient = apiClient
 	c.GPU = IsGPU()
 
-	go c.Setup(ctx)
+	go c.Setup(context.Background())
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// ChainPipelineRequest is used to handle requests for chain of models pipelines.
+// The json expected is
+// - prompt string, prompt from the user.
+// - models array of strings, an array of strings containing three models to use.
+// - mode string, mode of prompt struture to use.
+func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
+	ctx := context.Background()
+	go api.Cors(w, req)
+
+	var payload chainRequest
+
+	err := json.NewDecoder(req.Body).Decode(&payload)
+	if err != nil {
+		color.Red("%s", err)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Write([]byte("Error unexpected request format"))
+		return
+	}
 
 	promptChoice, maxtokens := processPrompt(payload.Mode)
 
 	// generate a response
-	result, err := c.Generate(payload.Prompt, promptChoice, maxtokens, vars.OpenaiClient)
+	result, err := c.Generate(payload.Prompt, promptChoice, maxtokens)
 	if err != nil {
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusOK)
@@ -105,7 +126,7 @@ func (c *ChainofModels) ChainPipelineRequest(w http.ResponseWriter, req *http.Re
 	// for debugging streaming
 	color.Green(result)
 
-	respPayload := simpleResponse{
+	respPayload := chainResponse{
 		Answer: result,
 	}
 
@@ -116,6 +137,7 @@ func (c *ChainofModels) ChainPipelineRequest(w http.ResponseWriter, req *http.Re
 		w.Write([]byte("Error marshaling your response from model"))
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
 }
@@ -157,7 +179,7 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 
 // ChainofModels.Generate is the facilitator of model orchestration based on the chain of model pipeline.
 // Since the pipeline is based on the Chan of Thought prompting technique, it follows this style, mimicing its behavior.
-func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens int64, openaiClient *openai.Client) (string, error) {
+func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens int64) (string, error) {
 	var result string
 
 	for i, model := range c.containers {
@@ -178,7 +200,7 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 			}
 		}
 
-		openaiClient = openai.NewClient(
+		openaiClient := openai.NewClient(
 			option.WithBaseURL("http://localhost:800" + strconv.Itoa(i) + "/v1"),
 		)
 
@@ -191,7 +213,7 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 				openai.UserMessage(prompt),
 			}),
 			Seed:        openai.Int(0),
-			Model:       openai.String("llama3.2"),
+			Model:       openai.String(c.Models[i]),
 			Temperature: openai.Float(vars.ModelTemperature),
 			MaxTokens:   openai.Int(maxtokens),
 		}
@@ -202,7 +224,7 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 			return "", err
 		}
 
-		systemprompt = systemprompt + result
+		systemprompt = systemprompt + "\nAnswer from previous expert: " + result
 
 		color.Green("Stopping container %d...", i)
 		(c.DockerClient).ContainerStop(context.Background(), model.ID, container.StopOptions{})

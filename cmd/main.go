@@ -60,11 +60,14 @@ var (
 func main() {
 
 	// channel for managing pipelines
-	//keystone := make(chan pipeline.Pipeline)
+	// keystone := make(chan pipeline.Pipeline)
 
-	http.HandleFunc("/simple", s.SimplePipelineRequest)
-	http.HandleFunc("/cot", c.ChainPipelineRequest)
-	http.HandleFunc("/debate", d.DebatePipelineRequest)
+	http.HandleFunc("/simple", s.SimplePipelineGenerateRequest)
+	http.HandleFunc("/smplsetup", s.SimplePipelineSetupRequest)
+	http.HandleFunc("/cot", c.ChainPipelineGenerateRequest)
+	http.HandleFunc("/cotsetup", c.ChainPipelineSetupRequest)
+	http.HandleFunc("/debate", d.DebatePipelineGenerateRequest)
+	http.HandleFunc("/debsetup", d.DebatePipelineSetupRequest)
 	//http.HandleFunc("/moe", simplerequest)
 	//http.HandleFunc("/up", upDog)
 	http.HandleFunc("/getmodels", api.GetModels)
@@ -99,14 +102,11 @@ func main() {
 	}
 
 	// Close the pipeline to stop adding new pipelines
-	//close(keystone)
+	// close(keystone)
 
-	// clean up all the pipelines
-    /*
-    for pipeline := range keystone {
-        pipeline.Shutdown()
-    }
-    */
+	go s.Shutdown(context.Background())
+	go c.Shutdown(context.Background())
+	go d.Shutdown(context.Background())
 
 	log.Println("Server gracefully stopped")
 }
