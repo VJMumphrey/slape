@@ -17,8 +17,8 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/StoneG24/slape/cmd/api"
-	"github.com/StoneG24/slape/cmd/pipeline"
+	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/pkg/pipeline"
 	"github.com/fatih/color"
 )
 
