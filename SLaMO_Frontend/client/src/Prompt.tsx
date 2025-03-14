@@ -72,11 +72,12 @@ export default function Prompt() {
               value={PromptInfo}
               onChange={(e) => setPromptInfo(e.target.value)} //access the current input and updates PromptInfo (e represents the event object)
             />
-            <button style={{backgroundColor: "gray", color: "black"}}>
-              {" "}
-              Submit
-            </button>
-            <DropDownButton value={PromptMode} callBack={setPromptMode} optionObject={promptTypes}/>
+            <button className="Submit"> Submit</button>
+            <DropDownButton
+              value={PromptMode}
+              callBack={setPromptMode}
+              optionObject={promptTypes}
+            />
           </label>
         </form>
       </div>
