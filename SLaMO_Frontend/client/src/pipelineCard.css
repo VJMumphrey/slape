@@ -1,0 +1,40 @@
+.pipelineDiv{
+    text-align: left;
+    background-color: rgb(20, 20, 25);
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    max-width: fit-content;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.25s;
+
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0px;
+    grid-auto-rows: minmax(auto, auto);
+}
+
+.pipelineDiv:hover {
+    background-color: rgb(12, 12, 22);
+    border-color: #646cff;
+}
+
+.pipelineHeader {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.pipelineButton {
+    grid-column: 6;
+    grid-row: 1;
+}
+
+.pipelineModels {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.pipelineDesc {
+    grid-column: 1 / 3;
+    grid-row: 3;
+}
