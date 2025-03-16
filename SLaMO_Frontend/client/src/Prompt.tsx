@@ -19,12 +19,6 @@ export default function Prompt() {
   ];
 
   async function handleSubmit(event: {preventDefault: () => void}) {
-    // event.preventDefault();
-    // const model = await fetch("http://localhost:3069/up");
-
-    // if (model.status !== 200) {
-    //   alert("model not ready");
-    // } else {
     setPromptInfo(""); //clears the prompt box after submission
     setResponseAnswer(
       <>
@@ -33,7 +27,7 @@ export default function Prompt() {
       </>
     );
     event.preventDefault(); //makes sure the page doesn't reload when submitting the form
-    const response = await fetch("http://localhost:3069/simple", {
+    const response = await fetch("http://localhost:8080/simple", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -55,7 +49,6 @@ export default function Prompt() {
         </p>
       </>
     );
-    // }
   }
   return (
     <>
