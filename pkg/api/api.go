@@ -10,7 +10,6 @@ import (
 	"github.com/fatih/color"
 )
 
-// cors is used to handle cors for each HandleFunc that we create.
 func Cors(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	w.Header().Set("Access-Control-Allow-Option", "GET, POST, OPTIONS")
@@ -21,10 +20,13 @@ func Cors(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// request GET for backend check to make sure llamacpp is ready for requests.
-// returns 200 ok when things are ready
 func UpDog(port string) bool {
-
+	// swagger:operation GET /updog UpDog
+	//
+	// UpDog is a check to make sure llamacpp is ready for requests.
+	//
+	// Responses:
+	//	200: StatusOk
 	resp, err := http.Get("http://localhost:" + port + "/health")
 	if err != nil {
 		color.Red("%s", err)
@@ -44,14 +46,20 @@ func UpDog(port string) bool {
 	}
 }
 
-type modelsResponse struct {
+// swagger:model ModelsResponse
+type ModelsResponse struct {
+	// List of models to be returned to the client
+	// required: true
 	Models []string `json:"models"`
 }
 
-// request GET for client to get models that the backend can see
-// in the ./models folder
-// Returns a json string of key model and a value of array of strings
-// - {models":["name"]}
+// swagger:route GET /getmodels
+//
+// get models that the backend can see in the ./models folder
+//
+// Responses:
+//
+//	200: ModelsResponse
 func GetModels(w http.ResponseWriter, req *http.Request) {
 	files, err := os.ReadDir("./models")
 	if err != nil {
@@ -69,7 +77,7 @@ func GetModels(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	respBundle := modelsResponse{
+	respBundle := ModelsResponse{
 		Models: bundle,
 	}
 
