@@ -1,0 +1,15 @@
+definitions:
+    ModelsResponse:
+        properties:
+            models:
+                description: List of models to be returned to the client
+                items:
+                    type: string
+                type: array
+                x-go-name: Models
+        required:
+            - models
+        type: object
+        x-go-package: github.com/StoneG24/slape/pkg/api
+paths: {}
+swagger: "2.0"
