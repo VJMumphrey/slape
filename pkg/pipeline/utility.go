@@ -1,8 +1,6 @@
 package pipeline
 
 import (
-	"fmt"
-
 	"github.com/StoneG24/slape/cmd/prompt"
 	"github.com/StoneG24/slape/internal/vars"
 	"github.com/fatih/color"
