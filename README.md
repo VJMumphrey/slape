@@ -69,6 +69,18 @@ docker image prune
 docker builder prune
 ```
 
+### Documentation
+Our code uses go doc comments as a way of effectively documenting our code.
+
+This tool is included in our tool list of the project.
+
+To run the doc server locally run this command
+```bash
+godoc -index -notes="BUG|TODO|NOTE"
+```
+
+And travel to this url in your browser http://localhost:6060/pkg/github.com/StoneG24/slape/.
+
 ### Reference
 
 Here are some of the research papers that we used to aid us in development.

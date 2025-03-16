@@ -3,14 +3,13 @@ package pipeline
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/StoneG24/slape/pkg/api"
 	"github.com/StoneG24/slape/internal/vars"
+	"github.com/StoneG24/slape/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
@@ -46,14 +45,18 @@ type simpleRequest struct {
 }
 
 type simpleSetupPayload struct {
+	// Model is the name of the single
+	// model used in the pipeline
 	Model string `json:"model"`
 }
 
 type simpleResponse struct {
+	// Answer is a json string containing the answer is markdown format
+	// along with the models thought process
 	Answer string `json:"answer"`
 }
 
-// SimplePipelineSetupRequest, handlerfunc expects GET method and returns nothing
+// SimplePipelineSetupRequest, handlerfunc expects POST method and returns no content
 func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -63,7 +66,7 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 	go api.Cors(w, req)
 
 	if req.Method != http.MethodPost {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Wrong method used for endpoint", http.StatusBadRequest)
 		return
 	}
 
@@ -72,16 +75,12 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
 		color.Red("%s", err)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		w.Write([]byte("Error unexpected request format"))
+		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
 
-	s.PickImage()
-
 	s.Model = setupPayload.Model
 	s.DockerClient = apiClient
-	s.GPU = IsGPU()
 
 	go s.Setup(context.Background())
 
@@ -98,19 +97,20 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)
 	if err != nil {
 		color.Red("%s", err)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		w.Write([]byte("Error unexpected request format"))
+		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
 
 	promptChoice, maxtokens := processPrompt(simplePayload.Mode)
 
+	s.ContextBox.SystemPrompt = promptChoice
+	s.ContextBox.Prompt = simplePayload.Prompt
+
 	// generate a response
-	result, err := s.Generate(simplePayload.Prompt, promptChoice, maxtokens, vars.OpenaiClient)
+	result, err := s.Generate(maxtokens, vars.OpenaiClient)
 	if err != nil {
 		color.Red("%s", err)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Error getting generation from model"))
+		http.Error(w, "Error getting generation from model", http.StatusOK)
 		go s.Shutdown(ctx)
 
 		return
@@ -128,8 +128,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	json, err := json.Marshal(respPayload)
 	if err != nil {
 		color.Red("%s", err)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Error marshaling your response from model"))
+		http.Error(w, "Error marshaling your response from model", http.StatusOK)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -181,7 +180,7 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 
 }
 
-func (s *SimplePipeline) Generate(prompt string, systemprompt string, maxtokens int64, openaiClient *openai.Client) (string, error) {
+func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) (string, error) {
 	// take care of upDog on our own
 	for {
 		// sleep and give server guy a break
@@ -193,12 +192,18 @@ func (s *SimplePipeline) Generate(prompt string, systemprompt string, maxtokens 
 		}
 	}
 
-	color.Yellow("Debug: %s%s", systemprompt, prompt)
+	color.Yellow("Debug: %s%s", s.ContextBox.SystemPrompt, s.ContextBox.Prompt)
+
+	err := s.PromptBuilder("")
+	if err != nil {
+		return "", err
+	}
 
 	param := openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(systemprompt),
-			openai.UserMessage(prompt),
+			openai.SystemMessage(s.SystemPrompt),
+			openai.UserMessage(s.Prompt),
+			//openai.UserMessage(s.FutureQuestions),
 		}),
 		Seed:        openai.Int(0),
 		Model:       openai.String(s.Model),
@@ -230,33 +235,4 @@ func (s *SimplePipeline) Shutdown(ctx context.Context) error {
 	color.Green("Shutting Down...")
 
 	return nil
-}
-
-func (s *SimplePipeline) PickImage() {
-	gpuTrue := IsGPU()
-	if gpuTrue {
-		gpus, err := GatherGPUs()
-		if err != nil {
-			s.ContainerImage = vars.CpuImage
-			return
-		}
-		for _, gpu := range gpus {
-			if gpu.DeviceInfo.Vendor.Name == "NVIDIA Corporation" {
-				s.ContainerImage = vars.CudagpuImage
-				break
-			}
-
-			// BUG(v,t): fix idk what the value is.
-			// After reading upstream, he reads the devices mounted
-			// with $ ll /sys/class/drm/
-			if gpu.DeviceInfo.Vendor.Name == "Advanced Micro Devices, Inc. [AMD/ATI]" {
-				s.ContainerImage = vars.RocmgpuImage
-				break
-			}
-		}
-	} else {
-		s.ContainerImage = vars.CpuImage
-	}
-
-	fmt.Println(s.ContainerImage)
 }

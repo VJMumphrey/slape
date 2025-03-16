@@ -1,7 +1,10 @@
 package pipeline
 
 import (
+	"fmt"
+
 	"github.com/StoneG24/slape/cmd/prompt"
+	"github.com/StoneG24/slape/internal/vars"
 	"github.com/fatih/color"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/gpu"
@@ -39,6 +42,29 @@ func processPrompt(mode string) (string, int64) {
 	}
 
 	return promptChoice, maxtokens
+}
+
+// TODO(v) PickImage should be made global for all pipelines and be ran in main as preprocess step
+func PickImage() string {
+	gpuTrue := IsGPU()
+	if gpuTrue {
+		gpus, err := GatherGPUs()
+		if err != nil {
+			return vars.CpuImage
+		}
+		// BUG(v,t): fix idk what the value is.
+		// After reading upstream, he reads the devices mounted
+		// with $ ll /sys/class/drm/
+		for _, gpu := range gpus {
+			switch gpu.DeviceInfo.Vendor.Name {
+			case "NVIDIA Corporation":
+				return vars.CudagpuImage
+			case "Advanced Micro Devices, Inc. [AMD/ATI]":
+				return vars.RocmgpuImage
+			}
+		}
+	}
+	return vars.CpuImage
 }
 
 func IsGPU() bool {

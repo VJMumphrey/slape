@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/StoneG24/slape/pkg/api"
 	"github.com/StoneG24/slape/internal/vars"
+	"github.com/StoneG24/slape/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
@@ -79,11 +79,8 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 		return
 	}
 
-	c.PickImage()
-
 	c.Models = setupPayload.Models
 	c.DockerClient = apiClient
-	c.GPU = IsGPU()
 
 	go c.Setup(context.Background())
 
@@ -206,11 +203,18 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 
 		color.Yellow("Debug: %s%s", systemprompt, prompt)
 
-		// get reponse
+		err = c.PromptBuilder(result)
+		if err != nil {
+			return "", err
+		}
+
+		// Answer the initial question.
+		// If it's the first model, there will not be any questions from the previous model.
 		param := openai.ChatCompletionNewParams{
 			Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(systemprompt + result),
-				openai.UserMessage(prompt),
+				openai.SystemMessage(c.SystemPrompt),
+				openai.UserMessage(c.Prompt),
+				openai.UserMessage(c.FutureQuestions),
 			}),
 			Seed:        openai.Int(0),
 			Model:       openai.String(c.Models[i]),
@@ -224,7 +228,49 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 			return "", err
 		}
 
-		systemprompt = systemprompt + "\nAnswer from previous expert: " + result
+		// Summarize the answer generate.
+		// This apparently makes it easier for the next models to digest the information.
+		summarizePrompt := fmt.Sprintf("Given this answer %s, can you summarize it", result)
+		param = openai.ChatCompletionNewParams{
+			Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+				openai.SystemMessage(c.SystemPrompt),
+				openai.UserMessage(summarizePrompt),
+				//openai.UserMessage(s.FutureQuestions),
+			}),
+			Seed:        openai.Int(0),
+			Model:       openai.String(c.Models[i]),
+			Temperature: openai.Float(vars.ModelTemperature),
+			MaxTokens:   openai.Int(maxtokens),
+		}
+
+		result, err = GenerateCompletion(param, "", *openaiClient)
+		if err != nil {
+			color.Red("%s", err)
+			return "", err
+		}
+
+		// Ask the model to generate questions for the model to answer.
+		// Then store this answer in the contextbox for the next go around.
+		askFutureQuestions := fmt.Sprintf("Given this answer, %s, can you make some further questions to ask the next model in order to aid in answering the question?", result)
+		param = openai.ChatCompletionNewParams{
+			Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+				openai.SystemMessage(c.SystemPrompt),
+				openai.UserMessage(askFutureQuestions),
+				//openai.UserMessage(s.FutureQuestions),
+			}),
+			Seed:        openai.Int(0),
+			Model:       openai.String(c.Models[i]),
+			Temperature: openai.Float(vars.ModelTemperature),
+			MaxTokens:   openai.Int(maxtokens),
+		}
+
+		result, err = GenerateCompletion(param, "", *openaiClient)
+		if err != nil {
+			color.Red("%s", err)
+			return "", err
+		}
+
+		c.FutureQuestions = result
 
 		color.Green("Stopping container %d...", i)
 		(c.DockerClient).ContainerStop(context.Background(), model.ID, container.StopOptions{})
@@ -246,33 +292,4 @@ func (c *ChainofModels) Shutdown(ctx context.Context) {
 	}
 
 	color.Green("Shutting Down...")
-}
-
-func (c *ChainofModels) PickImage() {
-	gpuTrue := IsGPU()
-	if gpuTrue {
-		gpus, err := GatherGPUs()
-		if err != nil {
-			c.ContainerImage = vars.CpuImage
-			return
-		}
-		for _, gpu := range gpus {
-			if gpu.DeviceInfo.Vendor.Name == "NVIDIA Corporation" {
-				c.ContainerImage = vars.CudagpuImage
-				break
-			}
-
-			// BUG(v,t): fix idk what the value is.
-			// After reading upstream, he reads the devices mounted
-			// with $ ll /sys/class/drm/
-			if gpu.DeviceInfo.Vendor.Name == "Advanced Micro Devices, Inc. [AMD/ATI]" {
-				c.ContainerImage = vars.RocmgpuImage
-				break
-			}
-		}
-	} else {
-		c.ContainerImage = vars.CpuImage
-	}
-
-	fmt.Println(c.ContainerImage)
 }

@@ -7,6 +7,8 @@ Usage:
 
 Containerized models are spawned as needed adhering to a pipeline system.
 */
+
+// go:generate go tool swagger generate spec -o ./swagger/swagger.yml --scan-models -c ./pkg --exclude-dep
 package main
 
 import (
@@ -29,9 +31,9 @@ var (
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
 		Active:         true,
-		ContainerImage: "",
+		ContainerImage: pipeline.PickImage(),
 		DockerClient:   nil,
-		GPU:            false,
+		GPU:            pipeline.IsGPU(),
 	}
 
 	c = pipeline.ChainofModels{
@@ -40,9 +42,9 @@ var (
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
 		Active:         true,
-		ContainerImage: "",
+		ContainerImage: pipeline.PickImage(),
 		DockerClient:   nil,
-		GPU:            false,
+		GPU:            pipeline.IsGPU(),
 	}
 
 	d = pipeline.DebateofModels{
@@ -51,34 +53,39 @@ var (
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
 		Active:         true,
-		ContainerImage: "",
+		ContainerImage: pipeline.PickImage(),
 		DockerClient:   nil,
-		GPU:            false,
+		GPU:            pipeline.IsGPU(),
 	}
 )
 
+// @title My API
+// @version 1.0
+// @description This is a sample API
+// @host localhost:8080
+// @BasePath /
 func main() {
 
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
 
-	http.HandleFunc("/simple", s.SimplePipelineGenerateRequest)
-	http.HandleFunc("/smplsetup", s.SimplePipelineSetupRequest)
-	http.HandleFunc("/cot", c.ChainPipelineGenerateRequest)
-	http.HandleFunc("/cotsetup", c.ChainPipelineSetupRequest)
-	http.HandleFunc("/debate", d.DebatePipelineGenerateRequest)
-	http.HandleFunc("/debsetup", d.DebatePipelineSetupRequest)
+	http.HandleFunc("POST /simple", s.SimplePipelineGenerateRequest)
+	http.HandleFunc("POST /smplsetup", s.SimplePipelineSetupRequest)
+	http.HandleFunc("POST /cot", c.ChainPipelineGenerateRequest)
+	http.HandleFunc("POST /cotsetup", c.ChainPipelineSetupRequest)
+	http.HandleFunc("POST /debate", d.DebatePipelineGenerateRequest)
+	http.HandleFunc("POST /debsetup", d.DebatePipelineSetupRequest)
 	//http.HandleFunc("/moe", simplerequest)
 	//http.HandleFunc("/up", upDog)
-	http.HandleFunc("/getmodels", api.GetModels)
+	http.HandleFunc("GET /getmodels", api.GetModels)
 
 	// Create a new HTTP server.
 	srv := &http.Server{
-		Addr: ":3069",
+		Addr: ":8080",
 	}
 
 	// Start the server in a goroutine.
-	color.Green("[+] Server started on :3069")
+	color.Green("[+] Server started on :8080")
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe(): %s", err)
