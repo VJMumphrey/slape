@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/openai/openai-go"
+	"golang.org/x/net/websocket"
 )
 
 // SimplePipeline is the smallest pipeline.
@@ -88,7 +89,8 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 }
 
 // simplerequest is used to handle simple requests as needed.
-func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
+func (s *SimplePipeline) SimplePipelineGenerateRequest(ws *websocket.Conn) {
+    defer ws.Close()
 	ctx := context.Background()
 	go api.Cors(w, req)
 
