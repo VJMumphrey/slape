@@ -22,7 +22,6 @@ import (
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/StoneG24/slape/pkg/pipeline"
 	"github.com/fatih/color"
-	"golang.org/x/net/websocket"
 )
 
 var (
@@ -70,7 +69,7 @@ func main() {
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
 
-	http.HandleFunc("POST /simple", websocket.Handler(s.SimplePipelineGenerateRequest))
+	http.HandleFunc("POST /simple", s.SimplePipelineGenerateRequest)
 	http.HandleFunc("POST /smplsetup", s.SimplePipelineSetupRequest)
 	http.HandleFunc("POST /cot", c.ChainPipelineGenerateRequest)
 	http.HandleFunc("POST /cotsetup", c.ChainPipelineSetupRequest)
