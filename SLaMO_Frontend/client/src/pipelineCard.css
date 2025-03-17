@@ -1,4 +1,4 @@
-.pipelineDiv{
+.Dark_pipelineDiv{
     text-align: left;
     background-color: rgb(20, 20, 25);
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
@@ -14,8 +14,52 @@
     grid-auto-rows: minmax(auto, auto);
 }
 
-.pipelineDiv:hover {
-    background-color: rgb(12, 12, 22);
+.Dark_pipelineDiv:hover {
+    background-color: rgb(25, 25, 30);
+    border-color: #646cff;
+}
+
+.Pink_pipelineDiv{
+    text-align: left;
+    background-color: rgb(180, 130, 180);
+    color: black;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    max-width: fit-content;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.25s;
+
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0px;
+    grid-auto-rows: minmax(auto, auto);
+}
+
+.Pink_pipelineDiv:hover {
+    background-color: rgb(200, 150, 200);
+    border-color: rgb(200, 20, 150);
+}
+
+.Light_pipelineDiv{
+    text-align: left;
+    background-color: rgb(200, 200, 200);
+    color: black;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    max-width: fit-content;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.25s;
+
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0px;
+    grid-auto-rows: minmax(auto, auto);
+}
+
+.Light_pipelineDiv:hover {
+    background-color: rgb(220, 220, 220);
     border-color: #646cff;
 }
 

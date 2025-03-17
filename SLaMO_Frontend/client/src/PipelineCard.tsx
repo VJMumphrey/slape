@@ -17,6 +17,13 @@ export default function PipelineCard({
 }: pipelineProperties) {
   const [ModalOpen, setModalOpen] = useState(false);
 
+  if (localStorage.getItem("PromptSetting") == null)
+    localStorage.setItem("PromptSetting", "Automatic");
+  if (localStorage.getItem("StyleSetting") == null)
+    localStorage.setItem("StyleSetting", "Dark");
+
+  const colorTheme: string | null = localStorage.getItem("StyleSetting");
+
   let modelsString = "";
   models.forEach((element, index) => {
     if (index != models.length - 1) modelsString += `${element}, `;
@@ -52,7 +59,7 @@ export default function PipelineCard({
   }
 
   return (
-    <div className="pipelineDiv">
+    <div className={`${colorTheme}_pipelineDiv`}>
       <h3 className="pipelineHeader">{pipeline}</h3>
       <button
         className="pipelineButton"

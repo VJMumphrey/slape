@@ -9,6 +9,13 @@ export default function Prompt() {
   const [ResponseAnswer, setResponseAnswer] = useState("... Awaiting Response");
   const [PromptMode, setPromptMode] = useState("simple");
 
+  if (localStorage.getItem("PromptSetting") == null)
+    localStorage.setItem("PromptSetting", "Automatic");
+  if (localStorage.getItem("StyleSetting") == null)
+    localStorage.setItem("StyleSetting", "Dark");
+
+  const themeColor: string|null = localStorage.getItem("StyleSetting");
+
   const promptTypes = [
     {name: "Simple", type: "simple"},
     {name: "Chain of Thought", type: "cot"},
@@ -22,8 +29,8 @@ export default function Prompt() {
     setPromptInfo(""); //clears the prompt box after submission
     setResponseAnswer(
       <>
-        <p className="left">{`Prompt: ${PromptInfo}`}</p>{" "}
-        <p className="left">{`Response: Generating Response...`}</p>
+        <p className={`${themeColor}_left`}>{`Prompt: ${PromptInfo}`}</p>{" "}
+        <p className={`${themeColor}_left`}>{`Response: Generating Response...`}</p>
       </>
     );
     event.preventDefault(); //makes sure the page doesn't reload when submitting the form
@@ -40,8 +47,8 @@ export default function Prompt() {
     });
     setResponseAnswer(
       <>
-        <p className="left">{`Prompt: ${PromptInfo}`}</p>{" "}
-        <p className="left">
+        <p className={`${themeColor}_left`}>{`Prompt: ${PromptInfo}`}</p>{" "}
+        <p className={`${themeColor}_left`}>
           Response:
           <Markdown>
             {`${JSON.parse(JSON.stringify(await response.json())).answer}`}
@@ -53,19 +60,19 @@ export default function Prompt() {
   return (
     <>
       <MenuTabs />
-      <div className="output">{ResponseAnswer}</div>
-      <div className="fixedBottom">
+      <div className={`${themeColor}_output`}>{ResponseAnswer}</div>
+      <div className={`${themeColor}_fixedBottom`}>
         <form onSubmit={handleSubmit}>
           <label>
             {" "}
             Enter Prompt:
             <input
-              className="prompt"
+              className={`${themeColor}_prompt`}
               type="text"
               value={PromptInfo}
               onChange={(e) => setPromptInfo(e.target.value)} //access the current input and updates PromptInfo (e represents the event object)
             />
-            <button className="Submit"> Submit</button>
+            <button className={`${themeColor}_Submit`}> Submit</button>
             <DropDownButton
               value={PromptMode}
               callBack={setPromptMode}

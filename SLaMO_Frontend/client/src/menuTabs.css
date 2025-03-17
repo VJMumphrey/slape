@@ -1,4 +1,4 @@
-.top {
+.Dark_top {
     position: fixed;
     margin: auto;
     top: 0;
@@ -10,3 +10,29 @@
     background-color: rgb(30, 30, 30);
     align-content: center;
   }
+
+.Pink_top {
+  position: fixed;
+  margin: auto;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  border: 3px solid;
+  border-color: rgb(200, 150, 170);
+  background-color: rgb(180, 100, 150);
+  align-content: center;
+}
+
+.Light_top {
+  position: fixed;
+  margin: auto;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  border: 3px solid;
+  border-color: rgb(255, 255, 255);
+  background-color: rgb(150, 150, 150);
+  align-content: center;
+}

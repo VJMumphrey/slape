@@ -6,7 +6,7 @@ export default function Settings() {
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
   if (localStorage.getItem("StyleSetting") == null)
-    localStorage.setItem("StyleSetting", "Pink");
+    localStorage.setItem("StyleSetting", "Dark");
 
   const [PromptSetting, setPromptSetting] = useState(
     localStorage.getItem("PromptSetting")
@@ -29,6 +29,7 @@ export default function Settings() {
   function settingsButtonHandler() {
     localStorage.setItem("PromptSetting", PromptSetting);
     localStorage.setItem("StyleSetting", StyleSetting);
+    globalThis.location.reload();
   }
 
   return (
