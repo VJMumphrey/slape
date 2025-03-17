@@ -2,6 +2,14 @@ import MenuTabs from "./MenuTabs.tsx";
 import PipelineCard from "./PipelineCard.tsx";
 
 export default function Pipelines() {
+
+  if (localStorage.getItem("PromptSetting") == null)
+    localStorage.setItem("PromptSetting", "Automatic");
+  if (localStorage.getItem("StyleSetting") == null)
+    localStorage.setItem("StyleSetting", "Dark");
+
+  const themeColor: string | null = localStorage.getItem("StyleSetting");
+
   const testModel = {
     pipeline: "TestPipeline",
     models: ["Phi-3.5", "Dolphin", "Ms. Gorman"],
@@ -17,6 +25,7 @@ export default function Pipelines() {
 
   return (
     <>
+      <div className={`${themeColor}_background`}/>
       <MenuTabs />
       <PipelineCard {...testModel}></PipelineCard>
       <p></p>

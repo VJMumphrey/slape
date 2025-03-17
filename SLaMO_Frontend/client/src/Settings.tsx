@@ -1,12 +1,15 @@
 import DropDownButton from "./DropDownButton.tsx";
 import MenuTabs from "./MenuTabs.tsx";
 import {useState} from "react";
+import "./settings.css";
 
 export default function Settings() {
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
   if (localStorage.getItem("StyleSetting") == null)
     localStorage.setItem("StyleSetting", "Dark");
+
+  const themeColor: string | null = localStorage.getItem("StyleSetting");
 
   const [PromptSetting, setPromptSetting] = useState(
     localStorage.getItem("PromptSetting")
@@ -34,8 +37,9 @@ export default function Settings() {
 
   return (
     <>
+    <div className={`${themeColor}_background`}/>
       <MenuTabs />
-      <div>
+      <div className={`${themeColor}_settingsDiv`}>
         <h2>Settings</h2>
         <h4>Prompting Settings</h4>
         <DropDownButton

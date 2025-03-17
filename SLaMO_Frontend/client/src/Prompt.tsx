@@ -59,6 +59,7 @@ export default function Prompt() {
   }
   return (
     <>
+      <div className={`${themeColor}_background`}/>
       <MenuTabs />
       <div className={`${themeColor}_output`}>{ResponseAnswer}</div>
       <div className={`${themeColor}_fixedBottom`}>
