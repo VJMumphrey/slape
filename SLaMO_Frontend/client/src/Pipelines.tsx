@@ -1,7 +1,10 @@
+import { useState } from "react";
 import MenuTabs from "./MenuTabs.tsx";
 import PipelineCard from "./PipelineCard.tsx";
 
 export default function Pipelines() {
+
+  const [ CurrentPipeline, setCurrentPipeline ] = useState(null);
 
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
@@ -23,13 +26,24 @@ export default function Pipelines() {
     description: "Tests to see how multiple cards look",
   };
 
+  function savePipeline() {
+    alert([ CurrentPipeline ])
+  }
+
   return (
     <>
       <div className={`${themeColor}_background`}/>
       <MenuTabs />
-      <PipelineCard {...testModel}></PipelineCard>
+      <div onClick={() => {setCurrentPipeline(testModel.pipeline);}}>
+        <PipelineCard {...testModel}></PipelineCard>
+      </div>
       <p></p>
-      <PipelineCard {...testModel2}></PipelineCard>
+      <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
+        <PipelineCard {...testModel2}></PipelineCard>
+      </div>
+      <button onClick={savePipeline}>
+        Save Pipeline
+      </button>
     </>
   );
 }

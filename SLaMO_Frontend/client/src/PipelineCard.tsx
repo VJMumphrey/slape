@@ -16,6 +16,7 @@ export default function PipelineCard({
   description,
 }: pipelineProperties) {
   const [ModalOpen, setModalOpen] = useState(false);
+  const [modelName, setmodelName] = useState("Phi 3");
 
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
@@ -32,16 +33,13 @@ export default function PipelineCard({
 
   const pipelineSettingsButtonHandler = () => {
     setModalOpen(true);
-    localStorage.removeItem("models");
+    localStorage.removeItem(`${pipeline}Models`);
   };
 
   const modalCloseButtonHandler = () => {
     setModalOpen(false);
-    if (localStorage.getItem("models") == null)
-      localStorage.setItem("models", "Phi 3");
   };
 
-  const [modelName, setmodelName] = useState("Phi 3");
 
   const modelNamesDropDownOptions = [
     {type: "Phi 3", name: "Phi 3"},
@@ -49,13 +47,16 @@ export default function PipelineCard({
   ];
 
   function addModelHandler() {
-    if (localStorage.getItem("models") == null)
-      localStorage.setItem("models", modelName);
-    else
+    if (localStorage.getItem(`${pipeline}Models`) == null)
+      localStorage.setItem(`${pipeline}Models`, JSON.stringify([modelName]));
+    else {
+      const currentPipelineModel: string[] = JSON.parse(localStorage.getItem(`${pipeline}Models`) as string);
+      currentPipelineModel.push(modelName);
       localStorage.setItem(
-        "models",
-        localStorage.getItem("models") + "," + modelName
+        `${pipeline}Models`,
+        JSON.stringify(currentPipelineModel)
       );
+    }
   }
 
   return (

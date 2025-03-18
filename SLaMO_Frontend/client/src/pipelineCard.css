@@ -21,7 +21,7 @@
 
 .Pink_pipelineDiv{
     text-align: left;
-    background-color: rgb(180, 130, 180);
+    background-color: #B75264;
     color: black;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
     max-width: fit-content;
@@ -37,7 +37,7 @@
 }
 
 .Pink_pipelineDiv:hover {
-    background-color: rgb(200, 150, 200);
+    background-color: #DEB9CE;
     border-color: rgb(200, 20, 150);
 }
 
