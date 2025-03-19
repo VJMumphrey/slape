@@ -26,15 +26,35 @@ export default function Pipelines() {
     description: "Tests to see how multiple cards look",
   };
 
-  function savePipeline() {
-    alert([ CurrentPipeline ])
+  async function savePipeline() {
+    if (localStorage.getItem(`${CurrentPipeline}Models`) === null) {
+      alert("Please Select Models for this Pipeline First!");
+    } else {
+      const modelsObjects: {name: string, fullName: string}[] = JSON.parse(localStorage.getItem(`${CurrentPipeline}Models`) as string)
+      const models: string[] = [];
+      modelsObjects.forEach((element) => {
+        models.push(element.fullName);
+      })
+
+      const response = await fetch(`http://localhost:8080/${CurrentPipeline}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          models: models
+        }),
+      });
+
+      alert(response);
+    }
   }
 
   return (
     <>
       <div className={`${themeColor}_background`}/>
       <MenuTabs />
-      <div onClick={() => {setCurrentPipeline(testModel.pipeline);}}>
+      <div onClick={() => {setCurrentPipeline(testModel.pipeline)}}>
         <PipelineCard {...testModel}></PipelineCard>
       </div>
       <p></p>

@@ -3,12 +3,14 @@ import {useState} from "react";
 import Modal from "./Modal.tsx";
 import {createPortal} from "react-dom";
 import DropDownButton from "./DropDownButton.tsx";
+import { ReactNode } from "react";
 
 interface pipelineProperties {
   pipeline: string;
   models: string[];
   description: string;
 }
+
 
 export default function PipelineCard({
   pipeline,
@@ -17,6 +19,7 @@ export default function PipelineCard({
 }: pipelineProperties) {
   const [ModalOpen, setModalOpen] = useState(false);
   const [modelName, setmodelName] = useState("Phi 3");
+  const [ Models, setModels ] = useState<object[]>([]);
 
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
@@ -25,19 +28,15 @@ export default function PipelineCard({
 
   const colorTheme: string | null = localStorage.getItem("StyleSetting");
 
-  let modelsString = "";
-  models.forEach((element, index) => {
-    if (index != models.length - 1) modelsString += `${element}, `;
-    else modelsString += element;
-  });
-
   const pipelineSettingsButtonHandler = () => {
     setModalOpen(true);
+    setModels([]);
     localStorage.removeItem(`${pipeline}Models`);
   };
 
   const modalCloseButtonHandler = () => {
     setModalOpen(false);
+    localStorage.setItem(`${pipeline}Models`, JSON.stringify(Models));
   };
 
 
@@ -46,17 +45,51 @@ export default function PipelineCard({
     {type: "Dolphin", name: "Dolphin"},
   ];
 
+  // function addModelHandler() {
+  //   if (localStorage.getItem(`${pipeline}Models`) == null)
+  //     localStorage.setItem(`${pipeline}Models`, JSON.stringify([modelName]));
+  //   else {
+  //     const currentPipelineModel: string[] = JSON.parse(localStorage.getItem(`${pipeline}Models`) as string);
+  //     currentPipelineModel.push(modelName);
+  //     localStorage.setItem(
+  //       `${pipeline}Models`,
+  //       JSON.stringify(currentPipelineModel)
+  //     );
+  //   }
+  // }
+
   function addModelHandler() {
-    if (localStorage.getItem(`${pipeline}Models`) == null)
-      localStorage.setItem(`${pipeline}Models`, JSON.stringify([modelName]));
-    else {
-      const currentPipelineModel: string[] = JSON.parse(localStorage.getItem(`${pipeline}Models`) as string);
-      currentPipelineModel.push(modelName);
-      localStorage.setItem(
-        `${pipeline}Models`,
-        JSON.stringify(currentPipelineModel)
-      );
+
+    let modelObject = {name: modelName, fullName: ""};
+    switch(modelName) {
+      case "Phi 3": {
+        modelObject = {...modelObject, fullName: "Phi-3.5-mini-instruct.Q4_K_M.gguf"};
+        break;
+      }
+
+      case "Dolphin": {
+        modelObject = {...modelObject, fullName: "Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf"};
+        break;
+      }
+
+      default: {
+        modelObject = {...modelObject, fullName: "kys"};
+      }
     }
+
+    setModels([ ...Models, modelObject ]);
+  }
+
+  function displayCurrentModels(className: string): ReactNode {
+    let modelsString = "";
+    Models.forEach((element: {name: string, fullName: string}, index: number) => {
+      if (index !== (Models.length - 1)) {
+        modelsString += element.name + ", ";
+      } else {
+        modelsString += element.name;
+      }
+    });
+    return (<p className={className}>{`Current Models: ${modelsString}`}</p>);
   }
 
   return (
@@ -71,6 +104,7 @@ export default function PipelineCard({
       {createPortal(
         <Modal isOpen={ModalOpen} onClose={modalCloseButtonHandler}>
           <p>
+            {displayCurrentModels("")}
             <DropDownButton
               value={modelName}
               callBack={setmodelName}
@@ -81,7 +115,7 @@ export default function PipelineCard({
         </Modal>,
         document.body
       )}
-      <p className="pipelineModels">{`Models: ${modelsString}`}</p>
+      {displayCurrentModels("pipelineModels")}
       <p className="pipelineDesc">{`Description: ${description}`}</p>
     </div>
   );

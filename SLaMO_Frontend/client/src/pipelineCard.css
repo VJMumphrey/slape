@@ -63,6 +63,10 @@
     border-color: #646cff;
 }
 
+.Light_pipelineDiv:active {
+    background-color: #646cff;
+}
+
 .pipelineHeader {
     grid-column: 1;
     grid-row: 1;
