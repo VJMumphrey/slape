@@ -19,41 +19,43 @@ import (
 	"github.com/openai/openai-go/option"
 )
 
-// ChainofModels is the next step above smallest pipeline.
-// This pipeline contains a ContextBox and the models in squential order.
-// ChainofModels forces the models to talk in sequential order
-// like the name suggests.
-type ChainofModels struct {
-	Models []string
-	ContextBox
-	Tools
-	Active         bool
-	ContainerImage string
-	DockerClient   *client.Client
-	GPU            bool
+type (
+	// ChainofModels is the next step above smallest pipeline.
+	// This pipeline contains a ContextBox and the models in squential order.
+	// ChainofModels forces the models to talk in sequential order
+	// like the name suggests.
+	ChainofModels struct {
+		Models []string
+		ContextBox
+		Tools
+		Active         bool
+		ContainerImage string
+		DockerClient   *client.Client
+		GPU            bool
 
-	// for internal use to store the models in
-	containers []container.CreateResponse
-}
+		// for internal use to store the models in
+		containers []container.CreateResponse
+	}
 
-type chainRequest struct {
-	// Prompt is the string that
-	// will be appended to the prompt
-	// string chosen.
-	Prompt string `json:"prompt"`
+	chainRequest struct {
+		// Prompt is the string that
+		// will be appended to the prompt
+		// string chosen.
+		Prompt string `json:"prompt"`
 
-	// Options are strings matching
-	// the names of prompt types
-	Mode string `json:"mode"`
-}
+		// Options are strings matching
+		// the names of prompt types
+		Mode string `json:"mode"`
+	}
 
-type chainSetupPayload struct {
-	Models []string `json:"models"`
-}
+	chainSetupPayload struct {
+		Models []string `json:"models"`
+	}
 
-type chainResponse struct {
-	Answer string `json:"answer"`
-}
+	chainResponse struct {
+		Answer string `json:"answer"`
+	}
+)
 
 // ChainPipeline, handlerfunc expects POST method and returns nothing
 func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *http.Request) {

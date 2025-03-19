@@ -139,6 +139,14 @@ func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion s
 	return result, nil
 }
 
+// GenerateEmbedding is used as a helper function for generating embeddings.
+func GenerateEmbedding(param openai.EmbeddingNewParams, client openai.Client) (openai.Embedding, error) {
+
+	client.Embeddings
+
+	return embedding, nil
+}
+
 // FindContainer finds a specific container based on the nomenclature of /name.
 // Useful making checks before
 func FindContainer(apiClient *client.Client, ctx context.Context) (types.Container, bool) {

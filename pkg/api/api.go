@@ -90,4 +90,6 @@ func GetModels(w http.ResponseWriter, req *http.Request) {
 }
 
 // TODO(t) implement this. Download the gguf model into the ./models folder
+// This functionality is already in llamacpp-server just need to bulid the arg
+// for it or something
 func DownloadHuggingFaceModel(w http.ResponseWriter, req *http.Request) {}

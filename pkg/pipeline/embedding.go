@@ -14,52 +14,28 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/internal/param"
+	"github.com/openai/openai-go/shared"
 )
 
-type (
-	// SimplePipeline is the smallest pipeline.
-	// It contains only a model with a ContextBox.
-	// This is good for a giving a single model access to tools
-	// like internet search.
-	SimplePipeline struct {
-		Model string
-		ContextBox
-		Tools
-		Active         bool
-		ContainerImage string
-		DockerClient   *client.Client
-		GPU            bool
-
-		// for internal use
-		container container.CreateResponse
-	}
-
-	simpleRequest struct {
-		// Prompt is the string that
-		// will be appended to the prompt
-		// string chosen.
-		Prompt string `json:"prompt"`
-
-		// Options are strings matching
-		// the names of prompt types
-		Mode string `json:"mode"`
-	}
-
-	simpleSetupPayload struct {
-		// Model is the name of the single
-		// model used in the pipeline
-		Model string `json:"model"`
-	}
-
-	simpleResponse struct {
-		// Answer is a json string containing the answer is markdown format
-		// along with the models thought process
-		Answer string `json:"answer"`
-	}
+const (
+	embedmodel = "snowflake-arctic-embed-l-v2.0-q4_k_m.gguf"
+	genmodel   = "Phi-3.5-mini-instruct-Q4_K_M.gguf"
 )
+
+// This pipeline is meant to be used for indexing a RAG database.
+// We are using MiniRAG for a size complexity balance.
+type EmbeddingPipeline struct {
+	DockerClient   *client.Client
+	ContainerImage string
+	GPU            bool
+
+	// for internal use
+	container container.CreateResponse
+}
 
 // SimplePipelineSetupRequest, handlerfunc expects POST method and returns no content
-func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
+func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		color.Red("%s", err)
@@ -81,16 +57,15 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 		return
 	}
 
-	s.Model = setupPayload.Model
-	s.DockerClient = apiClient
+	e.DockerClient = apiClient
 
-	go s.Setup(context.Background())
+	go e.Setup(context.Background())
 
 	w.WriteHeader(http.StatusOK)
 }
 
 // simplerequest is used to handle simple requests as needed.
-func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
+func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
 	ctx := context.Background()
 	go api.Cors(w, req)
 
@@ -103,22 +78,18 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 		return
 	}
 
-	promptChoice, maxtokens := processPrompt(simplePayload.Mode)
-
-	s.ContextBox.SystemPrompt = promptChoice
-	s.ContextBox.Prompt = simplePayload.Prompt
-
 	// generate a response
-	result, err := s.Generate(maxtokens, vars.OpenaiClient)
+	// TODO rewrite for embedding and rag
+	result, err := e.Generate(simplePayload.Prompt, vars.OpenaiClient)
 	if err != nil {
 		color.Red("%s", err)
 		http.Error(w, "Error getting generation from model", http.StatusOK)
-		go s.Shutdown(ctx)
+		go e.Shutdown(ctx)
 
 		return
 	}
 
-	go s.Shutdown(ctx)
+	go e.Shutdown(ctx)
 
 	// for debugging streaming
 	color.Green(result)
@@ -138,9 +109,9 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	w.Write(json)
 }
 
-func (s *SimplePipeline) Setup(ctx context.Context) error {
+func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 
-	reader, err := PullImage(s.DockerClient, ctx, s.ContainerImage)
+	reader, err := PullImage(e.DockerClient, ctx, e.ContainerImage)
 	if err != nil {
 		color.Red("%s", err)
 		return err
@@ -152,13 +123,13 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	defer reader.Close()
 
 	createResponse, err := CreateContainer(
-		s.DockerClient,
+		e.DockerClient,
 		"8000",
 		"",
 		ctx,
-		s.Model,
-		s.ContainerImage,
-		s.GPU,
+		embedmodel,
+		e.ContainerImage,
+		e.GPU,
 	)
 
 	if err != nil {
@@ -168,7 +139,7 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	}
 
 	// start container
-	err = (s.DockerClient).ContainerStart(context.Background(), createResponse.ID, container.StartOptions{})
+	err = (e.DockerClient).ContainerStart(context.Background(), createResponse.ID, container.StartOptions{})
 	if err != nil {
 		color.Red("%s", err)
 		return err
@@ -176,13 +147,13 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 
 	// For debugging
 	color.Green("%s", createResponse.ID)
-	s.container = createResponse
+	e.container = createResponse
 
 	return nil
 
 }
 
-func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) (string, error) {
+func (e *EmbeddingPipeline) Generate(payload string, openaiClient *openai.Client) (string, error) {
 	// take care of upDog on our own
 	for {
 		// sleep and give server guy a break
@@ -194,25 +165,15 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 		}
 	}
 
-	color.Yellow("Debug: %s%s", s.ContextBox.SystemPrompt, s.ContextBox.Prompt)
+	param := openai.EmbeddingNewParams{
+		Input: []string {
+			payload,
+		},
+		Model:      openai.String(embedmodel),
+		Dimensions: openai.Int(1024),
+	},
 
-	err := s.PromptBuilder("")
-	if err != nil {
-		return "", err
-	}
-
-	param := openai.ChatCompletionNewParams{
-		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(s.SystemPrompt),
-			openai.UserMessage(s.Prompt),
-			//openai.UserMessage(s.FutureQuestions),
-		}),
-		Seed:        openai.Int(0),
-		Model:       openai.String(s.Model),
-		Temperature: openai.Float(vars.ModelTemperature),
-		MaxTokens:   openai.Int(maxtokens),
-	}
-
+	// should return a type of openai.Embedding
 	result, err := GenerateCompletion(param, "", *openaiClient)
 	if err != nil {
 		return "", err
@@ -221,14 +182,14 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 	return result, nil
 }
 
-func (s *SimplePipeline) Shutdown(ctx context.Context) error {
-	err := (s.DockerClient).ContainerStop(ctx, s.container.ID, container.StopOptions{})
+func (e *EmbeddingPipeline) Shutdown(ctx context.Context) error {
+	err := (e.DockerClient).ContainerStop(ctx, e.container.ID, container.StopOptions{})
 	if err != nil {
 		color.Red("%s", err)
 		return nil
 	}
 
-	err = (s.DockerClient).ContainerRemove(ctx, s.container.ID, container.RemoveOptions{})
+	err = (e.DockerClient).ContainerRemove(ctx, e.container.ID, container.RemoveOptions{})
 	if err != nil {
 		color.Red("%s", err)
 		return nil

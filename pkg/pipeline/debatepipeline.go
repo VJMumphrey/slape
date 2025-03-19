@@ -24,41 +24,43 @@ var (
 	rounds = 3
 )
 
-// DebateofModels is pipeline for debate structured prompting.
-// Models talk in a round robin style.
-// According to the paper, Improving Factuality and Reasoning in Language Models through Multiagent Debate, pg8, https://arxiv.org/abs/2305.14325,
-// 3-4 rounds was the best range. There wasn't much of an improvement from 3 to 4 and greater. Since we are constrained on resources and compute time, we'll use 3.
-type DebateofModels struct {
-	Models []string
-	ContextBox
-	Tools
-	Active         bool
-	ContainerImage string
-	DockerClient   *client.Client
-	GPU            bool
+type (
+	// DebateofModels is pipeline for debate structured prompting.
+	// Models talk in a round robin style.
+	// According to the paper, Improving Factuality and Reasoning in Language Models through Multiagent Debate, pg8, https://arxiv.org/abs/2305.14325,
+	// 3-4 rounds was the best range. There wasn't much of an improvement from 3 to 4 and greater. Since we are constrained on resources and compute time, we'll use 3.
+	DebateofModels struct {
+		Models []string
+		ContextBox
+		Tools
+		Active         bool
+		ContainerImage string
+		DockerClient   *client.Client
+		GPU            bool
 
-	// for internal use only
-	containers []container.CreateResponse
-}
+		// for internal use only
+		containers []container.CreateResponse
+	}
 
-type debateRequest struct {
-	// Prompt is the string that
-	// will be appended to the prompt
-	// string chosen.
-	Prompt string `json:"prompt"`
+	debateRequest struct {
+		// Prompt is the string that
+		// will be appended to the prompt
+		// string chosen.
+		Prompt string `json:"prompt"`
 
-	// Options are strings matching
-	// the names of prompt types
-	Mode string `json:"mode"`
-}
+		// Options are strings matching
+		// the names of prompt types
+		Mode string `json:"mode"`
+	}
 
-type debateSetupPayload struct {
-	Models []string `json:"models"`
-}
+	debateSetupPayload struct {
+		Models []string `json:"models"`
+	}
 
-type debateResponse struct {
-	Answer string `json:"answer"`
-}
+	debateResponse struct {
+		Answer string `json:"answer"`
+	}
+)
 
 // DebatePipelineSetupRequest, handlerfunc expects POST method and returns nothing
 func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
@@ -244,26 +246,26 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 
 			// Ask the model to generate questions for the model to answer.
 			// Then store this answer in the contextbox for the next go around.
-            /*
-			askFutureQuestions := fmt.Sprintf("Given this answer, %s, can you make some further questions to ask the next model in order to aid in answering the question?", result)
-			param = openai.ChatCompletionNewParams{
-				Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-					openai.SystemMessage(d.SystemPrompt),
-					openai.UserMessage(askFutureQuestions),
-					//openai.UserMessage(s.FutureQuestions),
-				}),
-				Seed:        openai.Int(0),
-				Model:       openai.String(d.Models[i]),
-				Temperature: openai.Float(vars.ModelTemperature),
-				MaxTokens:   openai.Int(maxtokens),
-			}
+			/*
+				askFutureQuestions := fmt.Sprintf("Given this answer, %s, can you make some further questions to ask the next model in order to aid in answering the question?", result)
+				param = openai.ChatCompletionNewParams{
+					Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+						openai.SystemMessage(d.SystemPrompt),
+						openai.UserMessage(askFutureQuestions),
+						//openai.UserMessage(s.FutureQuestions),
+					}),
+					Seed:        openai.Int(0),
+					Model:       openai.String(d.Models[i]),
+					Temperature: openai.Float(vars.ModelTemperature),
+					MaxTokens:   openai.Int(maxtokens),
+				}
 
-			result, err = GenerateCompletion(param, "", *openaiClient)
-			if err != nil {
-				color.Red("%s", err)
-				return "", err
-			}
-            */
+				result, err = GenerateCompletion(param, "", *openaiClient)
+				if err != nil {
+					color.Red("%s", err)
+					return "", err
+				}
+			*/
 
 			d.FutureQuestions = result
 
