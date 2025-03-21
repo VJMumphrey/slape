@@ -2,7 +2,7 @@
     text-align: left;
     background-color: rgb(20, 20, 25);
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-    max-width: fit-content;
+    width: 80%;
     padding: 10px;
     border-radius: 8px;
     border: 1px solid transparent;
@@ -46,7 +46,7 @@
     background-color: rgb(200, 200, 200);
     color: black;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-    max-width: fit-content;
+    width: 98%;
     padding: 10px;
     border-radius: 8px;
     border: 1px solid transparent;

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import MenuTabs from "./MenuTabs.tsx";
 import PipelineCard from "./PipelineCard.tsx";
+import "./pipelines.css";
 
 export default function Pipelines() {
 
@@ -54,6 +55,7 @@ export default function Pipelines() {
     <>
       <div className={`${themeColor}_background`}/>
       <MenuTabs />
+      {/*To do this not stupid, add an onClick Property to PipelineCard that passes the onClick to the div of PipelineCard*/}
       <div onClick={() => {setCurrentPipeline(testModel.pipeline)}}>
         <PipelineCard {...testModel}></PipelineCard>
       </div>
@@ -61,9 +63,11 @@ export default function Pipelines() {
       <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
         <PipelineCard {...testModel2}></PipelineCard>
       </div>
-      <button onClick={savePipeline}>
-        Save Pipeline
-      </button>
+      <div className={`${themeColor}_footer`}>
+        <button className={`${themeColor}_saveButton`} onClick={savePipeline}>
+          Save Pipeline
+        </button>
+      </div>
     </>
   );
 }
