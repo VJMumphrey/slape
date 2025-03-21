@@ -2,6 +2,7 @@ import DropDownButton from "./DropDownButton.tsx";
 import MenuTabs from "./MenuTabs.tsx";
 import {useState} from "react";
 import "./settings.css";
+import "./index.css";
 
 export default function Settings() {
   if (localStorage.getItem("PromptSetting") == null)
@@ -37,7 +38,7 @@ export default function Settings() {
 
   return (
     <>
-    <div className={`${themeColor}_background`}/>
+      <div className={`${themeColor}_background`} />
       <MenuTabs />
       <div className={`${themeColor}_settingsDiv`}>
         <h2>Settings</h2>
@@ -55,7 +56,10 @@ export default function Settings() {
           optionObject={styleDropDownOptions}
         />
         <hr />
-        <button className="Submit" onClick={settingsButtonHandler}>
+        <button
+          className={`${themeColor}_Submit`}
+          onClick={settingsButtonHandler}
+        >
           Display Settings
         </button>
       </div>

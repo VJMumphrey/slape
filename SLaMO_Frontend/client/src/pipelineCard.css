@@ -2,11 +2,12 @@
     text-align: left;
     background-color: rgb(20, 20, 25);
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-    width: 80%;
+    width: 100%;
     padding: 10px;
     border-radius: 8px;
     border: 1px solid transparent;
     transition: border-color 0.25s;
+    color: white;
 
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -24,11 +25,11 @@
     background-color: #B75264;
     color: black;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-    max-width: fit-content;
     padding: 10px;
     border-radius: 8px;
     border: 1px solid transparent;
     transition: border-color 0.25s;
+    width: 100%;
 
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -46,7 +47,7 @@
     background-color: rgb(200, 200, 200);
     color: black;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-    width: 98%;
+    width: 100%;
     padding: 10px;
     border-radius: 8px;
     border: 1px solid transparent;
@@ -72,9 +73,25 @@
     grid-row: 1;
 }
 
-.pipelineButton {
+.Dark_pipelineButton {
     grid-column: 6;
     grid-row: 1;
+    background-color: blue;
+    color: white;
+}
+
+.Light_pipelineButton {
+    grid-column: 6;
+    grid-row: 1;
+    background-color: blue;
+    color: white;
+}
+
+.Pink_pipelineButton {
+    grid-column: 6;
+    grid-row: 1;
+    background-color: #cb3b8d;
+    color: white;
 }
 
 .pipelineModels {

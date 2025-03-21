@@ -3,14 +3,13 @@ import {useState} from "react";
 import Modal from "./Modal.tsx";
 import {createPortal} from "react-dom";
 import DropDownButton from "./DropDownButton.tsx";
-import { ReactNode } from "react";
+import {ReactNode} from "react";
 
 interface pipelineProperties {
   pipeline: string;
   models: string[];
   description: string;
 }
-
 
 export default function PipelineCard({
   pipeline,
@@ -19,7 +18,7 @@ export default function PipelineCard({
 }: pipelineProperties) {
   const [ModalOpen, setModalOpen] = useState(false);
   const [modelName, setmodelName] = useState("Phi 3");
-  const [ Models, setModels ] = useState<object[]>([]);
+  const [Models, setModels] = useState<object[]>([]);
 
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
@@ -38,7 +37,6 @@ export default function PipelineCard({
     setModalOpen(false);
     localStorage.setItem(`${pipeline}Models`, JSON.stringify(Models));
   };
-
 
   const modelNamesDropDownOptions = [
     {type: "Phi 3", name: "Phi 3"},
@@ -59,16 +57,21 @@ export default function PipelineCard({
   // }
 
   function addModelHandler() {
-
     let modelObject = {name: modelName, fullName: ""};
-    switch(modelName) {
+    switch (modelName) {
       case "Phi 3": {
-        modelObject = {...modelObject, fullName: "Phi-3.5-mini-instruct.Q4_K_M.gguf"};
+        modelObject = {
+          ...modelObject,
+          fullName: "Phi-3.5-mini-instruct.Q4_K_M.gguf",
+        };
         break;
       }
 
       case "Dolphin": {
-        modelObject = {...modelObject, fullName: "Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf"};
+        modelObject = {
+          ...modelObject,
+          fullName: "Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf",
+        };
         break;
       }
 
@@ -77,26 +80,28 @@ export default function PipelineCard({
       }
     }
 
-    setModels([ ...Models, modelObject ]);
+    setModels([...Models, modelObject]);
   }
 
   function displayCurrentModels(className: string): ReactNode {
     let modelsString = "";
-    Models.forEach((element: {name: string, fullName: string}, index: number) => {
-      if (index !== (Models.length - 1)) {
-        modelsString += element.name + ", ";
-      } else {
-        modelsString += element.name;
+    Models.forEach(
+      (element: {name: string; fullName: string}, index: number) => {
+        if (index !== Models.length - 1) {
+          modelsString += element.name + ", ";
+        } else {
+          modelsString += element.name;
+        }
       }
-    });
-    return (<p className={className}>{`Current Models: ${modelsString}`}</p>);
+    );
+    return <p className={className}>{`Current Models: ${modelsString}`}</p>;
   }
 
   return (
     <div className={`${colorTheme}_pipelineDiv`}>
       <h3 className="pipelineHeader">{pipeline}</h3>
       <button
-        className="pipelineButton"
+        className={`${colorTheme}_pipelineButton`}
         onClick={pipelineSettingsButtonHandler}
       >
         Settings
