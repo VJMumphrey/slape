@@ -1,5 +1,6 @@
 import {useState} from "react";
 import "./App.css";
+import "./prompt.css";
 import MenuTabs from "./MenuTabs.tsx";
 import Markdown from "react-markdown";
 import DropDownButton from "./DropDownButton.tsx";
@@ -8,13 +9,14 @@ export default function Prompt() {
   const [PromptInfo, setPromptInfo] = useState(""); //used to contain the current value, and to set the new value
   const [ResponseAnswer, setResponseAnswer] = useState("... Awaiting Response");
   const [PromptMode, setPromptMode] = useState("simple");
+  const [loadingAnimation, setloadingAnimation] = useState("");
 
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
   if (localStorage.getItem("StyleSetting") == null)
     localStorage.setItem("StyleSetting", "Dark");
 
-  const themeColor: string|null = localStorage.getItem("StyleSetting");
+  const themeColor: string | null = localStorage.getItem("StyleSetting");
 
   const promptTypes = [
     {name: "Simple", type: "simple"},
@@ -27,10 +29,13 @@ export default function Prompt() {
 
   async function handleSubmit(event: {preventDefault: () => void}) {
     setPromptInfo(""); //clears the prompt box after submission
+    setloadingAnimation(<div className={`${themeColor}_spinner`} />);
     setResponseAnswer(
       <>
         <p className={`${themeColor}_left`}>{`Prompt: ${PromptInfo}`}</p>{" "}
-        <p className={`${themeColor}_left`}>{`Response: Generating Response...`}</p>
+        <p
+          className={`${themeColor}_left`}
+        >{`Response: Generating Response...`}</p>
       </>
     );
     event.preventDefault(); //makes sure the page doesn't reload when submitting the form
@@ -45,6 +50,7 @@ export default function Prompt() {
         mode: PromptMode,
       }),
     });
+    setloadingAnimation("");
     setResponseAnswer(
       <>
         <p className={`${themeColor}_left`}>{`Prompt: ${PromptInfo}`}</p>{" "}
@@ -59,7 +65,7 @@ export default function Prompt() {
   }
   return (
     <>
-      <div className={`${themeColor}_background`}/>
+      <div className={`${themeColor}_background`} />
       <MenuTabs />
       <div className={`${themeColor}_output`}>{ResponseAnswer}</div>
       <div className={`${themeColor}_fixedBottom`}>
@@ -82,6 +88,7 @@ export default function Prompt() {
           </label>
         </form>
       </div>
+      <p className="loading">{loadingAnimation}</p>
     </>
   );
 }
