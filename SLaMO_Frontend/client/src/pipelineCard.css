@@ -20,6 +20,10 @@
     border-color: #646cff;
 }
 
+.Dark_pipelineDiv:active {
+    background-color: #646cff;
+}
+
 .Pink_pipelineDiv{
     text-align: left;
     background-color: #B75264;
