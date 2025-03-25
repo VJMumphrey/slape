@@ -49,7 +49,7 @@
 
 .Light_pipelineDiv{
     text-align: left;
-    background-color: rgb(200, 200, 200);
+    background-color: #CCD5D5;
     color: black;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
     width: 100%;
@@ -57,6 +57,7 @@
     border-radius: 8px;
     border: 1px solid transparent;
     transition: border-color 0.25s;
+    transition: background 0.15s;
 
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -65,12 +66,12 @@
 }
 
 .Light_pipelineDiv:hover {
-    background-color: rgb(220, 220, 220);
+    background-color: #B3C8CF;
     border-color: #646cff;
 }
 
 .Light_pipelineDiv:active {
-    background-color: #646cff;
+    background-color: #CCE7E7;
 }
 
 .pipelineHeader {
@@ -81,14 +82,14 @@
 .Dark_pipelineButton {
     grid-column: 6;
     grid-row: 1;
-    background-color: blue;
+    background-color: #535bf2;
     color: white;
 }
 
 .Light_pipelineButton {
     grid-column: 6;
     grid-row: 1;
-    background-color: blue;
+    background-color: #89BAD3;
     color: white;
 }
 

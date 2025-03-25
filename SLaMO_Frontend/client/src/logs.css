@@ -7,7 +7,7 @@
     left: 0;
     right: 0;   
     z-index: -1;
-    background-color: rgb(10, 10, 20);
+    background-color: #070F2B;
 }
   
 .Pink_background {
@@ -32,6 +32,6 @@
     left: 0;
     right: 0;   
     z-index: -1;
-    background-color: white;
+    background-color: #F1F0E8;
     color: black;
 }

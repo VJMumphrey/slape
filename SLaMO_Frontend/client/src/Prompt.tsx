@@ -72,19 +72,19 @@ export default function Prompt() {
         <form onSubmit={handleSubmit}>
           <label>
             {" "}
-            Enter Prompt:
             <input
               className={`${themeColor}_prompt`}
               type="text"
               value={PromptInfo}
+              placeholder="Enter Prompt"
               onChange={(e) => setPromptInfo(e.target.value)} //access the current input and updates PromptInfo (e represents the event object)
             />
-            <button className={`${themeColor}_Submit`}> Submit</button>
             <DropDownButton
               value={PromptMode}
               callBack={setPromptMode}
               optionObject={promptTypes}
             />
+            <button className={`${themeColor}_Submit`}> Submit</button>
           </label>
         </form>
       </div>
