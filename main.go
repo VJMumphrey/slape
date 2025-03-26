@@ -69,12 +69,12 @@ func main() {
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
 
-	http.HandleFunc("POST /simple", s.SimplePipelineGenerateRequest)
-	http.HandleFunc("POST /smplsetup", s.SimplePipelineSetupRequest)
-	http.HandleFunc("POST /cot", c.ChainPipelineGenerateRequest)
-	http.HandleFunc("POST /cotsetup", c.ChainPipelineSetupRequest)
-	http.HandleFunc("POST /debate", d.DebatePipelineGenerateRequest)
-	http.HandleFunc("POST /debsetup", d.DebatePipelineSetupRequest)
+	http.HandleFunc("POST /simple/generate", s.SimplePipelineGenerateRequest)
+	http.HandleFunc("POST /simple/setup", s.SimplePipelineSetupRequest)
+	http.HandleFunc("POST /cot/generate", c.ChainPipelineGenerateRequest)
+	http.HandleFunc("POST /cot/setup", c.ChainPipelineSetupRequest)
+	http.HandleFunc("POST /debate/generate", d.DebatePipelineGenerateRequest)
+	http.HandleFunc("POST /deb/setup", d.DebatePipelineSetupRequest)
 	//http.HandleFunc("/moe", simplerequest)
 	//http.HandleFunc("/up", upDog)
 	http.HandleFunc("GET /getmodels", api.GetModels)
