@@ -3,18 +3,27 @@ import MenuTabs from "./MenuTabs.tsx";
 import {useState} from "react";
 
 export default function Settings() {
-  const [PromptSetting, setPromptSetting] = useState("Automatic");
-  const [StyleSetting, setStyleSetting] = useState("Pink");
+  if (localStorage.getItem("PromptSetting") == null)
+    localStorage.setItem("PromptSetting", "Automatic");
+  if (localStorage.getItem("StyleSetting") == null)
+    localStorage.setItem("StyleSetting", "Pink");
+
+  const [PromptSetting, setPromptSetting] = useState(
+    localStorage.getItem("PromptSetting")
+  );
+  const [StyleSetting, setStyleSetting] = useState(
+    localStorage.getItem("StyleSetting")
+  );
 
   const promptDropDownOptions = [
-    { type: "Automatic", name: "Automatic" },
-    { type: "Manual", name: "Manual" },
-    { type: "Mixed", name: "Mixed" }
+    {type: "Automatic", name: "Automatic"},
+    {type: "Manual", name: "Manual"},
+    {type: "Mixed", name: "Mixed"},
   ];
   const styleDropDownOptions = [
-    { type: "Pink", name: "Pink" },
-    { type: "Dark", name: "Dark" },
-    { type: "Light", name: "Light" }
+    {type: "Pink", name: "Pink"},
+    {type: "Dark", name: "Dark"},
+    {type: "Light", name: "Light"},
   ];
 
   function settingsButtonHandler() {
@@ -28,12 +37,22 @@ export default function Settings() {
       <div>
         <h2>Settings</h2>
         <h4>Prompting Settings</h4>
-        <DropDownButton value={PromptSetting} callBack={setPromptSetting} optionObject={promptDropDownOptions}/>
+        <DropDownButton
+          value={PromptSetting}
+          callBack={setPromptSetting}
+          optionObject={promptDropDownOptions}
+        />
         <hr />
         <h4>Style Settings</h4>
-        <DropDownButton value={StyleSetting} callBack={setStyleSetting} optionObject={styleDropDownOptions}/>
+        <DropDownButton
+          value={StyleSetting}
+          callBack={setStyleSetting}
+          optionObject={styleDropDownOptions}
+        />
         <hr />
-        <button onClick={settingsButtonHandler}>Display Settings</button>
+        <button className="Submit" onClick={settingsButtonHandler}>
+          Display Settings
+        </button>
       </div>
     </>
   );

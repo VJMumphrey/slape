@@ -11,6 +11,7 @@ p.left{
 
 select.inference {
   height: 40px;
+  background-color: rgb(28, 28, 134);
 }
 
 div.fixedBottom {
