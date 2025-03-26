@@ -6,10 +6,15 @@ An application designed to leverage the efficiency of small language models by i
 
 ### Installation
 
-We need to install some dependencies so that we can build and run the project. The first thing we need to install is Podman.
-Follow your OS specific instructions to install podman.
+1. We need to install some dependencies so that we can build and run the project. The first thing we need to install is Docker.
+Follow your OS specific instructions to install Docker.
 
-Create a folder for the models that you want to use. These should probably be _.gguf_ files.
+2. This project also uses other projects as submodules. To get these projects run the following command to clone the repo and get those dependencies.
+```bash
+git clone --recursive https://github.com/StoneG24/slape.git
+```
+
+3. Create a folder for the models that you want to use. These should probably be _.gguf_ files.
 
 #### GPU Support
 
