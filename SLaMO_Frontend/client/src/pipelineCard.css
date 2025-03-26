@@ -130,11 +130,14 @@
     color: white;
 }
 
-select.Light_inference{
+select.Light_modelDropdown{
     height: 40px;
     margin-right: 20px;
     background-color: #89BAD3;
     border-radius: 0px 8px 8px 0px;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 500;
 }
 
 select.Dark_inference{

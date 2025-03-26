@@ -117,6 +117,7 @@ export default function PipelineCard({
               Add Model
             </button>
             <DropDownButton
+              className="modelDropdown"
               value={modelName}
               callBack={setmodelName}
               optionObject={modelNamesDropDownOptions}

@@ -65,7 +65,7 @@ select.Light_inference {
     background-color: #89A8B2;
     color: white;
     border: 0px;
-    font-family: inherit;
+    border-radius: 0px 8px 8px 0px;font-family: inherit;
     font-size: 1em;
     font-weight: 500;
 }
@@ -150,6 +150,7 @@ input.Light_prompt {
     font-family: inherit;
     font-size: 1em;
     font-weight: 500;
+    border-radius: 8px 0px 0px 8px;
 }
 
 input.settings {
@@ -195,6 +196,19 @@ input.settings {
     color: black;
 }
 
+button.Light_promptSubmit
+{
+  height: 45px;
+  width: 125px;
+  border-radius: 8px;
+  border: 0px;
+  background-color: #697892;
+  color: white;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  margin-left: 45px;
 
-
+}
 

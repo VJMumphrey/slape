@@ -42,15 +42,9 @@ export default function Settings() {
       <MenuTabs />
       <div className={`${themeColor}_settingsDiv`}>
         <h2>Settings</h2>
-        <h4>Prompting Settings</h4>
-        <DropDownButton
-          value={PromptSetting}
-          callBack={setPromptSetting}
-          optionObject={promptDropDownOptions}
-        />
-        <hr />
         <h4>Style Settings</h4>
         <DropDownButton
+          className="colorSetting"
           value={StyleSetting}
           callBack={setStyleSetting}
           optionObject={styleDropDownOptions}

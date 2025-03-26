@@ -47,3 +47,31 @@
   .Light_settingsDiv {
     color: black;
   }
+
+  button.Light_Submit
+{
+  height: 40px;
+  border-radius: 8px;
+  border: 0px;
+  background-color: #697892;
+  color: white;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  margin-left: 0px;
+}
+
+select.Light_colorSetting{
+  height: 25px;
+    background-color: #89BAD3;
+    color: white;
+    border: 0px;
+    font-family: inherit;
+    font-size: 1.5em;
+    font-weight: 500;
+    border-radius: 8px;
+    height: 42px;
+    width: 100px;
+    padding-left: 5px;
+}
