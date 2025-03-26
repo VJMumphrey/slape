@@ -109,3 +109,40 @@
     grid-column: 1 / 3;
     grid-row: 3;
 }
+
+.Light_addModel{
+    background-color: #697892;
+    color: white;
+    margin-left: 20px;
+    border-radius: 8px 0px 0px 8px;
+    width: 95px;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.Dark_addModel{
+    background-color: #697892;
+    color: white;
+}
+
+.Pink_addModel{
+    background-color: #697892;
+    color: white;
+}
+
+select.Light_inference{
+    height: 40px;
+    margin-right: 20px;
+    background-color: #89BAD3;
+    border-radius: 0px 8px 8px 0px;
+}
+
+select.Dark_inference{
+    height: 35px;
+    margin: 10px;
+}
+
+select.Pink_inference{
+    height: 35px;
+    margin: 10px;
+}

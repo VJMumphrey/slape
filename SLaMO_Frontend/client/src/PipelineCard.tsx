@@ -25,7 +25,7 @@ export default function PipelineCard({
   if (localStorage.getItem("StyleSetting") == null)
     localStorage.setItem("StyleSetting", "Dark");
 
-  const colorTheme: string | null = localStorage.getItem("StyleSetting");
+  const themeColor: string | null = localStorage.getItem("StyleSetting");
 
   const pipelineSettingsButtonHandler = () => {
     setModalOpen(true);
@@ -98,10 +98,10 @@ export default function PipelineCard({
   }
 
   return (
-    <div className={`${colorTheme}_pipelineDiv`}>
+    <div className={`${themeColor}_pipelineDiv`}>
       <h3 className="pipelineHeader">{pipeline}</h3>
       <button
-        className={`${colorTheme}_pipelineButton`}
+        className={`${themeColor}_pipelineButton`}
         onClick={pipelineSettingsButtonHandler}
       >
         Settings
@@ -109,13 +109,18 @@ export default function PipelineCard({
       {createPortal(
         <Modal isOpen={ModalOpen} onClose={modalCloseButtonHandler}>
           <p>
-            {displayCurrentModels("")}
+            {/* {displayCurrentModels("")} */}
+            <button
+              className={`${themeColor}_addModel`}
+              onClick={addModelHandler}
+            >
+              Add Model
+            </button>
             <DropDownButton
               value={modelName}
               callBack={setmodelName}
               optionObject={modelNamesDropDownOptions}
             />
-            <button onClick={addModelHandler}>Add Model</button>
           </p>
         </Modal>,
         document.body
