@@ -41,8 +41,8 @@ export default function Settings() {
       <div className={`${themeColor}_background`} />
       <MenuTabs />
       <div className={`${themeColor}_settingsDiv`}>
-        <h2>Settings</h2>
-        <h4>Style Settings</h4>
+        <h1 className={`${themeColor}_settingTitle`}>Settings</h1>
+        <h2>Theme</h2>
         <DropDownButton
           className="colorSetting"
           value={StyleSetting}

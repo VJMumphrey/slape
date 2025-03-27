@@ -123,11 +123,21 @@
 .Dark_addModel{
     background-color: #697892;
     color: white;
+    margin-left: 20px;
+    border-radius: 8px 0px 0px 8px;
+    width: 95px;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .Pink_addModel{
-    background-color: #697892;
+    background-color: #cb3b8d;
     color: white;
+    margin-left: 20px;
+    border-radius: 8px 0px 0px 8px;
+    width: 95px;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 select.Light_modelDropdown{
@@ -140,12 +150,22 @@ select.Light_modelDropdown{
     font-weight: 500;
 }
 
-select.Dark_inference{
-    height: 35px;
-    margin: 10px;
+select.Dark_modelDropdown{
+    height: 40px;
+    margin-right: 20px;
+    background-color: blue;
+    border-radius: 0px 8px 8px 0px;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 500;
 }
 
-select.Pink_inference{
-    height: 35px;
-    margin: 10px;
+select.Pink_modelDropdown{
+    height: 40px;
+    margin-right: 20px;
+    background-color: rgb(179, 60, 177);
+    border-radius: 0px 8px 8px 0px;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 500;
 }

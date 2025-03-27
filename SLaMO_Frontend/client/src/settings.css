@@ -75,3 +75,58 @@ select.Light_colorSetting{
     width: 100px;
     padding-left: 5px;
 }
+
+select.Dark_colorSetting{
+  height: 25px;
+    background-color: #89BAD3;
+    color: white;
+    border: 0px;
+    font-family: inherit;
+    font-size: 1.5em;
+    font-weight: 500;
+    border-radius: 8px;
+    height: 42px;
+    width: 100px;
+    padding-left: 5px;
+}
+
+select.Pink_colorSetting{
+  height: 25px;
+    background-color: rgb(179, 60, 177);
+    color: white;
+    border: 0px;
+    font-family: inherit;
+    font-size: 1.5em;
+    font-weight: 500;
+    border-radius: 8px;
+    height: 42px;
+    width: 100px;
+    padding-left: 5px;
+}
+
+.Light_settingTitle {
+  font-family: inherit;
+  font-weight: 600;
+  position: relative;
+  top: -175px;
+  color: black;
+  
+}
+
+.Dark_settingTitle {
+  font-family: inherit;
+  font-weight: 600;
+  position: relative;
+  top: -175px;
+  color: white;
+  
+}
+
+.Pink_settingTitle {
+  font-family: inherit;
+  font-weight: 600;
+  position: relative;
+  top: -175px;
+  color: black;
+  
+}

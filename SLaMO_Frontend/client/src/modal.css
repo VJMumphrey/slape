@@ -52,7 +52,29 @@
   transition: background 0.15s;
 }
 
+.Dark_modal-close {
+  background-color: rgb(40, 45, 45);
+  border-radius: 20px 0px 0px 0px;
+  transition: background 0.15s;
+}
+
+.Pink_modal-close {
+  background-color: rgb(180, 130, 180);
+  border-radius: 20px 0px 0px 0px;
+  transition: background 0.15s;
+}
+
 .Light_modal-close:hover {
+  background-color: #d00000;
+  border-color: red;
+}
+
+.Dark_modal-close:hover {
+  background-color: #d00000;
+  border-color: red;
+}
+
+.Pink_modal-close:hover {
   background-color: #d00000;
   border-color: red;
 }

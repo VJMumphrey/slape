@@ -2,7 +2,7 @@ div.Light_spinner {
     width: 64px;
     height: 64px;
     border: 12px solid;
-    border-color: #2447f5 #36458f;
+    border-color: #B3C8CF #89A8B2;
     border-radius: 50%;
     animation: spin-anim 1.2s linear infinite;
 }
@@ -55,9 +55,14 @@ p.Light_left{
 }
 
 select.Dark_inference {
-    height: 40px;
-    background-color: rgb(28, 28, 134);
+    height: 25px;
+    background-color: blue;
     color: white;
+    border: 0px;
+    border-radius: 0px 8px 8px 0px;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 500;
 }
 
 select.Light_inference {
@@ -65,15 +70,22 @@ select.Light_inference {
     background-color: #89A8B2;
     color: white;
     border: 0px;
-    border-radius: 0px 8px 8px 0px;font-family: inherit;
+    border-radius: 0px 8px 8px 0px;
+    font-family: inherit;
     font-size: 1em;
     font-weight: 500;
 }
 
 select.Pink_inference {
-    height: 40px;
+    height: 25px;
     background-color: rgb(179, 60, 177);
     color: white;
+    border: 0px;
+    border-radius: 0px 8px 8px 0px;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 500;
+
 }
 
 div.Dark_fixedBottom {
@@ -94,11 +106,6 @@ div.Dark_output{
     color: white;
 }
 
-input.Dark_prompt {
-    width: 70%;
-    height: 20px;
-    color: white;
-}
 
 div.Pink_fixedBottom {
     position: fixed;
@@ -121,6 +128,32 @@ input.Pink_prompt {
     width: 70%;
     height: 20px;
     color: white;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 505;
+    border-radius: 8px 0px 0px 8px;
+}
+
+input.Dark_prompt {
+    width: 70%;
+    height: 20px;
+    color: white;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 505;
+    border-radius: 8px 0px 0px 8px;
+}
+
+input.Light_prompt {
+    width: 70%;
+    height: 20px;
+    background-color: #CCD5D5;
+    color: #697892;
+    border-color: #89A8B2;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 505;
+    border-radius: 8px 0px 0px 8px;
 }
 
 div.Light_fixedBottom {
@@ -144,17 +177,7 @@ div.Light_output{
     font-weight: 500;
 }
 
-input.Light_prompt {
-    width: 70%;
-    height: 20px;
-    background-color: #CCD5D5;
-    color: #697892;
-    border-color: #89A8B2;
-    font-family: inherit;
-    font-size: 1em;
-    font-weight: 505;
-    border-radius: 8px 0px 0px 8px;
-}
+
 
 input.settings {
     width: 40%;
@@ -215,3 +238,34 @@ button.Light_promptSubmit
 
 }
 
+button.Dark_promptSubmit
+{
+  height: 45px;
+  width: 125px;
+  border-radius: 8px;
+  border: 0px;
+  background-color: #697892;
+  color: white;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  margin-left: 45px;
+
+}
+
+button.Pink_promptSubmit
+{
+  height: 45px;
+  width: 125px;
+  border-radius: 8px;
+  border: 0px;
+  background-color: #7b2074;
+  color: white;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  margin-left: 45px;
+
+}
