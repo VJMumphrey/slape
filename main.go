@@ -57,6 +57,13 @@ var (
 		DockerClient:   nil,
 		GPU:            pipeline.IsGPU(),
 	}
+
+	e = pipeline.EmbeddingPipeline{
+		// updates after created
+		DockerClient:   nil,
+		ContainerImage: pipeline.PickImage(),
+		GPU:            pipeline.IsGPU(),
+	}
 )
 
 // @title My API
@@ -75,6 +82,8 @@ func main() {
 	http.HandleFunc("POST /cot/setup", c.ChainPipelineSetupRequest)
 	http.HandleFunc("POST /debate/generate", d.DebatePipelineGenerateRequest)
 	http.HandleFunc("POST /deb/setup", d.DebatePipelineSetupRequest)
+	http.HandleFunc("GET /emb/setup", e.EmbeddingPipelineSetupRequest)
+	http.HandleFunc("POST /emb/generate", e.EmbeddingPipelineGenerateRequest)
 	//http.HandleFunc("/moe", simplerequest)
 	//http.HandleFunc("/up", upDog)
 	http.HandleFunc("GET /getmodels", api.GetModels)

@@ -107,6 +107,8 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	s.ContextBox.SystemPrompt = promptChoice
 	s.ContextBox.Prompt = simplePayload.Prompt
+    thoughts, err := s.getThoughts()
+    s.ContextBox.Thoughts = thoughts
 
 	// generate a response
 	result, err := s.Generate(maxtokens, vars.OpenaiClient)
@@ -200,6 +202,8 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 	if err != nil {
 		return "", err
 	}
+
+    color.Yellow(s.SystemPrompt)
 
 	param := openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{

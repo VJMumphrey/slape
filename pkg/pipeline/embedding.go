@@ -14,8 +14,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/internal/param"
-	"github.com/openai/openai-go/shared"
 )
 
 const (
@@ -23,16 +21,23 @@ const (
 	genmodel   = "Phi-3.5-mini-instruct-Q4_K_M.gguf"
 )
 
-// This pipeline is meant to be used for indexing a RAG database.
-// We are using MiniRAG for a size complexity balance.
-type EmbeddingPipeline struct {
-	DockerClient   *client.Client
-	ContainerImage string
-	GPU            bool
+type (
+	// This pipeline is meant to be used for indexing a RAG database.
+	// We are using MiniRAG for a size complexity balance.
+	EmbeddingPipeline struct {
+		DockerClient   *client.Client
+		ContainerImage string
+		GPU            bool
 
-	// for internal use
-	container container.CreateResponse
-}
+		// for internal use
+		gencontainer container.CreateResponse
+		embcontainer container.CreateResponse
+	}
+
+	embeddingResponse struct {
+		Response openai.CreateEmbeddingResponse
+	}
+)
 
 // SimplePipelineSetupRequest, handlerfunc expects POST method and returns no content
 func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
@@ -43,20 +48,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter,
 	}
 	go api.Cors(w, req)
 
-	if req.Method != http.MethodPost {
-		http.Error(w, "Wrong method used for endpoint", http.StatusBadRequest)
-		return
-	}
-
-	var setupPayload simpleSetupPayload
-
-	err = json.NewDecoder(req.Body).Decode(&setupPayload)
-	if err != nil {
-		color.Red("%s", err)
-		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
-		return
-	}
-
+	// setup values needed for pipeline
 	e.DockerClient = apiClient
 
 	go e.Setup(context.Background())
@@ -80,7 +72,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 
 	// generate a response
 	// TODO rewrite for embedding and rag
-	result, err := e.Generate(simplePayload.Prompt, vars.OpenaiClient)
+	result, err := e.Generate(simplePayload.Prompt, vars.EmbeddingClient)
 	if err != nil {
 		color.Red("%s", err)
 		http.Error(w, "Error getting generation from model", http.StatusOK)
@@ -92,10 +84,10 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 	go e.Shutdown(ctx)
 
 	// for debugging streaming
-	color.Green(result)
+	color.Green("%s", result)
 
-	respPayload := simpleResponse{
-		Answer: result,
+	respPayload := embeddingResponse{
+		Response: *result,
 	}
 
 	json, err := json.Marshal(respPayload)
@@ -122,9 +114,19 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	io.Copy(os.Stdout, reader)
 	defer reader.Close()
 
-	createResponse, err := CreateContainer(
+	gencreateResponse, err := CreateContainer(
 		e.DockerClient,
-		"8000",
+		"8081",
+		"",
+		ctx,
+		genmodel,
+		e.ContainerImage,
+		e.GPU,
+	)
+
+	embedcreateResponse, err := CreateContainer(
+		e.DockerClient,
+		"8082",
 		"",
 		ctx,
 		embedmodel,
@@ -133,63 +135,82 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	)
 
 	if err != nil {
-		color.Yellow("%s", createResponse.Warnings)
+		color.Yellow("%s", gencreateResponse.Warnings)
+		color.Yellow("%s", embedcreateResponse.Warnings)
 		color.Red("%s", err)
 		return err
 	}
 
 	// start container
-	err = (e.DockerClient).ContainerStart(context.Background(), createResponse.ID, container.StartOptions{})
+	err = (e.DockerClient).ContainerStart(context.Background(), gencreateResponse.ID, container.StartOptions{})
+	if err != nil {
+		color.Red("%s", err)
+		return err
+	}
+
+	// start container
+	err = (e.DockerClient).ContainerStart(context.Background(), embedcreateResponse.ID, container.StartOptions{})
 	if err != nil {
 		color.Red("%s", err)
 		return err
 	}
 
 	// For debugging
-	color.Green("%s", createResponse.ID)
-	e.container = createResponse
+	color.Green("%s", gencreateResponse.ID)
+	color.Green("%s", embedcreateResponse.ID)
+	e.embcontainer = embedcreateResponse
+	e.gencontainer = gencreateResponse
 
 	return nil
-
 }
 
-func (e *EmbeddingPipeline) Generate(payload string, openaiClient *openai.Client) (string, error) {
+func (e *EmbeddingPipeline) Generate(payload string, openaiClient *openai.Client) (*openai.CreateEmbeddingResponse, error) {
 	// take care of upDog on our own
 	for {
 		// sleep and give server guy a break
 		time.Sleep(time.Duration(5 * time.Second))
 
 		// Single model, single port, assuming one pipeline is running at a time
-		if api.UpDog("8000") {
+		if api.UpDog("8081") && api.UpDog("8082") {
 			break
 		}
 	}
 
 	param := openai.EmbeddingNewParams{
-		Input: []string {
-			payload,
-		},
+		Input:      openai.F(openai.EmbeddingNewParamsInputUnion(openai.EmbeddingNewParamsInputArrayOfStrings{payload})),
 		Model:      openai.String(embedmodel),
 		Dimensions: openai.Int(1024),
-	},
+	}
 
 	// should return a type of openai.Embedding
-	result, err := GenerateCompletion(param, "", *openaiClient)
+	result, err := GenerateEmbedding(param, *openaiClient)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	return result, nil
 }
 
 func (e *EmbeddingPipeline) Shutdown(ctx context.Context) error {
-	err := (e.DockerClient).ContainerStop(ctx, e.container.ID, container.StopOptions{})
+	err := (e.DockerClient).ContainerStop(ctx, e.gencontainer.ID, container.StopOptions{})
 	if err != nil {
 		color.Red("%s", err)
 		return nil
 	}
 
-	err = (e.DockerClient).ContainerRemove(ctx, e.container.ID, container.RemoveOptions{})
+	err = (e.DockerClient).ContainerStop(ctx, e.embcontainer.ID, container.StopOptions{})
+	if err != nil {
+		color.Red("%s", err)
+		return nil
+	}
+
+	err = (e.DockerClient).ContainerRemove(ctx, e.gencontainer.ID, container.RemoveOptions{})
+	if err != nil {
+		color.Red("%s", err)
+		return nil
+	}
+
+	err = (e.DockerClient).ContainerRemove(ctx, e.embcontainer.ID, container.RemoveOptions{})
 	if err != nil {
 		color.Red("%s", err)
 		return nil

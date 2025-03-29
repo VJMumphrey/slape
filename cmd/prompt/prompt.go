@@ -20,9 +20,10 @@ var (
     while not sacrificing the accuracy and correctness of your answers,
     prefering to not answer if you are not sure about the answer you have. Return you answer in markdown format.
 
-    Additional Context: {s}
-
-    Previous Answers: {s} 
+    Please use the following information before answering the question.
+    Thoughts: %s
+    Additional Context: %s
+    Previous Answers: %s 
     `
 
 	// CoTPrompt is for linear progression tasks where clear steps can be seen.
@@ -42,9 +43,10 @@ var (
 
     Return you answer in markdown format. 
 
-    Additional Context: {s}
-
-    Previous Answers: {s} 
+    Please use the following information before answering the question.
+    Thoughts: %s
+    Additional Context: %s
+    Previous Answers: %s 
     `
 
 	// ToTPrompt uses a structured approach to generating human-like responses to questions or prompts.
@@ -56,9 +58,10 @@ var (
     If any expert realises they're wrong at any point then they leave.
     Return you answer in markdown format. 
 
-    Additional Context: {s}
-
-    Previous Answers: {s} 
+    Please use the following information before answering the question.
+    Thoughts: %s
+    Additional Context: %s
+    Previous Answers: %s 
     `
 
 	// GoTPrompt Graphs of thought prompting are visual representations of the relationships between different aspects of a problem or situation.
@@ -76,9 +79,10 @@ var (
     Repeat this until an answer to this question can be decided.
     Return you answer in markdown format. 
 
-    Additional Context: {s}
-
-    Previous Answers: {s} 
+    Please use the following information before answering the question.
+    Thoughts: %s
+    Additional Context: %s
+    Previous Answers: %s 
     `
 
 	// MoEPrompt uses expert prompting which is a technique used in natural language processing (NLP) and machine learning (ML) to generate responses to questions or tasks that require domain knowledge or expertise.
@@ -112,9 +116,10 @@ var (
     Given a question, take the question and cycle through each expert, giving a chance to get advice until Expert five thinks the answer is correct.
     Return you answer in markdown format. 
 
-    Additional Context: {s}
-
-    Previous Answers: {s} 
+    Please use the following information before answering the question.
+    Thoughts: %s
+    Additional Context: %s
+    Previous Answers: %s 
     `
 
 	// SixThinkingHats, It is a problem-solving technique that involves the model wearing several hats.
@@ -139,9 +144,10 @@ var (
     Once you have enough information to solve the problem, answer the question.
     Return you answer in markdown format. 
 
-    Additional Context: {s}
-
-    Previous Answers: {s} 
+    Please use the following information before answering the question.
+    Thoughts: %s
+    Additional Context: %s
+    Previous Answers: %s 
     `
 
 	// WIP and not supposed to be used.
@@ -175,8 +181,9 @@ var (
 
     Return you answer in markdown format. 
 
-    Additional Context: {s}
-
-    Previous Answers: {s} 
+    Please use the following information before answering the question.
+    Thoughts: %s
+    Additional Context: %s
+    Previous Answers: %s 
     `
 )

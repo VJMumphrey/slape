@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
@@ -140,28 +139,12 @@ func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion s
 }
 
 // GenerateEmbedding is used as a helper function for generating embeddings.
-func GenerateEmbedding(param openai.EmbeddingNewParams, client openai.Client) (openai.Embedding, error) {
+func GenerateEmbedding(param openai.EmbeddingNewParams, client openai.Client) (*openai.CreateEmbeddingResponse, error) {
 
-	client.Embeddings
-
-	return embedding, nil
-}
-
-// FindContainer finds a specific container based on the nomenclature of /name.
-// Useful making checks before
-func FindContainer(apiClient *client.Client, ctx context.Context) (types.Container, bool) {
-	status := false
-
-	containers, err := apiClient.ContainerList(ctx, container.ListOptions{All: true})
+	embeddings, err := client.Embeddings.New(context.Background(), param)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	for _, container := range containers {
-		if container.Names[len(container.Names)-1] == "/llamacpp" {
-			return container, true
-		}
-	}
-
-	return types.Container{}, status
+	return embeddings, nil
 }

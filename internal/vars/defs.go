@@ -17,5 +17,13 @@ var (
 		option.WithBaseURL("http://localhost:8000/v1"),
 	)
 
+	GenerationClient = openai.NewClient(
+		option.WithBaseURL("http://localhost:8081/v1"),
+	)
+
+	EmbeddingClient = openai.NewClient(
+		option.WithBaseURL("http://localhost:8082/v1"),
+	)
+
 	ModelTemperature = 0.1
 )

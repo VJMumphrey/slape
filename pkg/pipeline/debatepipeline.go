@@ -110,6 +110,11 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 	}
 
 	promptChoice, maxtokens := processPrompt(payload.Mode)
+    d.ContextBox.SystemPrompt = promptChoice
+    d.ContextBox.Prompt = payload.Prompt
+
+    thoughts, err := d.getThoughts()
+    d.ContextBox.Thoughts = thoughts
 
 	// generate a response
 	result, err := d.Generate(payload.Prompt, promptChoice, maxtokens)

@@ -86,6 +86,8 @@ godoc -index -notes="BUG|TODO|NOTE"
 
 And travel to this url in your browser http://localhost:6060/pkg/github.com/StoneG24/slape/.
 
+### Indexing RAG (LightRag/MiniRag)
+
 ### Reference
 
 Here are some of the research papers that we used to aid us in development.

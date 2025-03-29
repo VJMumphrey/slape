@@ -109,6 +109,10 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 	}
 
 	promptChoice, maxtokens := processPrompt(payload.Mode)
+	c.ContextBox.SystemPrompt = promptChoice
+	c.ContextBox.Prompt = payload.Prompt
+    thoughts, err := c.getThoughts()
+	c.ContextBox.Thoughts = thoughts
 
 	// generate a response
 	result, err := c.Generate(payload.Prompt, promptChoice, maxtokens)

@@ -10,7 +10,7 @@ import (
 	"github.com/coder/hnsw"
 )
 
-// Utilize HNSW algorithim to create a vector to Internet searching and Document
+// Utilize HNSW algorithim to create a vector for Internet searching 
 // This is a simple function to get us going and will need more work in future to implement
 // correctly.
 // Apparently this has some openai cabability
