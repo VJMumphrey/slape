@@ -58,7 +58,6 @@ func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter,
 
 // simplerequest is used to handle simple requests as needed.
 func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	ctx := context.Background()
 	go api.Cors(w, req)
 
 	var simplePayload simpleRequest
@@ -76,12 +75,9 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 	if err != nil {
 		color.Red("%s", err)
 		http.Error(w, "Error getting generation from model", http.StatusOK)
-		go e.Shutdown(ctx)
 
 		return
 	}
-
-	go e.Shutdown(ctx)
 
 	// for debugging streaming
 	color.Green("%s", result)
@@ -191,32 +187,26 @@ func (e *EmbeddingPipeline) Generate(payload string, openaiClient *openai.Client
 	return result, nil
 }
 
-func (e *EmbeddingPipeline) Shutdown(ctx context.Context) error {
-	err := (e.DockerClient).ContainerStop(ctx, e.gencontainer.ID, container.StopOptions{})
+func (e *EmbeddingPipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
+	err := (e.DockerClient).ContainerStop(context.Background(), e.gencontainer.ID, container.StopOptions{})
 	if err != nil {
 		color.Red("%s", err)
-		return nil
 	}
 
-	err = (e.DockerClient).ContainerStop(ctx, e.embcontainer.ID, container.StopOptions{})
+	err = (e.DockerClient).ContainerStop(context.Background(), e.embcontainer.ID, container.StopOptions{})
 	if err != nil {
 		color.Red("%s", err)
-		return nil
 	}
 
-	err = (e.DockerClient).ContainerRemove(ctx, e.gencontainer.ID, container.RemoveOptions{})
+	err = (e.DockerClient).ContainerRemove(context.Background(), e.gencontainer.ID, container.RemoveOptions{})
 	if err != nil {
 		color.Red("%s", err)
-		return nil
 	}
 
-	err = (e.DockerClient).ContainerRemove(ctx, e.embcontainer.ID, container.RemoveOptions{})
+	err = (e.DockerClient).ContainerRemove(context.Background(), e.embcontainer.ID, container.RemoveOptions{})
 	if err != nil {
 		color.Red("%s", err)
-		return nil
 	}
 
 	color.Green("Shutting Down...")
-
-	return nil
 }

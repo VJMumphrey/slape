@@ -78,12 +78,16 @@ func main() {
 
 	http.HandleFunc("POST /simple/generate", s.SimplePipelineGenerateRequest)
 	http.HandleFunc("POST /simple/setup", s.SimplePipelineSetupRequest)
+	http.HandleFunc("GET /simple/shutdown", s.Shutdown)
 	http.HandleFunc("POST /cot/generate", c.ChainPipelineGenerateRequest)
 	http.HandleFunc("POST /cot/setup", c.ChainPipelineSetupRequest)
-	http.HandleFunc("POST /debate/generate", d.DebatePipelineGenerateRequest)
+	http.HandleFunc("GET /cot/shutdown", c.Shutdown)
 	http.HandleFunc("POST /deb/setup", d.DebatePipelineSetupRequest)
-	http.HandleFunc("GET /emb/setup", e.EmbeddingPipelineSetupRequest)
+	http.HandleFunc("POST /deb/generate", d.DebatePipelineGenerateRequest)
+	http.HandleFunc("GET /deb/shutdown", d.Shutdown)
+	http.HandleFunc("GET  /emb/setup", e.EmbeddingPipelineSetupRequest)
 	http.HandleFunc("POST /emb/generate", e.EmbeddingPipelineGenerateRequest)
+	http.HandleFunc("GET /emb/shutdown", e.Shutdown)
 	//http.HandleFunc("/moe", simplerequest)
 	//http.HandleFunc("/up", upDog)
 	http.HandleFunc("GET /getmodels", api.GetModels)
@@ -120,9 +124,9 @@ func main() {
 	// Close the pipeline to stop adding new pipelines
 	// close(keystone)
 
-	go s.Shutdown(context.Background())
-	go c.Shutdown(context.Background())
-	go d.Shutdown(context.Background())
+	go s.Shutdown(nil, nil)
+	go c.Shutdown(nil, nil)
+	go d.Shutdown(nil, nil)
 
 	log.Println("Server gracefully stopped")
 }

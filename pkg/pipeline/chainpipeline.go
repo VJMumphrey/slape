@@ -95,7 +95,6 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 // - models array of strings, an array of strings containing three models to use.
 // - mode string, mode of prompt struture to use.
 func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	ctx := context.Background()
 	go api.Cors(w, req)
 
 	var payload chainRequest
@@ -120,11 +119,8 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Error getting generation from model"))
-		go c.Shutdown(ctx)
 		return
 	}
-
-	go c.Shutdown(ctx)
 
 	// for debugging streaming
 	color.Green(result)
@@ -286,15 +282,15 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 }
 
 // ChainofModels.Shutdown handles the shutdown of the pipelines models.
-func (c *ChainofModels) Shutdown(ctx context.Context) {
+func (c *ChainofModels) Shutdown(w http.ResponseWriter, req *http.Request) {
 	// turn off the containers if they aren't already off
 	for _, model := range c.containers {
-		(c.DockerClient).ContainerStop(ctx, model.ID, container.StopOptions{})
+		(c.DockerClient).ContainerStop(context.Background(), model.ID, container.StopOptions{})
 	}
 
 	// remove the containers, seperate incase it's already stopped
 	for _, model := range c.containers {
-		(c.DockerClient).ContainerRemove(ctx, model.ID, container.RemoveOptions{})
+		(c.DockerClient).ContainerRemove(context.Background(), model.ID, container.RemoveOptions{})
 	}
 
 	color.Green("Shutting Down...")

@@ -91,7 +91,6 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 
 // simplerequest is used to handle simple requests as needed.
 func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	ctx := context.Background()
 	go api.Cors(w, req)
 
 	var simplePayload simpleRequest
@@ -107,20 +106,17 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	s.ContextBox.SystemPrompt = promptChoice
 	s.ContextBox.Prompt = simplePayload.Prompt
-    thoughts, err := s.getThoughts()
-    s.ContextBox.Thoughts = thoughts
+	thoughts, err := s.getThoughts()
+	s.ContextBox.Thoughts = thoughts
 
 	// generate a response
 	result, err := s.Generate(maxtokens, vars.OpenaiClient)
 	if err != nil {
 		color.Red("%s", err)
 		http.Error(w, "Error getting generation from model", http.StatusOK)
-		go s.Shutdown(ctx)
 
 		return
 	}
-
-	go s.Shutdown(ctx)
 
 	// for debugging streaming
 	color.Green(result)
@@ -203,7 +199,7 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 		return "", err
 	}
 
-    color.Yellow(s.SystemPrompt)
+	color.Yellow(s.SystemPrompt)
 
 	param := openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
@@ -225,20 +221,16 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 	return result, nil
 }
 
-func (s *SimplePipeline) Shutdown(ctx context.Context) error {
-	err := (s.DockerClient).ContainerStop(ctx, s.container.ID, container.StopOptions{})
+func (s *SimplePipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
+	err := (s.DockerClient).ContainerStop(context.Background(), s.container.ID, container.StopOptions{})
 	if err != nil {
 		color.Red("%s", err)
-		return nil
 	}
 
-	err = (s.DockerClient).ContainerRemove(ctx, s.container.ID, container.RemoveOptions{})
+	err = (s.DockerClient).ContainerRemove(context.Background(), s.container.ID, container.RemoveOptions{})
 	if err != nil {
 		color.Red("%s", err)
-		return nil
 	}
 
 	color.Green("Shutting Down...")
-
-	return nil
 }

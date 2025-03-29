@@ -96,7 +96,6 @@ func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *
 
 // DebatePipelineGenerateRequest is used to handle the request for a debate style thought process.
 func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	ctx := context.Background()
 	api.Cors(w, req)
 
 	var payload debateRequest
@@ -122,11 +121,8 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 		color.Red("%s", err)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Error getting generation from model"))
-		go d.Shutdown(ctx)
 		return
 	}
-
-	go d.Shutdown(ctx)
 
 	// for debugging streaming
 	color.Green(result)
@@ -282,15 +278,15 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 	return result, nil
 }
 
-func (d *DebateofModels) Shutdown(ctx context.Context) {
+func (d *DebateofModels) Shutdown(w http.ResponseWriter, req *http.Request) {
 	// turn off the containers if they aren't already off
 	for i := range d.Models {
-		(d.DockerClient).ContainerStop(ctx, d.Models[i], container.StopOptions{})
+		(d.DockerClient).ContainerStop(context.Background(), d.Models[i], container.StopOptions{})
 	}
 
 	// remove the containers
 	for i := range d.Models {
-		(d.DockerClient).ContainerRemove(ctx, d.Models[i], container.RemoveOptions{})
+		(d.DockerClient).ContainerRemove(context.Background(), d.Models[i], container.RemoveOptions{})
 	}
 
 	color.Green("Shutting Down...")
