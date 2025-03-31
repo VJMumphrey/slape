@@ -1,6 +1,6 @@
 .Dark_pipelineDiv{
     text-align: left;
-    background-color: rgb(20, 20, 25);
+    background-color: #131C46;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
     width: 100%;
     padding: 10px;
@@ -17,13 +17,22 @@
 }
 
 .Dark_pipelineDiv:hover {
-    background-color: rgb(25, 25, 30);
+    background-color: #1a1f56;
     border-color: #646cff;
 }
 
 .Dark_pipelineDiv:active {
     background-color: #646cff;
 }
+
+.Dark_pipelineDiv:focus,
+.Dark_pipelineDiv:focus-visible,
+.Dark_pipelineDiv:focus-within {
+    background-color: #646cff;
+}
+
+
+
 
 .Pink_pipelineDiv{
     text-align: left;
@@ -74,6 +83,12 @@
     background-color: #CCE7E7;
 }
 
+.Light_pipelineDiv:focus,
+.Light_pipelineDiv:focus-visible,
+.Light_pipelineDiv:focus-within {
+    background-color: #CCE7E7;
+}
+
 .pipelineHeader {
     grid-column: 1;
     grid-row: 1;
@@ -82,7 +97,7 @@
 .Dark_pipelineButton {
     grid-column: 6;
     grid-row: 1;
-    background-color: #535bf2;
+    background-color: #292f75;
     color: white;
 }
 
@@ -112,6 +127,7 @@
 
 .Light_addModelActive{
     background-color: #697892;
+    height: 40px;
     color: white;
     margin-left: 20px;
     border-radius: 8px 0px 0px 8px;
@@ -122,18 +138,20 @@
 
 .Light_addModelInactive{
     background-color: #A3B8BF;
+    height: 40px;
     color: black;
     margin-left: 20px;
     border-radius: 8px 0px 0px 8px;
     width: 95px;
     padding-left: 0;
     padding-right: 0;
+    padding-top:0.55;
+    padding-bottom:0.55;
     transition: background 0.15;
 }
 
 .Light_addModelInactive:hover{
-    border: #A3B8BF;
-    border-width: 8px;
+    border-color: #A3B8BF;
     cursor: inherit;
 }
 
@@ -142,24 +160,47 @@
 }
 
 .Light_addModelInactive:focus,
-.Light-addModelInactive:focus-visible {
-    border: #A3B8BF;
-    border-width: 8px;
+.Light_addModelInactive:focus-visible {
+    border-color: #A3B8BF;
     outline: none;
 }
 
-.Light-addModelInactive:focus{
-    border: none;
-}
-
-.Dark_addModel{
-    background-color: #697892;
+.Dark_addModelActive{
+    background-color: #5f66b2;
+    height: 40px;
     color: white;
     margin-left: 20px;
     border-radius: 8px 0px 0px 8px;
     width: 95px;
     padding-left: 0;
     padding-right: 0;
+}
+
+.Dark_addModelInactive{
+    background-color: #3f3682;
+    height: 40px;
+    color: white;
+    margin-left: 20px;
+    border-radius: 8px 0px 0px 8px;
+    width: 95px;
+    padding-left: 0;
+    padding-right: 0;
+    transition: background 0.15;
+}
+
+.Dark_addModelInactive:hover {
+    border-color: #3f3682;
+    cursor: default;
+}
+
+.Dark_addModelInactive:active{
+    background-color: #d00000;
+}
+
+.Dark_addModelInactive:focus,
+.Dark_addModelInactive:focus-visible {
+    border-color: #3f3682;
+    outline: none;
 }
 
 .Pink_addModel{
@@ -175,6 +216,8 @@
 select.Light_modelDropdown{
     height: 40px;
     margin-right: 20px;
+    padding-top: 0.55em;
+    padding-bottom: 0.55em;
     background-color: #89BAD3;
     border-radius: 0px 8px 8px 0px;
     font-family: inherit;
@@ -185,7 +228,10 @@ select.Light_modelDropdown{
 select.Dark_modelDropdown{
     height: 40px;
     margin-right: 20px;
-    background-color: blue;
+    padding-top: 0.55em;
+    padding-bottom: 0.55em;
+    background-color: #494f95;
+    border-color: #494f95;
     border-radius: 0px 8px 8px 0px;
     font-family: inherit;
     font-size: 1em;

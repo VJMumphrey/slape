@@ -28,7 +28,7 @@ export default function Pipelines() {
   };
 
   async function savePipeline() {
-    if (localStorage.getItem(`${CurrentPipeline}Models`) === null) {
+    if (JSON.parse(localStorage.getItem(`${CurrentPipeline}Models`) as string).length === 0) {
       alert("Please Select Models for this Pipeline First!");
     } else {
       localStorage.setItem("currentPipeline", JSON.stringify(CurrentPipeline));

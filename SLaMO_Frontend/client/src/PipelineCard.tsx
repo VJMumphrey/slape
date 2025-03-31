@@ -105,7 +105,7 @@ export default function PipelineCard({
   }
 
   return (
-    <div className={`${themeColor}_pipelineDiv`}>
+    <div className={`${themeColor}_pipelineDiv`} tabIndex={0}>
       <h3 className="pipelineHeader">{displayName}</h3>
       <button
         className={`${themeColor}_pipelineButton`}
