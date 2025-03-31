@@ -110,7 +110,7 @@
     grid-row: 3;
 }
 
-.Light_addModel{
+.Light_addModelActive{
     background-color: #697892;
     color: white;
     margin-left: 20px;
@@ -118,6 +118,38 @@
     width: 95px;
     padding-left: 0;
     padding-right: 0;
+}
+
+.Light_addModelInactive{
+    background-color: #A3B8BF;
+    color: black;
+    margin-left: 20px;
+    border-radius: 8px 0px 0px 8px;
+    width: 95px;
+    padding-left: 0;
+    padding-right: 0;
+    transition: background 0.15;
+}
+
+.Light_addModelInactive:hover{
+    border: #A3B8BF;
+    border-width: 8px;
+    cursor: inherit;
+}
+
+.Light_addModelInactive:active{
+    background-color: #d00000;
+}
+
+.Light_addModelInactive:focus,
+.Light-addModelInactive:focus-visible {
+    border: #A3B8BF;
+    border-width: 8px;
+    outline: none;
+}
+
+.Light-addModelInactive:focus{
+    border: none;
 }
 
 .Dark_addModel{

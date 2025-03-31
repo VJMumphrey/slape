@@ -48,7 +48,7 @@ type (
 	simpleSetupPayload struct {
 		// Model is the name of the single
 		// model used in the pipeline
-		Model string `json:"model"`
+		Model string `json:"models"`
 	}
 
 	simpleResponse struct {

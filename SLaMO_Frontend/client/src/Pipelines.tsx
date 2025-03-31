@@ -14,16 +14,16 @@ export default function Pipelines() {
 
   const themeColor: string | null = localStorage.getItem("StyleSetting");
 
-  const testModel = {
-    pipeline: "TestPipeline",
-    models: ["Phi-3.5", "Dolphin", "Ms. Gorman"],
+  const simplePipeline = {
+    pipeline: "simple",
+    displayName: "Simple Pipeline",
     description:
-      "This test Pipeline tests how well I could pipeline your mom. So far the tests are successful.",
+      "This pipeline sends a request to one model to get a simple I/O response. This is mainly meant for simple questions.",
   };
 
   const testModel2 = {
     pipeline: "TestPipelines",
-    models: ["Phi-3.5", "Dolphin"],
+    displayName: "TestPipelines",
     description: "Tests to see how multiple cards look",
   };
 
@@ -37,7 +37,7 @@ export default function Pipelines() {
         models.push(element.fullName);
       })
 
-      const response = await fetch(`http://localhost:8080/${CurrentPipeline}`, {
+      const response = await fetch(`http://localhost:8080/${CurrentPipeline}/setup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,8 +56,8 @@ export default function Pipelines() {
       <div className={`${themeColor}_background`}/>
       <MenuTabs />
       {/*To do this not stupid, add an onClick Property to PipelineCard that passes the onClick to the div of PipelineCard*/}
-      <div onClick={() => {setCurrentPipeline(testModel.pipeline)}}>
-        <PipelineCard {...testModel}></PipelineCard>
+      <div onClick={() => {setCurrentPipeline(simplePipeline.pipeline)}}>
+        <PipelineCard {...simplePipeline}></PipelineCard>
       </div>
       <p></p>
       <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>

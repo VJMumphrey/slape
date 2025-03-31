@@ -7,18 +7,19 @@ import {ReactNode} from "react";
 
 interface pipelineProperties {
   pipeline: string;
-  models: string[];
+  displayName: string;
   description: string;
 }
 
 export default function PipelineCard({
   pipeline,
-  models,
+  displayName,
   description,
 }: pipelineProperties) {
   const [ModalOpen, setModalOpen] = useState(false);
   const [modelName, setmodelName] = useState("Phi 3");
   const [Models, setModels] = useState<object[]>([]);
+  const [ AddModelsButtonStatus, setAddModelsButtonStatus ] = useState("addModelActive");
 
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
@@ -31,6 +32,7 @@ export default function PipelineCard({
     setModalOpen(true);
     setModels([]);
     localStorage.removeItem(`${pipeline}Models`);
+    setAddModelsButtonStatus("addModelActive");
   };
 
   const modalCloseButtonHandler = () => {
@@ -80,7 +82,12 @@ export default function PipelineCard({
       }
     }
 
-    setModels([...Models, modelObject]);
+    if (pipeline !== "simple") {
+      setModels([...Models, modelObject]);
+    } else if (Models.length === 0) {
+      setModels([modelObject]);
+      setAddModelsButtonStatus("addModelInactive");
+    }
   }
 
   function displayCurrentModels(className: string): ReactNode {
@@ -99,7 +106,7 @@ export default function PipelineCard({
 
   return (
     <div className={`${themeColor}_pipelineDiv`}>
-      <h3 className="pipelineHeader">{pipeline}</h3>
+      <h3 className="pipelineHeader">{displayName}</h3>
       <button
         className={`${themeColor}_pipelineButton`}
         onClick={pipelineSettingsButtonHandler}
@@ -111,7 +118,7 @@ export default function PipelineCard({
           <p>
             {/* {displayCurrentModels("")} */}
             <button
-              className={`${themeColor}_addModel`}
+              className={`${themeColor}_${AddModelsButtonStatus}`}
               onClick={addModelHandler}
             >
               Add Model
