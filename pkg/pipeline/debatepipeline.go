@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+    "log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -14,7 +16,6 @@ import (
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/fatih/color"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
@@ -66,7 +67,7 @@ type (
 func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return
 	}
 	go api.Cors(w, req)
@@ -80,9 +81,8 @@ func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *
 
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		w.Write([]byte("Error unexpected request format"))
+		slog.Error("%s", err)
+		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -102,30 +102,28 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 
 	err := json.NewDecoder(req.Body).Decode(&payload)
 	if err != nil {
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		w.Write([]byte("Error unexpected request format"))
+		slog.Error("%s", err)
+		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
 
 	promptChoice, maxtokens := processPrompt(payload.Mode)
-    d.ContextBox.SystemPrompt = promptChoice
-    d.ContextBox.Prompt = payload.Prompt
+	d.ContextBox.SystemPrompt = promptChoice
+	d.ContextBox.Prompt = payload.Prompt
 
-    thoughts, err := d.getThoughts()
-    d.ContextBox.Thoughts = thoughts
+	thoughts, err := d.getThoughts()
+	d.ContextBox.Thoughts = thoughts
 
 	// generate a response
 	result, err := d.Generate(payload.Prompt, promptChoice, maxtokens)
 	if err != nil {
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Error getting generation from model"))
+		slog.Error("%s", err)
+		http.Error(w, "Error getting generation from model", http.StatusOK)
 		return
 	}
 
 	// for debugging streaming
-	color.Green(result)
+	log.Print(result)
 
 	respPayload := debateResponse{
 		Answer: result,
@@ -133,9 +131,8 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 
 	json, err := json.Marshal(respPayload)
 	if err != nil {
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Error marshaling your response from model"))
+		slog.Error("%s", err)
+		http.Error(w, "Error marshaling your response from model", http.StatusOK)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -148,7 +145,7 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 func (d *DebateofModels) Setup(ctx context.Context) error {
 	reader, err := PullImage(d.DockerClient, ctx, d.ContainerImage)
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return err
 	}
 	// prints out the status of the download
@@ -158,12 +155,12 @@ func (d *DebateofModels) Setup(ctx context.Context) error {
 	for i := 0; i < len(d.Models)-1; i++ {
 		createResponse, err := CreateContainer(d.DockerClient, "800"+strconv.Itoa(i), "", ctx, d.Models[i], d.ContainerImage, d.GPU)
 		if err != nil {
-			color.Yellow("%s", createResponse.Warnings)
-			color.Red("%s", err)
+			slog.Warn("%s", createResponse.Warnings)
+			slog.Error("%s", err)
 			return err
 		}
 
-		color.Green("%s", createResponse.ID)
+		slog.Info("%s", createResponse.ID)
 		d.Models[i] = createResponse.ID
 	}
 
@@ -179,10 +176,10 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 			// start container
 			err := (d.DockerClient).ContainerStart(context.Background(), model.ID, container.StartOptions{})
 			if err != nil {
-				color.Red("%s", err)
+				slog.Error("%s", err)
 				return "", err
 			}
-			color.Green("Starting container %d...", i)
+			slog.Info("Starting container %d...", i)
 
 			for {
 				// sleep and give server guy a break
@@ -197,7 +194,7 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 				option.WithBaseURL("http://localhost:800" + strconv.Itoa(i) + "/v1"),
 			)
 
-			color.Yellow("Debug: %s%s", systemprompt, prompt)
+			slog.Debug("Debug: %s%s", systemprompt, prompt)
 
 			err = d.PromptBuilder(result)
 			if err != nil {
@@ -220,7 +217,7 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 
 			result, err = GenerateCompletion(param, "", *openaiClient)
 			if err != nil {
-				color.Red("%s", err)
+				slog.Error("%s", err)
 				return "", err
 			}
 
@@ -241,7 +238,7 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 
 			result, err = GenerateCompletion(param, "", *openaiClient)
 			if err != nil {
-				color.Red("%s", err)
+				slog.Error("%s", err)
 				return "", err
 			}
 
@@ -263,14 +260,14 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 
 				result, err = GenerateCompletion(param, "", *openaiClient)
 				if err != nil {
-					color.Red("%s", err)
+					slog.Error("%s", err)
 					return "", err
 				}
 			*/
 
 			d.FutureQuestions = result
 
-			color.Green("Stopping container %d...", i)
+			slog.Info("Stopping container %d...", i)
 			(d.DockerClient).ContainerStop(context.Background(), model.ID, container.StopOptions{})
 		}
 	}
@@ -289,5 +286,5 @@ func (d *DebateofModels) Shutdown(w http.ResponseWriter, req *http.Request) {
 		(d.DockerClient).ContainerRemove(context.Background(), d.Models[i], container.RemoveOptions{})
 	}
 
-	color.Green("Shutting Down...")
+	slog.Info("Shutting Down...")
 }

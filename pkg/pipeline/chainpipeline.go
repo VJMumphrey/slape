@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -14,7 +15,6 @@ import (
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/fatih/color"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
@@ -61,7 +61,7 @@ type (
 func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return
 	}
 	go api.Cors(w, req)
@@ -75,7 +75,7 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		w.Write([]byte("Error unexpected request format"))
 		return
@@ -101,29 +101,27 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 
 	err := json.NewDecoder(req.Body).Decode(&payload)
 	if err != nil {
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		w.Write([]byte("Error unexpected request format"))
+		slog.Error("%s", err)
+		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
 
 	promptChoice, maxtokens := processPrompt(payload.Mode)
 	c.ContextBox.SystemPrompt = promptChoice
 	c.ContextBox.Prompt = payload.Prompt
-    thoughts, err := c.getThoughts()
+	thoughts, err := c.getThoughts()
 	c.ContextBox.Thoughts = thoughts
 
 	// generate a response
 	result, err := c.Generate(payload.Prompt, promptChoice, maxtokens)
 	if err != nil {
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Error getting generation from model"))
+		slog.Error("%s", err)
+		http.Error(w, "Error getting generation from model", http.StatusOK)
 		return
 	}
 
 	// for debugging streaming
-	color.Green(result)
+	slog.Info(result)
 
 	respPayload := chainResponse{
 		Answer: result,
@@ -131,9 +129,8 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 
 	json, err := json.Marshal(respPayload)
 	if err != nil {
-		color.Red("%s", err)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Error marshaling your response from model"))
+		slog.Error("%s", err)
+		http.Error(w, "Error marshaling your response from model", http.StatusOK)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -144,10 +141,10 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 func (c *ChainofModels) Setup(ctx context.Context) error {
 	reader, err := PullImage(c.DockerClient, ctx, c.ContainerImage)
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return err
 	}
-	color.Green("Pulling Image...")
+	slog.Info("Pulling Image...")
 	// prints out the status of the download
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
@@ -164,12 +161,12 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 		)
 
 		if err != nil {
-			color.Yellow("%s", createResponse.Warnings)
-			color.Red("%s", err)
+			slog.Warn("%s", createResponse.Warnings)
+			slog.Error("%s", err)
 			return err
 		}
 
-		color.Green("%s", createResponse.ID)
+		slog.Info("%s", createResponse.ID)
 		c.containers = append(c.containers, createResponse)
 	}
 
@@ -185,10 +182,10 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 		// start container
 		err := (c.DockerClient).ContainerStart(context.Background(), model.ID, container.StartOptions{})
 		if err != nil {
-			color.Red("%s", err)
+			slog.Error("%s", err)
 			return "", err
 		}
-		color.Green("Starting container %d...", i)
+		slog.Info("Starting container %d...", i)
 
 		for {
 			// sleep and give server guy a break
@@ -203,7 +200,7 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 			option.WithBaseURL("http://localhost:800" + strconv.Itoa(i) + "/v1"),
 		)
 
-		color.Yellow("Debug: %s%s", systemprompt, prompt)
+		slog.Debug("Debug: %s%s", systemprompt, prompt)
 
 		err = c.PromptBuilder(result)
 		if err != nil {
@@ -226,7 +223,7 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 
 		result, err = GenerateCompletion(param, "", *openaiClient)
 		if err != nil {
-			color.Red("%s", err)
+			slog.Error("%s", err)
 			return "", err
 		}
 
@@ -247,7 +244,7 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 
 		result, err = GenerateCompletion(param, "", *openaiClient)
 		if err != nil {
-			color.Red("%s", err)
+			slog.Error("%s", err)
 			return "", err
 		}
 
@@ -268,13 +265,13 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 
 		result, err = GenerateCompletion(param, "", *openaiClient)
 		if err != nil {
-			color.Red("%s", err)
+			slog.Error("%s", err)
 			return "", err
 		}
 
 		c.FutureQuestions = result
 
-		color.Green("Stopping container %d...", i)
+		slog.Info("Stopping container %d...", i)
 		(c.DockerClient).ContainerStop(context.Background(), model.ID, container.StopOptions{})
 	}
 
@@ -293,5 +290,5 @@ func (c *ChainofModels) Shutdown(w http.ResponseWriter, req *http.Request) {
 		(c.DockerClient).ContainerRemove(context.Background(), model.ID, container.RemoveOptions{})
 	}
 
-	color.Green("Shutting Down...")
+	slog.Info("Shutting Down...")
 }

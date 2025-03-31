@@ -2,8 +2,12 @@ package pipeline
 
 import (
 	"fmt"
+	"log"
+	"log/slog"
+	"time"
 
 	"github.com/StoneG24/slape/internal/vars"
+	"github.com/StoneG24/slape/pkg/api"
 	"github.com/openai/openai-go"
 )
 
@@ -51,7 +55,7 @@ func (c *ContextBox) PromptBuilder(previousAnswer string) error {
 		prevAns = "None"
 	}
 
-	//fmt.Println(c.Thoughts, additionalContex, prevAns)
+	slog.Debug(c.Thoughts, additionalContex, prevAns)
 	c.SystemPrompt = fmt.Sprintf(c.SystemPrompt, c.Thoughts, additionalContex, prevAns)
 
 	// TODO(v) do something different for debate where we have question/idea and ask the hats after.
@@ -63,8 +67,7 @@ func (c *ContextBox) PromptBuilder(previousAnswer string) error {
 // This will not be good for slms but llms that are centered around reasoning
 func (c *ContextBox) getThoughts() (string, error) {
 
-	prompt := `You are an intellegent agent that asses problems and ideas.
-    Think through the given statement and return your thoughts.
+	prompt := `Think through the given statement and return your thoughts.
     These thoughts should contain initial ideas, thoughts, and contraints regarding the problem.
     `
 
@@ -80,10 +83,23 @@ func (c *ContextBox) getThoughts() (string, error) {
 		//MaxTokens:   openai.Int(maxtokens),
 	}
 
+	for {
+		// sleep and give server guy a break
+		time.Sleep(time.Duration(5 * time.Second))
+
+		// Single model, single port, assuming one pipeline is running at a time
+		if api.UpDog("8000") {
+			break
+		}
+	}
+
 	result, err := GenerateCompletion(param, "", *vars.OpenaiClient)
+    log.Println(result)
 	if err != nil {
 		return "None", err
 	}
+
+    slog.Debug("%s", result)
 
 	return result, nil
 }

@@ -14,6 +14,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,7 +22,6 @@ import (
 
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/StoneG24/slape/pkg/pipeline"
-	"github.com/fatih/color"
 )
 
 var (
@@ -73,6 +73,11 @@ var (
 // @BasePath /
 func main() {
 
+    // This is info by default
+    var programLevel = new(slog.LevelVar)
+    // Change to Debug so we get debug logs
+    programLevel.Set(slog.LevelDebug)
+
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
 
@@ -98,7 +103,7 @@ func main() {
 	}
 
 	// Start the server in a goroutine.
-	color.Green("[+] Server started on :8080")
+	slog.Info("[+] Server started on :8080")
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe(): %s", err)
@@ -128,5 +133,5 @@ func main() {
 	c.Shutdown(nil, nil)
 	d.Shutdown(nil, nil)
 
-	log.Println("Server gracefully stopped")
+	slog.Info("[+] Server gracefully stopped")
 }

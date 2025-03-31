@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -12,7 +14,6 @@ import (
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/fatih/color"
 	"github.com/openai/openai-go"
 )
 
@@ -62,7 +63,7 @@ type (
 func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		color.Red("%s", err)
+        slog.Error("%s", err)
 		return
 	}
 	go api.Cors(w, req)
@@ -76,7 +77,7 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
-		color.Red("%s", err)
+        slog.Error("%s", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
@@ -97,7 +98,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
@@ -107,19 +108,20 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	s.ContextBox.SystemPrompt = promptChoice
 	s.ContextBox.Prompt = simplePayload.Prompt
 	thoughts, err := s.getThoughts()
+    log.Println("%s", thoughts)
 	s.ContextBox.Thoughts = thoughts
 
 	// generate a response
 	result, err := s.Generate(maxtokens, vars.OpenaiClient)
 	if err != nil {
-		color.Red("%s", err)
+	    slog.Error("%s", err)
 		http.Error(w, "Error getting generation from model", http.StatusOK)
 
 		return
 	}
 
 	// for debugging streaming
-    color.Green(result)
+    slog.Debug(result)
 
 	respPayload := simpleResponse{
 		Answer: result,
@@ -127,7 +129,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	json, err := json.Marshal(respPayload)
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("Error", err)
 		http.Error(w, "Error marshaling your response from model", http.StatusOK)
 		return
 	}
@@ -140,10 +142,10 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 
 	reader, err := PullImage(s.DockerClient, ctx, s.ContainerImage)
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return err
 	}
-	color.Green("Pulling Image...")
+	slog.Info("Pulling Image...")
 	// prints out the status of the download
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
@@ -160,20 +162,20 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	)
 
 	if err != nil {
-		color.Yellow("%s", createResponse.Warnings)
-		color.Red("%s", err)
+		slog.Warn("%s", createResponse.Warnings)
+		slog.Error("%s", err)
 		return err
 	}
 
 	// start container
 	err = (s.DockerClient).ContainerStart(context.Background(), createResponse.ID, container.StartOptions{})
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return err
 	}
 
 	// For debugging
-	color.Green("%s", createResponse.ID)
+	slog.Info(createResponse.ID)
 	s.container = createResponse
 
 	return nil
@@ -192,14 +194,14 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 		}
 	}
 
-	//color.Yellow("Debug: %s%s", s.ContextBox.SystemPrompt, s.ContextBox.Prompt)
+	slog.Debug("Debug: %s%s", s.ContextBox.SystemPrompt, s.ContextBox.Prompt)
 
 	err := s.PromptBuilder("")
 	if err != nil {
 		return "", err
 	}
 
-	//color.Yellow(s.SystemPrompt)
+	slog.Debug(s.SystemPrompt)
 
 	param := openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
@@ -225,13 +227,13 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 func (s *SimplePipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
 	err := (s.DockerClient).ContainerStop(context.Background(), s.container.ID, container.StopOptions{})
 	if err != nil {
-		color.Red("%s", err)
+        slog.Error("%s", err)
 	}
 
 	err = (s.DockerClient).ContainerRemove(context.Background(), s.container.ID, container.RemoveOptions{})
 	if err != nil {
-		color.Red("%s", err)
+        slog.Error("%s", err)
 	}
 
-	color.Green("Shutting Down...")
+	slog.Info("Shutting Down...")
 }

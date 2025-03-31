@@ -4,10 +4,9 @@ package api
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"os"
-
-	"github.com/fatih/color"
 )
 
 func Cors(w http.ResponseWriter, req *http.Request) {
@@ -29,19 +28,19 @@ func UpDog(port string) bool {
 	//	200: StatusOk
 	resp, err := http.Get("http://localhost:" + port + "/health")
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return false
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		color.Green("Model is ready")
+		slog.Info("Model is ready")
 		return true
 	case http.StatusServiceUnavailable:
-		color.Yellow("Model is not ready...")
+		slog.Warn("Model is not ready...")
 		return false
 	default:
-		color.Yellow("Model is not ready...")
+		slog.Warn("Model is not ready...")
 		return false
 	}
 }
@@ -63,7 +62,7 @@ type ModelsResponse struct {
 func GetModels(w http.ResponseWriter, req *http.Request) {
 	files, err := os.ReadDir("./models")
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		w.Write([]byte("Error while trying to read models files"))
 	}
 

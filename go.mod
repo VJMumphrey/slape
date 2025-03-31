@@ -6,7 +6,6 @@ require (
 	github.com/coder/hnsw v0.6.1
 	github.com/docker/docker v28.0.0+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/fatih/color v1.18.0
 	github.com/gocolly/colly v1.2.0
 	github.com/jaypipes/ghw v0.13.0
 	github.com/openai/openai-go v0.1.0-alpha.59
@@ -64,8 +63,6 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

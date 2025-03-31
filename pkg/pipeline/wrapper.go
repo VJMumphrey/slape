@@ -2,8 +2,8 @@ package pipeline
 
 import (
 	"context"
-	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -44,12 +44,12 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	if runtime.GOOS == "windows" {
 		ex, err := os.Executable()
 		if err != nil {
-			fmt.Println("idk something else")
+			slog.Error("idk something else")
 		}
 
 		currentPath := filepath.Dir(ex)
 
-		fmt.Println(currentPath)
+		slog.Debug(currentPath)
 
 		mountString = currentPath + "\\models"
 	}
@@ -120,9 +120,10 @@ func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion s
 
 		// it's best to use chunks after handling JustFinished events
 		if len(chunk.Choices) > 0 {
-			println(chunk.Choices[0].Delta.Content)
+			print(chunk.Choices[0].Delta.Content)
 		}
 	}
+    println("\n")
 
 	if err := stream.Err(); err != nil {
 		return "", err

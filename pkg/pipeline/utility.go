@@ -1,9 +1,10 @@
 package pipeline
 
 import (
+	"log/slog"
+
 	"github.com/StoneG24/slape/cmd/prompt"
 	"github.com/StoneG24/slape/internal/vars"
-	"github.com/fatih/color"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/gpu"
 )
@@ -69,15 +70,15 @@ func IsGPU() bool {
 	gpuInfo, err := ghw.GPU()
 	// if there is an error continue without using a GPU
 	if err != nil {
-		color.Red("%s", err)
-		color.Yellow("Continuing without GPU...")
+		slog.Error("%s", err)
+		slog.Warn("Continuing without GPU...")
 	}
 
 	// for debugging
-	color.Yellow("%s", gpuInfo.GraphicsCards)
+	slog.Debug("%s", gpuInfo.GraphicsCards)
 
 	if len(gpuInfo.GraphicsCards) == 0 {
-		color.Yellow("No GPUs to use, switching to cpu only")
+		slog.Warn("No GPUs to use, switching to cpu only")
 		return false
 	}
 

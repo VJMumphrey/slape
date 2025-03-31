@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/fatih/color"
 	"github.com/openai/openai-go"
 )
 
@@ -43,7 +43,7 @@ type (
 func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return
 	}
 	go api.Cors(w, req)
@@ -64,7 +64,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
@@ -73,14 +73,14 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 	// TODO rewrite for embedding and rag
 	result, err := e.Generate(simplePayload.Prompt, vars.EmbeddingClient)
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		http.Error(w, "Error getting generation from model", http.StatusOK)
 
 		return
 	}
 
 	// for debugging streaming
-	color.Green("%s", result)
+	slog.Info("%s", result)
 
 	respPayload := embeddingResponse{
 		Response: *result,
@@ -88,7 +88,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 
 	json, err := json.Marshal(respPayload)
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		http.Error(w, "Error marshaling your response from model", http.StatusOK)
 		return
 	}
@@ -101,10 +101,10 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 
 	reader, err := PullImage(e.DockerClient, ctx, e.ContainerImage)
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return err
 	}
-	color.Green("Pulling Image...")
+	slog.Info("Pulling Image...")
 	// prints out the status of the download
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
@@ -131,29 +131,29 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	)
 
 	if err != nil {
-		color.Yellow("%s", gencreateResponse.Warnings)
-		color.Yellow("%s", embedcreateResponse.Warnings)
-		color.Red("%s", err)
+		slog.Warn("%s", gencreateResponse.Warnings)
+		slog.Warn("%s", embedcreateResponse.Warnings)
+		slog.Error("%s", err)
 		return err
 	}
 
 	// start container
 	err = (e.DockerClient).ContainerStart(context.Background(), gencreateResponse.ID, container.StartOptions{})
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return err
 	}
 
 	// start container
 	err = (e.DockerClient).ContainerStart(context.Background(), embedcreateResponse.ID, container.StartOptions{})
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 		return err
 	}
 
 	// For debugging
-	color.Green("%s", gencreateResponse.ID)
-	color.Green("%s", embedcreateResponse.ID)
+	slog.Info("%s", gencreateResponse.ID)
+	slog.Info("%s", embedcreateResponse.ID)
 	e.embcontainer = embedcreateResponse
 	e.gencontainer = gencreateResponse
 
@@ -190,23 +190,23 @@ func (e *EmbeddingPipeline) Generate(payload string, openaiClient *openai.Client
 func (e *EmbeddingPipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
 	err := (e.DockerClient).ContainerStop(context.Background(), e.gencontainer.ID, container.StopOptions{})
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 	}
 
 	err = (e.DockerClient).ContainerStop(context.Background(), e.embcontainer.ID, container.StopOptions{})
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 	}
 
 	err = (e.DockerClient).ContainerRemove(context.Background(), e.gencontainer.ID, container.RemoveOptions{})
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 	}
 
 	err = (e.DockerClient).ContainerRemove(context.Background(), e.embcontainer.ID, container.RemoveOptions{})
 	if err != nil {
-		color.Red("%s", err)
+		slog.Error("%s", err)
 	}
 
-	color.Green("Shutting Down...")
+	slog.Info("Shutting Down...")
 }
