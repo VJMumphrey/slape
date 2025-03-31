@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -49,7 +48,7 @@ type (
 	simpleSetupPayload struct {
 		// Model is the name of the single
 		// model used in the pipeline
-		Models string `json:"model"`
+		Models string `json:"models"`
 	}
 
 	simpleResponse struct {
@@ -63,7 +62,7 @@ type (
 func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-        slog.Error("%s", err)
+		slog.Error("Error", "errorstring", err)
 		return
 	}
 	go api.Cors(w, req)
@@ -77,7 +76,7 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
-        slog.Error("%s", err)
+		slog.Error("Error", "errorstring", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
@@ -98,7 +97,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "errorstring", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
@@ -108,20 +107,22 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	s.ContextBox.SystemPrompt = promptChoice
 	s.ContextBox.Prompt = simplePayload.Prompt
 	thoughts, err := s.getThoughts()
-    log.Println("%s", thoughts)
+	if err != nil {
+		slog.Error("Error", "errorstring", err)
+	}
 	s.ContextBox.Thoughts = thoughts
 
 	// generate a response
 	result, err := s.Generate(maxtokens, vars.OpenaiClient)
 	if err != nil {
-	    slog.Error("%s", err)
+		slog.Error("Error", "errorstring", err)
 		http.Error(w, "Error getting generation from model", http.StatusOK)
 
 		return
 	}
 
 	// for debugging streaming
-    slog.Debug(result)
+	slog.Debug(result)
 
 	respPayload := simpleResponse{
 		Answer: result,
@@ -129,7 +130,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	json, err := json.Marshal(respPayload)
 	if err != nil {
-		slog.Error("Error", err)
+		slog.Error("Error", "errorstring", err)
 		http.Error(w, "Error marshaling your response from model", http.StatusOK)
 		return
 	}
@@ -142,7 +143,7 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 
 	reader, err := PullImage(s.DockerClient, ctx, s.ContainerImage)
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "errorstring", err)
 		return err
 	}
 	slog.Info("Pulling Image...")
@@ -162,15 +163,15 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	)
 
 	if err != nil {
-		slog.Warn("%s", createResponse.Warnings)
-		slog.Error("%s", err)
+		slog.Warn("Warning", "warningstring", createResponse.Warnings)
+		slog.Error("Error", "errorstring", err)
 		return err
 	}
 
 	// start container
 	err = (s.DockerClient).ContainerStart(context.Background(), createResponse.ID, container.StartOptions{})
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "errorstring", err)
 		return err
 	}
 
@@ -227,12 +228,12 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 func (s *SimplePipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
 	err := (s.DockerClient).ContainerStop(context.Background(), s.container.ID, container.StopOptions{})
 	if err != nil {
-        slog.Error("%s", err)
+		slog.Error("Error", "errorstring", err)
 	}
 
 	err = (s.DockerClient).ContainerRemove(context.Background(), s.container.ID, container.RemoveOptions{})
 	if err != nil {
-        slog.Error("%s", err)
+		slog.Error("Error", "errorstring", err)
 	}
 
 	slog.Info("Shutting Down...")

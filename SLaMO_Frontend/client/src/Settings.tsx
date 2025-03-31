@@ -1,12 +1,16 @@
 import DropDownButton from "./DropDownButton.tsx";
 import MenuTabs from "./MenuTabs.tsx";
 import {useState} from "react";
+import "./settings.css";
+import "./index.css";
 
 export default function Settings() {
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
   if (localStorage.getItem("StyleSetting") == null)
-    localStorage.setItem("StyleSetting", "Pink");
+    localStorage.setItem("StyleSetting", "Dark");
+
+  const themeColor: string | null = localStorage.getItem("StyleSetting");
 
   const [PromptSetting, setPromptSetting] = useState(
     localStorage.getItem("PromptSetting")
@@ -29,28 +33,27 @@ export default function Settings() {
   function settingsButtonHandler() {
     localStorage.setItem("PromptSetting", PromptSetting);
     localStorage.setItem("StyleSetting", StyleSetting);
+    globalThis.location.reload();
   }
 
   return (
     <>
+      <div className={`${themeColor}_background`} />
       <MenuTabs />
-      <div>
-        <h2>Settings</h2>
-        <h4>Prompting Settings</h4>
+      <div className={`${themeColor}_settingsDiv`}>
+        <h1 className={`${themeColor}_settingTitle`}>Settings</h1>
+        <h2>Theme</h2>
         <DropDownButton
-          value={PromptSetting}
-          callBack={setPromptSetting}
-          optionObject={promptDropDownOptions}
-        />
-        <hr />
-        <h4>Style Settings</h4>
-        <DropDownButton
+          className="colorSetting"
           value={StyleSetting}
           callBack={setStyleSetting}
           optionObject={styleDropDownOptions}
         />
         <hr />
-        <button className="Submit" onClick={settingsButtonHandler}>
+        <button
+          className={`${themeColor}_Submit`}
+          onClick={settingsButtonHandler}
+        >
           Display Settings
         </button>
       </div>

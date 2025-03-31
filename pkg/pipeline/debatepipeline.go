@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-    "log"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -176,7 +176,7 @@ func (d *DebateofModels) Generate(prompt string, systemprompt string, maxtokens 
 			// start container
 			err := (d.DockerClient).ContainerStart(context.Background(), model.ID, container.StartOptions{})
 			if err != nil {
-				slog.Error("%s", err)
+				slog.Error("Error", "errorstring", err)
 				return "", err
 			}
 			slog.Info("Starting container %d...", i)
