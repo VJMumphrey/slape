@@ -32,6 +32,7 @@ type (
 		ContainerImage string
 		DockerClient   *client.Client
 		GPU            bool
+		Thinking       bool
 
 		// for internal use to store the models in
 		containers []container.CreateResponse
@@ -46,6 +47,9 @@ type (
 		// Options are strings matching
 		// the names of prompt types
 		Mode string `json:"mode"`
+
+		// Should we have a thinking step involved
+		Thinking bool `json:"thinking"`
 	}
 
 	chainSetupPayload struct {
@@ -109,8 +113,13 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 	promptChoice, maxtokens := processPrompt(payload.Mode)
 	c.ContextBox.SystemPrompt = promptChoice
 	c.ContextBox.Prompt = payload.Prompt
-	thoughts, err := c.getThoughts()
-	c.ContextBox.Thoughts = thoughts
+	if c.Thinking {
+		thoughts, err := c.getThoughts()
+		if err != nil {
+			slog.Error("Error", "errorstring", err)
+		}
+		c.ContextBox.Thoughts = thoughts
+	}
 
 	// generate a response
 	result, err := c.Generate(payload.Prompt, promptChoice, maxtokens)

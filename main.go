@@ -27,7 +27,7 @@ import (
 var (
 	s = pipeline.SimplePipeline{
 		// updates after created
-		Model:          "",
+		Models:          "",
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
 		Active:         true,

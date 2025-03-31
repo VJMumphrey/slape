@@ -22,13 +22,14 @@ type (
 	// This is good for a giving a single model access to tools
 	// like internet search.
 	SimplePipeline struct {
-		Model string
+		Models string
 		ContextBox
 		Tools
 		Active         bool
 		ContainerImage string
 		DockerClient   *client.Client
 		GPU            bool
+		Thinking       bool
 
 		// for internal use
 		container container.CreateResponse
@@ -43,11 +44,14 @@ type (
 		// Options are strings matching
 		// the names of prompt types
 		Mode string `json:"mode"`
+
+        // Should thinking be included in the process
+        Thinking bool `json:"thinking"`
 	}
 
 	simpleSetupPayload struct {
-		// Model is the name of the single
-		// model used in the pipeline
+		// Models is the name of the single
+		// models used in the pipeline
 		Models string `json:"models"`
 	}
 
@@ -81,7 +85,7 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 		return
 	}
 
-	s.Model = setupPayload.Models
+	s.Models = setupPayload.Models
 	s.DockerClient = apiClient
 
 	go s.Setup(context.Background())
@@ -106,11 +110,13 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	s.ContextBox.SystemPrompt = promptChoice
 	s.ContextBox.Prompt = simplePayload.Prompt
-	thoughts, err := s.getThoughts()
-	if err != nil {
-		slog.Error("Error", "errorstring", err)
+	if s.Thinking {
+		thoughts, err := s.getThoughts()
+		if err != nil {
+			slog.Error("Error", "errorstring", err)
+		}
+		s.ContextBox.Thoughts = thoughts
 	}
-	s.ContextBox.Thoughts = thoughts
 
 	// generate a response
 	result, err := s.Generate(maxtokens, vars.OpenaiClient)
@@ -157,7 +163,7 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 		"8000",
 		"",
 		ctx,
-		s.Model,
+		s.Models,
 		s.ContainerImage,
 		s.GPU,
 	)
@@ -211,7 +217,7 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 			//openai.UserMessage(s.FutureQuestions),
 		}),
 		Seed:        openai.Int(0),
-		Model:       openai.String(s.Model),
+		Model:       openai.String(s.Models),
 		Temperature: openai.Float(vars.ModelTemperature),
 		MaxTokens:   openai.Int(maxtokens),
 	}
