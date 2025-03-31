@@ -48,7 +48,7 @@ type (
 	simpleSetupPayload struct {
 		// Model is the name of the single
 		// model used in the pipeline
-		Model string `json:"model"`
+		Models string `json:"model"`
 	}
 
 	simpleResponse struct {
@@ -81,7 +81,7 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 		return
 	}
 
-	s.Model = setupPayload.Model
+	s.Model = setupPayload.Models
 	s.DockerClient = apiClient
 
 	go s.Setup(context.Background())
@@ -119,7 +119,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	}
 
 	// for debugging streaming
-	color.Green(result)
+    color.Green(result)
 
 	respPayload := simpleResponse{
 		Answer: result,
@@ -192,14 +192,14 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 		}
 	}
 
-	color.Yellow("Debug: %s%s", s.ContextBox.SystemPrompt, s.ContextBox.Prompt)
+	//color.Yellow("Debug: %s%s", s.ContextBox.SystemPrompt, s.ContextBox.Prompt)
 
 	err := s.PromptBuilder("")
 	if err != nil {
 		return "", err
 	}
 
-	color.Yellow(s.SystemPrompt)
+	//color.Yellow(s.SystemPrompt)
 
 	param := openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
@@ -221,6 +221,7 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 	return result, nil
 }
 
+// BUG(v) if the server is shut off then the container ids are also lost leaving us with orphan containers. This is for all pipelines.
 func (s *SimplePipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
 	err := (s.DockerClient).ContainerStop(context.Background(), s.container.ID, container.StopOptions{})
 	if err != nil {

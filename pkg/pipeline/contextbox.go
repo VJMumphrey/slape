@@ -51,7 +51,7 @@ func (c *ContextBox) PromptBuilder(previousAnswer string) error {
 		prevAns = "None"
 	}
 
-	fmt.Println(c.Thoughts, additionalContex, prevAns)
+	//fmt.Println(c.Thoughts, additionalContex, prevAns)
 	c.SystemPrompt = fmt.Sprintf(c.SystemPrompt, c.Thoughts, additionalContex, prevAns)
 
 	// TODO(v) do something different for debate where we have question/idea and ask the hats after.
@@ -63,10 +63,11 @@ func (c *ContextBox) PromptBuilder(previousAnswer string) error {
 // This will not be good for slms but llms that are centered around reasoning
 func (c *ContextBox) getThoughts() (string, error) {
 
-	prompt := `You are an intellegent Small Language Model.
-    You answer problems in a simple manner. 
-    First think through this problem and return your thoughts.
+	prompt := `You are an intellegent agent that asses problems and ideas.
+    Think through the given statement and return your thoughts.
+    These thoughts should contain initial ideas, thoughts, and contraints regarding the problem.
     `
+
 	param := openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(prompt),
@@ -75,7 +76,7 @@ func (c *ContextBox) getThoughts() (string, error) {
 		}),
 		Seed: openai.Int(0),
 		//Model:       openai.String(pipeline.Model),
-		Temperature: openai.Float(vars.ModelTemperature),
+		Temperature: openai.Float(0.4),
 		//MaxTokens:   openai.Int(maxtokens),
 	}
 

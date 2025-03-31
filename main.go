@@ -124,9 +124,9 @@ func main() {
 	// Close the pipeline to stop adding new pipelines
 	// close(keystone)
 
-	go s.Shutdown(nil, nil)
-	go c.Shutdown(nil, nil)
-	go d.Shutdown(nil, nil)
+	s.Shutdown(nil, nil)
+	c.Shutdown(nil, nil)
+	d.Shutdown(nil, nil)
 
 	log.Println("Server gracefully stopped")
 }
