@@ -4,6 +4,7 @@ import "./prompt.css";
 import MenuTabs from "./MenuTabs.tsx";
 import Markdown from "react-markdown";
 import DropDownButton from "./DropDownButton.tsx";
+import { allGeneratedPositionsFor } from "../../../../../AppData/Local/deno/npm/registry.npmjs.org/@jridgewell/trace-mapping/0.3.25/dist/types/trace-mapping.d.ts";
 
 export default function Prompt() {
   const [PromptInfo, setPromptInfo] = useState(""); //used to contain the current value, and to set the new value
@@ -39,29 +40,32 @@ export default function Prompt() {
       </>
     );
     event.preventDefault(); //makes sure the page doesn't reload when submitting the form
-    const response = await fetch("http://localhost:8080/simple", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt: PromptInfo,
-        model: "gay",
-        mode: PromptMode,
-      }),
-    });
-    setloadingAnimation("");
-    setResponseAnswer(
-      <>
-        <p className={`${themeColor}_left`}>{`Prompt: ${PromptInfo}`}</p>{" "}
-        <p className={`${themeColor}_left`}>
-          Response:
-          <Markdown>
-            {`${JSON.parse(JSON.stringify(await response.json())).answer}`}
-          </Markdown>
-        </p>
-      </>
-    );
+    if (localStorage.getItem("currentPipeline") !== null) {
+      const response = await fetch(`http://localhost:8080/${JSON.parse(localStorage.getItem("currentPipeline") as string)}/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: PromptInfo,
+          mode: PromptMode,
+        }),
+      });
+      setloadingAnimation("");
+      setResponseAnswer(
+        <>
+          <p className={`${themeColor}_left`}>{`Prompt: ${PromptInfo}`}</p>{" "}
+          <p className={`${themeColor}_left`}>
+            Response:
+            <Markdown>
+              {`${JSON.parse(JSON.stringify(await response.json())).answer}`}
+            </Markdown>
+          </p>
+        </>
+      );
+    } else {
+      alert("Please Select a Pipeline from the Pipelines Tab");
+    }
   }
   return (
     <>
