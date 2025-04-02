@@ -38,7 +38,7 @@ export default function Pipelines() {
         models.push(element.fullName);
       })
 
-      const response = await fetch(`http://localhost:8080/${CurrentPipeline}/setup`, {
+      await fetch(`http://localhost:8080/${CurrentPipeline}/setup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -47,8 +47,6 @@ export default function Pipelines() {
           models: models
         }),
       });
-
-      alert(response);
     }
   }
 

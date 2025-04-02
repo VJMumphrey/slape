@@ -54,7 +54,7 @@ export default function Prompt() {
         },
         body: JSON.stringify({
           prompt: PromptInfo,
-          thinking: ThinkingMode,
+          thinking: String(ThinkingMode),
           mode: PromptMode,
         }),
       });
