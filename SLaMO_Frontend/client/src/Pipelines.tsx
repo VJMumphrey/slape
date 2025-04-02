@@ -28,7 +28,7 @@ export default function Pipelines() {
   };
 
   async function savePipeline() {
-    if (localStorage.getItem(`${CurrentPipeline}Models`) === null) {
+    if ((localStorage.getItem(`${CurrentPipeline}Models`) === null) || (JSON.parse(localStorage.getItem(`${CurrentPipeline}Models`) as string).length === 0)) {
       alert("Please Select Models for this Pipeline First!");
     } else {
       localStorage.setItem("currentPipeline", JSON.stringify(CurrentPipeline));
@@ -57,12 +57,22 @@ export default function Pipelines() {
       <div className={`${themeColor}_background`}/>
       <MenuTabs />
       {/*To do this not stupid, add an onClick Property to PipelineCard that passes the onClick to the div of PipelineCard*/}
-      <div onClick={() => {setCurrentPipeline(simplePipeline.pipeline)}}>
-        <PipelineCard {...simplePipeline}></PipelineCard>
-      </div>
-      <p></p>
-      <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
-        <PipelineCard {...testModel2}></PipelineCard>
+      <div className="cardContainer">
+        <div onClick={() => {setCurrentPipeline(simplePipeline.pipeline)}}>
+          <PipelineCard {...simplePipeline}></PipelineCard>
+        </div>
+        <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
+          <PipelineCard {...testModel2}></PipelineCard>
+        </div>
+        <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
+          <PipelineCard {...testModel2}></PipelineCard>
+        </div>
+        <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
+          <PipelineCard {...testModel2}></PipelineCard>
+        </div>
+        <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
+          <PipelineCard {...testModel2}></PipelineCard>
+        </div>
       </div>
       <div className={`${themeColor}_footer`}>
         <button className={`${themeColor}_saveButton`} onClick={savePipeline}>

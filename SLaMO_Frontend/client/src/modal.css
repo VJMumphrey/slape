@@ -6,7 +6,7 @@
     z-index: 1000;
     -webkit-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
-    background-color: rgb(40, 45, 45);
+    background-color: #1B1A55;
     border-radius: 20px;
   }
 
@@ -53,7 +53,7 @@
 }
 
 .Dark_modal-close {
-  background-color: rgb(40, 45, 45);
+  background-color: #1B1A55;
   border-radius: 20px 0px 0px 0px;
   transition: background 0.15s;
 }
