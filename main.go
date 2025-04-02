@@ -20,6 +20,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/StoneG24/slape/internal/logging"
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/StoneG24/slape/pkg/pipeline"
 )
@@ -27,7 +28,7 @@ import (
 var (
 	s = pipeline.SimplePipeline{
 		// updates after created
-		Models:         "",
+		Models:         []string{},
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
 		Active:         true,
@@ -77,6 +78,8 @@ func main() {
 	var programLevel = new(slog.LevelVar)
 	// Change to Debug so we get debug logs
 	programLevel.Set(slog.LevelDebug)
+
+    go logging.CreateLogFile()
 
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)

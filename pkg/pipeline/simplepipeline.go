@@ -23,7 +23,7 @@ type (
 	// This is good for a giving a single model access to tools
 	// like internet search.
 	SimplePipeline struct {
-		Models string
+		Models []string
 		ContextBox
 		Tools
 		Active         bool
@@ -53,7 +53,7 @@ type (
 	simpleSetupPayload struct {
 		// Models is the name of the single
 		// models used in the pipeline
-		Models string `json:"models"`
+		Models []string `json:"models"`
 	}
 
 	simpleResponse struct {
@@ -167,7 +167,7 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 		"8000",
 		"",
 		ctx,
-		s.Models,
+		s.Models[0],
 		s.ContainerImage,
 		s.GPU,
 	)
@@ -221,7 +221,7 @@ func (s *SimplePipeline) Generate(maxtokens int64, openaiClient *openai.Client) 
 			//openai.UserMessage(s.FutureQuestions),
 		}),
 		Seed:        openai.Int(0),
-		Model:       openai.String(s.Models),
+		Model:       openai.String(s.Models[0]),
 		Temperature: openai.Float(vars.ModelTemperature),
 		MaxTokens:   openai.Int(maxtokens),
 	}
