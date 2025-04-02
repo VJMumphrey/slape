@@ -55,7 +55,7 @@ type (
 		Mode string `json:"mode"`
 
 		// Should thinking be a step in the process
-		Thinking bool `json:"thinking"`
+		Thinking string `json:"thinking"`
 	}
 
 	debateSetupPayload struct {
@@ -114,11 +114,16 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 	promptChoice, maxtokens := processPrompt(payload.Mode)
 	d.ContextBox.SystemPrompt = promptChoice
 	d.ContextBox.Prompt = payload.Prompt
-
+    d.Thinking, err = strconv.ParseBool(payload.Thinking)
+    if err != nil {
+        slog.Error("Error", "Errorstring", err)
+        http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
+    }
 	if d.Thinking {
 		thoughts, err := d.getThoughts()
 		if err != nil {
 			slog.Error("Error", "errorstring", err)
+            http.Error(w, "Error gathering thoughts", http.StatusInternalServerError)
 		}
 		d.ContextBox.Thoughts = thoughts
 	}

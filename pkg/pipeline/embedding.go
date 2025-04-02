@@ -101,7 +101,7 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 
 	reader, err := PullImage(e.DockerClient, ctx, e.ContainerImage)
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", err)
 		return err
 	}
 	slog.Info("Pulling Image...")
@@ -131,9 +131,9 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	)
 
 	if err != nil {
-		slog.Warn("%s", gencreateResponse.Warnings)
-		slog.Warn("%s", embedcreateResponse.Warnings)
-		slog.Error("%s", err)
+		slog.Warn(gencreateResponse.Warnings[0])
+		slog.Warn(embedcreateResponse.Warnings[0])
+		slog.Error("Error", err)
 		return err
 	}
 
