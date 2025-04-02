@@ -102,3 +102,10 @@
     background-color: #697892;
     color: white;
 }
+
+.cardContainer {
+    top: 50%;
+    left: 50%;
+    margin-top: 52px;
+    margin-bottom: 60px;
+}
