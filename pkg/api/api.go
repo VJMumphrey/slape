@@ -9,16 +9,6 @@ import (
 	"os"
 )
 
-func Cors(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	w.Header().Set("Access-Control-Allow-Option", "GET, POST, OPTIONS")
-	w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-	if req.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-	}
-}
-
 func UpDog(port string) bool {
 	// swagger:operation GET /updog UpDog
 	//
@@ -62,7 +52,7 @@ type ModelsResponse struct {
 func GetModels(w http.ResponseWriter, req *http.Request) {
 	files, err := os.ReadDir("./models")
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "Errorstring", err)
 		w.Write([]byte("Error while trying to read models files"))
 	}
 

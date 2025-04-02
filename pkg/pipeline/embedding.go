@@ -46,7 +46,6 @@ func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter,
 		slog.Error("%s", err)
 		return
 	}
-	go api.Cors(w, req)
 
 	// setup values needed for pipeline
 	e.DockerClient = apiClient
@@ -58,7 +57,6 @@ func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter,
 
 // simplerequest is used to handle simple requests as needed.
 func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	go api.Cors(w, req)
 
 	var simplePayload simpleRequest
 

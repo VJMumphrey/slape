@@ -74,7 +74,6 @@ func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *
 		slog.Error("%s", err)
 		return
 	}
-	go api.Cors(w, req)
 
 	if req.Method != http.MethodPost {
 		w.WriteHeader(http.StatusBadRequest)
@@ -100,8 +99,6 @@ func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *
 
 // DebatePipelineGenerateRequest is used to handle the request for a debate style thought process.
 func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	api.Cors(w, req)
-
 	var payload debateRequest
 
 	err := json.NewDecoder(req.Body).Decode(&payload)

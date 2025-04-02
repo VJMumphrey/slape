@@ -68,7 +68,6 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 		slog.Error("%s", err)
 		return
 	}
-	go api.Cors(w, req)
 
 	if req.Method != http.MethodPost {
 		w.WriteHeader(http.StatusBadRequest)
@@ -99,8 +98,6 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 // - models array of strings, an array of strings containing three models to use.
 // - mode string, mode of prompt struture to use.
 func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	go api.Cors(w, req)
-
 	var payload chainRequest
 
 	err := json.NewDecoder(req.Body).Decode(&payload)

@@ -46,8 +46,8 @@ type (
 		// the names of prompt types
 		Mode string `json:"mode"`
 
-        // Should thinking be included in the process
-        Thinking string `json:"thinking"`
+		// Should thinking be included in the process
+		Thinking string `json:"thinking"`
 	}
 
 	simpleSetupPayload struct {
@@ -70,7 +70,6 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 		slog.Error("ErrorString", err)
 		return
 	}
-	go api.Cors(w, req)
 
 	if req.Method != http.MethodPost {
 		http.Error(w, "Wrong method used for endpoint", http.StatusBadRequest)
@@ -96,8 +95,6 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 
 // simplerequest is used to handle simple requests as needed.
 func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	go api.Cors(w, req)
-
 	var simplePayload simpleRequest
 
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)
@@ -111,19 +108,19 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	s.ContextBox.SystemPrompt = promptChoice
 	s.ContextBox.Prompt = simplePayload.Prompt
-    s.Thinking, err = strconv.ParseBool(simplePayload.Thinking)
-    if err != nil {
-        slog.Error("Error", "Errorstring", err)
-        http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
-    }
+	s.Thinking, err = strconv.ParseBool(simplePayload.Thinking)
+	if err != nil {
+		slog.Error("Error", "Errorstring", err)
+		http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
+	}
 	if s.Thinking {
 		thoughts, err := s.getThoughts()
 		if err != nil {
 			slog.Error("Error", "Errorstring", err)
-            http.Error(w, "Error gathering thoughts", http.StatusInternalServerError)
+			http.Error(w, "Error gathering thoughts", http.StatusInternalServerError)
 		}
 		s.ContextBox.Thoughts = thoughts
-    }
+	}
 
 	// generate a response
 	result, err := s.Generate(maxtokens, vars.OpenaiClient)
