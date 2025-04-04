@@ -2,22 +2,43 @@
 package logging
 
 import (
+	"log"
+	"log/slog"
 	"os"
 )
 
-// CreateLogFile is used to check and see if a logfile is already created.
-// If this is already done then func closes.
-func CreateLogFile() error {
-	err := os.WriteFile("logs.txt", []byte("--- SLaP-E Logging File ---\n"), 0644)
-	if err != nil {
-		return err
-	}
+const (
+	logfilename = "logs.txt"
+)
 
-    return nil
+// CreateLogFile is used to check and see if a logfile is already created.
+// It then creates a logger for the log file and returns it.
+func CreateLogFile() {
+	// Open the log file for writing
+	logFile, err := os.OpenFile(logfilename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println("Error creating the log file")
+	}
+	defer logFile.Close()
 }
 
-// WriteToFile writes to the log file using the io package in go.
-// This is for efficiency and performance reasons.
-func WriteToFile() {
-    
+func CreateLogger() *slog.Logger {
+
+	// Open the log file for writing
+	logFile, err := os.OpenFile(logfilename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println("Error setting up logging on startup")
+	}
+	defer logFile.Close()
+
+	// Create a terminal handler (for stdout)
+	//consoleHandler := slog.NewTextHandler(os.Stdout, nil)
+
+	// Create a file handler (for the log file)
+	fileHandler := slog.NewTextHandler(logFile, nil)
+
+	// Create the logger with the combined handler
+	logger := slog.New(fileHandler)
+
+	return logger
 }

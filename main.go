@@ -74,12 +74,12 @@ var (
 // @BasePath /
 func main() {
 
-	// This is info by default
-	var programLevel = new(slog.LevelVar)
 	// Change to Debug so we get debug logs
-	programLevel.Set(slog.LevelDebug)
+	slog.SetLogLoggerLevel(slog.LevelDebug)
 
-    go logging.CreateLogFile()
+	logging.CreateLogFile()
+
+    logger := logging.CreateLogger()
 
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
@@ -112,7 +112,7 @@ func main() {
 	}
 
 	// Start the server in a goroutine.
-	slog.Info("[+] Server started on :8080")
+	logger.Info("[+] Server started on :8080")
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe(): %s", err)
@@ -142,7 +142,7 @@ func main() {
 	c.Shutdown(nil, nil)
 	d.Shutdown(nil, nil)
 
-	slog.Info("[+] Server gracefully stopped")
+	logger.Info("[+] Server gracefully stopped")
 }
 
 type Coors struct {
@@ -162,7 +162,7 @@ func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	// Stop here if its Preflighted OPTIONS request
 	if req.Method == "OPTIONS" {
-        w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -173,8 +173,4 @@ func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // NewCoors constructs a new Logger middleware handler
 func NewCoors(handlerToWrap http.Handler) *Coors {
 	return &Coors{handlerToWrap}
-}
-
-// TODO rewrite to model middleware
-func Cors(w http.ResponseWriter, req *http.Request) {
 }
