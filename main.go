@@ -20,6 +20,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/StoneG24/slape/internal/logging"
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/StoneG24/slape/pkg/pipeline"
 )
@@ -27,7 +28,7 @@ import (
 var (
 	s = pipeline.SimplePipeline{
 		// updates after created
-		Model:          "",
+		Models:         []string{},
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
 		Active:         true,
@@ -73,33 +74,41 @@ var (
 // @BasePath /
 func main() {
 
-    // This is info by default
-    var programLevel = new(slog.LevelVar)
-    // Change to Debug so we get debug logs
-    programLevel.Set(slog.LevelDebug)
+	// This is info by default
+	var programLevel = new(slog.LevelVar)
+	// Change to Debug so we get debug logs
+	programLevel.Set(slog.LevelDebug)
+
+    go logging.CreateLogFile()
 
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
 
-	http.HandleFunc("POST /simple/generate", s.SimplePipelineGenerateRequest)
-	http.HandleFunc("POST /simple/setup", s.SimplePipelineSetupRequest)
-	http.HandleFunc("GET /simple/shutdown", s.Shutdown)
-	http.HandleFunc("POST /cot/generate", c.ChainPipelineGenerateRequest)
-	http.HandleFunc("POST /cot/setup", c.ChainPipelineSetupRequest)
-	http.HandleFunc("GET /cot/shutdown", c.Shutdown)
-	http.HandleFunc("POST /deb/setup", d.DebatePipelineSetupRequest)
-	http.HandleFunc("POST /deb/generate", d.DebatePipelineGenerateRequest)
-	http.HandleFunc("GET /deb/shutdown", d.Shutdown)
-	http.HandleFunc("GET  /emb/setup", e.EmbeddingPipelineSetupRequest)
-	http.HandleFunc("POST /emb/generate", e.EmbeddingPipelineGenerateRequest)
-	http.HandleFunc("GET /emb/shutdown", e.Shutdown)
-	//http.HandleFunc("/moe", simplerequest)
-	//http.HandleFunc("/up", upDog)
-	http.HandleFunc("GET /getmodels", api.GetModels)
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("POST /simple/generate", s.SimplePipelineGenerateRequest)
+	mux.HandleFunc("POST /simple/setup", s.SimplePipelineSetupRequest)
+	mux.HandleFunc("GET /simple/shutdown", s.Shutdown)
+	mux.HandleFunc("POST /cot/generate", c.ChainPipelineGenerateRequest)
+	mux.HandleFunc("POST /cot/setup", c.ChainPipelineSetupRequest)
+	mux.HandleFunc("GET /cot/shutdown", c.Shutdown)
+	mux.HandleFunc("POST /deb/setup", d.DebatePipelineSetupRequest)
+	mux.HandleFunc("POST /deb/generate", d.DebatePipelineGenerateRequest)
+	mux.HandleFunc("GET /deb/shutdown", d.Shutdown)
+	mux.HandleFunc("GET  /emb/setup", e.EmbeddingPipelineSetupRequest)
+	mux.HandleFunc("POST /emb/generate", e.EmbeddingPipelineGenerateRequest)
+	mux.HandleFunc("GET /emb/shutdown", e.Shutdown)
+	//mux.HandleFunc("/moe", simplerequest)
+	//mux.HandleFunc("/up", upDog)
+	mux.HandleFunc("GET /getmodels", api.GetModels)
+
+	// This is against my religion
+	wrappingMux := NewCoors(mux)
 
 	// Create a new HTTP server.
 	srv := &http.Server{
-		Addr: ":8080",
+		Addr:    ":8080",
+		Handler: wrappingMux,
 	}
 
 	// Start the server in a goroutine.
@@ -134,4 +143,38 @@ func main() {
 	d.Shutdown(nil, nil)
 
 	slog.Info("[+] Server gracefully stopped")
+}
+
+type Coors struct {
+	handler http.Handler
+}
+
+// ServeHTTP handles the request by passing it to the real
+// handler and logging the request details
+func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	//start := time.Now()
+
+	if origin := req.Header.Get("Origin"); origin != "" {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers",
+			"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	}
+	// Stop here if its Preflighted OPTIONS request
+	if req.Method == "OPTIONS" {
+        w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	c.handler.ServeHTTP(w, req)
+	//log.Printf("%s %s %v", req.Method, req.URL.Path, time.Since(start))
+}
+
+// NewCoors constructs a new Logger middleware handler
+func NewCoors(handlerToWrap http.Handler) *Coors {
+	return &Coors{handlerToWrap}
+}
+
+// TODO rewrite to model middleware
+func Cors(w http.ResponseWriter, req *http.Request) {
 }

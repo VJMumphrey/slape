@@ -46,7 +46,6 @@ func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter,
 		slog.Error("%s", err)
 		return
 	}
-	go api.Cors(w, req)
 
 	// setup values needed for pipeline
 	e.DockerClient = apiClient
@@ -58,7 +57,6 @@ func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter,
 
 // simplerequest is used to handle simple requests as needed.
 func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	go api.Cors(w, req)
 
 	var simplePayload simpleRequest
 
@@ -101,7 +99,7 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 
 	reader, err := PullImage(e.DockerClient, ctx, e.ContainerImage)
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", err)
 		return err
 	}
 	slog.Info("Pulling Image...")
@@ -131,9 +129,9 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	)
 
 	if err != nil {
-		slog.Warn("%s", gencreateResponse.Warnings)
-		slog.Warn("%s", embedcreateResponse.Warnings)
-		slog.Error("%s", err)
+		slog.Warn(gencreateResponse.Warnings[0])
+		slog.Warn(embedcreateResponse.Warnings[0])
+		slog.Error("Error", err)
 		return err
 	}
 

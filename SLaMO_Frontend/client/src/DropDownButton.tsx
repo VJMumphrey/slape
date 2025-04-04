@@ -3,7 +3,7 @@ interface dropDownSettings {
   className: string;
   value: string;
   callBack: (event: string) => void;
-  optionObject: {type: string; name: string}[];
+  optionObject: {name: string; type: string | number}[];
 }
 
 const themeColor = localStorage.getItem("StyleSetting");

@@ -38,6 +38,7 @@ type (
 		ContainerImage string
 		DockerClient   *client.Client
 		GPU            bool
+		Thinking       bool
 
 		// for internal use only
 		containers []container.CreateResponse
@@ -52,6 +53,9 @@ type (
 		// Options are strings matching
 		// the names of prompt types
 		Mode string `json:"mode"`
+
+		// Should thinking be a step in the process
+		Thinking string `json:"thinking"`
 	}
 
 	debateSetupPayload struct {
@@ -70,7 +74,6 @@ func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *
 		slog.Error("%s", err)
 		return
 	}
-	go api.Cors(w, req)
 
 	if req.Method != http.MethodPost {
 		w.WriteHeader(http.StatusBadRequest)
@@ -96,8 +99,6 @@ func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *
 
 // DebatePipelineGenerateRequest is used to handle the request for a debate style thought process.
 func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	api.Cors(w, req)
-
 	var payload debateRequest
 
 	err := json.NewDecoder(req.Body).Decode(&payload)
@@ -110,9 +111,19 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 	promptChoice, maxtokens := processPrompt(payload.Mode)
 	d.ContextBox.SystemPrompt = promptChoice
 	d.ContextBox.Prompt = payload.Prompt
-
-	thoughts, err := d.getThoughts()
-	d.ContextBox.Thoughts = thoughts
+    d.Thinking, err = strconv.ParseBool(payload.Thinking)
+    if err != nil {
+        slog.Error("Error", "Errorstring", err)
+        http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
+    }
+	if d.Thinking {
+		thoughts, err := d.getThoughts()
+		if err != nil {
+			slog.Error("Error", "errorstring", err)
+            http.Error(w, "Error gathering thoughts", http.StatusInternalServerError)
+		}
+		d.ContextBox.Thoughts = thoughts
+	}
 
 	// generate a response
 	result, err := d.Generate(payload.Prompt, promptChoice, maxtokens)

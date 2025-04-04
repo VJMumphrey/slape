@@ -32,6 +32,7 @@ type (
 		ContainerImage string
 		DockerClient   *client.Client
 		GPU            bool
+		Thinking       bool
 
 		// for internal use to store the models in
 		containers []container.CreateResponse
@@ -46,6 +47,9 @@ type (
 		// Options are strings matching
 		// the names of prompt types
 		Mode string `json:"mode"`
+
+		// Should we have a thinking step involved
+		Thinking string `json:"thinking"`
 	}
 
 	chainSetupPayload struct {
@@ -64,7 +68,6 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 		slog.Error("%s", err)
 		return
 	}
-	go api.Cors(w, req)
 
 	if req.Method != http.MethodPost {
 		w.WriteHeader(http.StatusBadRequest)
@@ -95,8 +98,6 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 // - models array of strings, an array of strings containing three models to use.
 // - mode string, mode of prompt struture to use.
 func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	go api.Cors(w, req)
-
 	var payload chainRequest
 
 	err := json.NewDecoder(req.Body).Decode(&payload)
@@ -109,8 +110,19 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 	promptChoice, maxtokens := processPrompt(payload.Mode)
 	c.ContextBox.SystemPrompt = promptChoice
 	c.ContextBox.Prompt = payload.Prompt
-	thoughts, err := c.getThoughts()
-	c.ContextBox.Thoughts = thoughts
+    c.Thinking, err = strconv.ParseBool(payload.Thinking)
+    if err != nil {
+        slog.Error("Error", "Errorstring", err)
+        http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
+    }
+	if c.Thinking {
+		thoughts, err := c.getThoughts()
+		if err != nil {
+			slog.Error("Error", "errorstring", err)
+            http.Error(w, "Error gathering thoughts", http.StatusInternalServerError)
+		}
+		c.ContextBox.Thoughts = thoughts
+	}
 
 	// generate a response
 	result, err := c.Generate(payload.Prompt, promptChoice, maxtokens)

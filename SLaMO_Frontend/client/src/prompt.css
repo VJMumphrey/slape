@@ -56,24 +56,34 @@ p.Light_left{
 
 select.Dark_inference {
     height: 25px;
-    background-color: #494f95;
+    background-color: #131C46;
     color: white;
     border: 0px;
-    border-radius: 0px 8px 8px 0px;
+    border-radius: 0px 0px 0px 0px;
     font-family: inherit;
     font-size: 1em;
     font-weight: 500;
 }
 
+.Dark_inference:hover {
+    background-color: #232C56;
+    cursor: pointer;
+}
+
 select.Light_inference {
     height: 25px;
-    background-color: #89A8B2;
-    color: white;
+    background-color: #CCD5D5;
+    color: black;
     border: 0px;
-    border-radius: 0px 8px 8px 0px;
+    border-radius: 0px 0px 0px 0px;
     font-family: inherit;
     font-size: 1em;
     font-weight: 500;
+}
+
+.Light_inference:hover {
+    background-color: #BCC5C5;
+    cursor: pointer;
 }
 
 select.Pink_inference {
@@ -86,6 +96,38 @@ select.Pink_inference {
     font-size: 1em;
     font-weight: 500;
 
+}
+
+.Light_thinkingDropDown {
+    height: 25px;
+    background-color: #89A8B2;
+    color: white;
+    border: 0px;
+    border-radius: 0px 8px 8px 0px;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+.Light_thinkingDropDown:hover {
+    background-color: #7998A2;
+    cursor: pointer;
+}
+
+.Dark_thinkingDropDown {
+    height: 25px;
+    background-color: #494f95;
+    color: white;
+    border: 0px;
+    border-radius: 0px 8px 8px 0px;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+.Dark_thinkingDropDown:hover {
+    background-color: #595fA5;
+    cursor: pointer;
 }
 
 div.Dark_fixedBottom {
@@ -161,10 +203,11 @@ input.Pink_prompt {
 }
 
 input.Dark_prompt {
-    width: 70%;
+    width: 60%;
     height: 20px;
     background-color: #131C46;
-    border-color: #494f95;
+    border: solid 2px ;
+    border-color: #131C46;
     color: white;
     font-family: inherit;
     font-size: 1em;
@@ -173,11 +216,12 @@ input.Dark_prompt {
 }
 
 input.Light_prompt {
-    width: 70%;
+    width: 60%;
     height: 20px;
     background-color: #CCD5D5;
     color: #697892;
-    border-color: #89A8B2;
+    border: solid 2px;
+    border-color: #CCD5D5;
     font-family: inherit;
     font-size: 1em;
     font-weight: 505;
