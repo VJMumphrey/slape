@@ -13,6 +13,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -79,7 +80,7 @@ func main() {
 	// Change to Debug so we get debug logs
 	programLevel.Set(slog.LevelDebug)
 
-    go logging.CreateLogFile()
+	go logging.CreateLogFile()
 
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
@@ -126,6 +127,17 @@ func main() {
 	// Block until a signal is received.
 	<-sigChan
 
+	err := shutdownPipelines()
+	if err != nil {
+		slog.Error("Error", "ErrorString", err)
+	}
+	/*
+	   s.DockerClient.Close()
+	   c.DockerClient.Close()
+	   d.DockerClient.Close()
+	   e.DockerClient.Close()
+	*/
+
 	// Create a context with a timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -138,10 +150,6 @@ func main() {
 	// Close the pipeline to stop adding new pipelines
 	// close(keystone)
 
-	s.Shutdown(nil, nil)
-	c.Shutdown(nil, nil)
-	d.Shutdown(nil, nil)
-
 	slog.Info("[+] Server gracefully stopped")
 }
 
@@ -152,8 +160,6 @@ type Coors struct {
 // ServeHTTP handles the request by passing it to the real
 // handler and logging the request details
 func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	//start := time.Now()
-
 	if origin := req.Header.Get("Origin"); origin != "" {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -162,7 +168,7 @@ func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	// Stop here if its Preflighted OPTIONS request
 	if req.Method == "OPTIONS" {
-        w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -175,6 +181,21 @@ func NewCoors(handlerToWrap http.Handler) *Coors {
 	return &Coors{handlerToWrap}
 }
 
-// TODO rewrite to model middleware
-func Cors(w http.ResponseWriter, req *http.Request) {
+// need to shutdown pipelines with
+// a remote request since the shutdown functions now need a req struct
+func shutdownPipelines() error {
+
+	url := "http://localhost:8080/%s/shutdown"
+	pipelines := []string{"simple", "cot", "deb", "emb"}
+
+	for _, pipeline := range pipelines {
+		requrl := fmt.Sprintf(url, pipeline)
+		resp, err := http.Get(requrl)
+		if err != nil {
+			return err
+		}
+		resp.Body.Close()
+	}
+
+	return nil
 }

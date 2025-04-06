@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"log/slog"
@@ -65,7 +66,7 @@ func (c *ContextBox) PromptBuilder(previousAnswer string) error {
 // getThought is used to generate initial thoughts about a given question.
 // This is supposed to create some guardrails for thought.
 // This will not be good for slms but llms that are centered around reasoning
-func (c *ContextBox) getThoughts() (string, error) {
+func (c *ContextBox) getThoughts(ctx context.Context) {
 
 	prompt := `Think through the given statement and return your thoughts.
     These thoughts should contain initial ideas, thoughts, and contraints regarding the problem.
@@ -93,13 +94,13 @@ func (c *ContextBox) getThoughts() (string, error) {
 		}
 	}
 
-	result, err := GenerateCompletion(param, "", *vars.OpenaiClient)
-    log.Println(result)
+	result, err := GenerateCompletion(ctx, param, "", *vars.OpenaiClient)
+	log.Println(result)
 	if err != nil {
-		return "None", err
+        c.Thoughts = "None"
 	}
 
-    slog.Debug("%s", result)
+	slog.Debug("Debug", "DebugValue", result)
 
-	return result, nil
+	c.Thoughts = result
 }
