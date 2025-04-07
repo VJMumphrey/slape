@@ -22,22 +22,22 @@ func processPrompt(mode string) (string, int64) {
 		maxtokens = 4096
 	case "tot":
 		promptChoice = prompt.ToTPrompt
-		maxtokens = 32768
+		maxtokens = 16384
 	case "got":
 		promptChoice = prompt.GoTPrompt
-		maxtokens = 32768
+		maxtokens = 16384
 	case "moe":
 		promptChoice = prompt.MoEPrompt
-		maxtokens = 32768
+		maxtokens = 16384
 	case "thinkinghats":
 		promptChoice = prompt.SixThinkingHats
-		maxtokens = 32768
+		maxtokens = 16384
 	case "goe":
 		promptChoice = prompt.GoEPrompt
-		maxtokens = 32768
+		maxtokens = 16384
 	default:
 		promptChoice = prompt.SimplePrompt
-		maxtokens = 100
+		maxtokens = 1024
 	}
 
 	return promptChoice, maxtokens
@@ -70,12 +70,12 @@ func IsGPU() bool {
 	gpuInfo, err := ghw.GPU()
 	// if there is an error continue without using a GPU
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "Errorstring", err)
 		slog.Warn("Continuing without GPU...")
 	}
 
 	// for debugging
-	slog.Debug("%s", gpuInfo.GraphicsCards)
+	slog.Debug("Error", "Errorstring", gpuInfo.GraphicsCards)
 
 	if len(gpuInfo.GraphicsCards) == 0 {
 		slog.Warn("No GPUs to use, switching to cpu only")

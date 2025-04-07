@@ -30,8 +30,13 @@ type (
 		GPU            bool
 
 		// for internal use
-		gencontainer container.CreateResponse
-		embcontainer container.CreateResponse
+        // 0 is embedding model
+        // 1 is generation model
+		containers []container.CreateResponse
+	}
+
+	embeddingRequst struct {
+		Prompt string `json:"prompt"`
 	}
 
 	embeddingResponse struct {
@@ -41,37 +46,40 @@ type (
 
 // SimplePipelineSetupRequest, handlerfunc expects POST method and returns no content
 func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "Errostring", err)
 		return
 	}
 
 	// setup values needed for pipeline
 	e.DockerClient = apiClient
 
-	go e.Setup(context.Background())
+	go e.Setup(ctx)
 
 	w.WriteHeader(http.StatusOK)
 }
 
 // simplerequest is used to handle simple requests as needed.
 func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
+	var payload embeddingRequst
 
-	var simplePayload simpleRequest
+	ctx := req.Context()
 
-	err := json.NewDecoder(req.Body).Decode(&simplePayload)
+	err := json.NewDecoder(req.Body).Decode(&payload)
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "Errostring", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
 
 	// generate a response
 	// TODO rewrite for embedding and rag
-	result, err := e.Generate(simplePayload.Prompt, vars.EmbeddingClient)
+	result, err := e.Generate(ctx, payload.Prompt, vars.EmbeddingClient)
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "Errostring", err)
 		http.Error(w, "Error getting generation from model", http.StatusOK)
 
 		return
@@ -86,7 +94,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 
 	json, err := json.Marshal(respPayload)
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "Errostring", err)
 		http.Error(w, "Error marshaling your response from model", http.StatusOK)
 		return
 	}
@@ -138,27 +146,28 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	// start container
 	err = (e.DockerClient).ContainerStart(context.Background(), gencreateResponse.ID, container.StartOptions{})
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "Errostring", err)
 		return err
 	}
 
 	// start container
 	err = (e.DockerClient).ContainerStart(context.Background(), embedcreateResponse.ID, container.StartOptions{})
 	if err != nil {
-		slog.Error("%s", err)
+		slog.Error("Error", "Errostring", err)
 		return err
 	}
 
 	// For debugging
 	slog.Info("%s", gencreateResponse.ID)
 	slog.Info("%s", embedcreateResponse.ID)
-	e.embcontainer = embedcreateResponse
-	e.gencontainer = gencreateResponse
+
+    e.containers = append(e.containers, embedcreateResponse)
+    e.containers = append(e.containers, gencreateResponse)
 
 	return nil
 }
 
-func (e *EmbeddingPipeline) Generate(payload string, openaiClient *openai.Client) (*openai.CreateEmbeddingResponse, error) {
+func (e *EmbeddingPipeline) Generate(ctx context.Context, payload string, openaiClient *openai.Client) (*openai.CreateEmbeddingResponse, error) {
 	// take care of upDog on our own
 	for {
 		// sleep and give server guy a break
@@ -177,7 +186,7 @@ func (e *EmbeddingPipeline) Generate(payload string, openaiClient *openai.Client
 	}
 
 	// should return a type of openai.Embedding
-	result, err := GenerateEmbedding(param, *openaiClient)
+	result, err := GenerateEmbedding(ctx, param, *openaiClient)
 	if err != nil {
 		return nil, err
 	}
@@ -186,24 +195,18 @@ func (e *EmbeddingPipeline) Generate(payload string, openaiClient *openai.Client
 }
 
 func (e *EmbeddingPipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
-	err := (e.DockerClient).ContainerStop(context.Background(), e.gencontainer.ID, container.StopOptions{})
-	if err != nil {
-		slog.Error("%s", err)
+
+	childctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
+	defer cancel()
+
+	// turn off the containers if they aren't already off
+	for _, model := range e.containers {
+		(e.DockerClient).ContainerStop(childctx, model.ID, container.StopOptions{})
 	}
 
-	err = (e.DockerClient).ContainerStop(context.Background(), e.embcontainer.ID, container.StopOptions{})
-	if err != nil {
-		slog.Error("%s", err)
-	}
-
-	err = (e.DockerClient).ContainerRemove(context.Background(), e.gencontainer.ID, container.RemoveOptions{})
-	if err != nil {
-		slog.Error("%s", err)
-	}
-
-	err = (e.DockerClient).ContainerRemove(context.Background(), e.embcontainer.ID, container.RemoveOptions{})
-	if err != nil {
-		slog.Error("%s", err)
+	// remove the containers, seperate incase it's already stopped
+	for _, model := range e.containers {
+		(e.DockerClient).ContainerRemove(childctx, model.ID, container.RemoveOptions{})
 	}
 
 	slog.Info("Shutting Down...")
