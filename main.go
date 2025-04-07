@@ -21,7 +21,6 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/StoneG24/slape/internal/logging"
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/StoneG24/slape/pkg/pipeline"
 )
@@ -75,8 +74,6 @@ var (
 // @BasePath /
 func main() {
 
-	// This is info by default
-	var programLevel = new(slog.LevelVar)
 	// Change to Debug so we get debug logs
 	programLevel.Set(slog.LevelDebug)
 
@@ -168,6 +165,7 @@ func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	// Stop here if its Preflighted OPTIONS request
 	if req.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
