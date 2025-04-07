@@ -152,8 +152,6 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
 	defer cancel()
 
-	// fmt.Println(childctx.Deadline())
-
 	reader, err := PullImage(s.DockerClient, childctx, s.ContainerImage)
 	if err != nil {
 		slog.Error("Error", "ErrorString", err)

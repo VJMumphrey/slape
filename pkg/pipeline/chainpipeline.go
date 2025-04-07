@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/StoneG24/slape/internal/vars"
@@ -64,7 +63,10 @@ type (
 
 // ChainPipeline, handlerfunc expects POST method and returns nothing
 func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
+	var setupPayload chainSetupPayload
+
+	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
+	defer cancel()
 
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -72,20 +74,17 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 		return
 	}
 
-	var setupPayload chainSetupPayload
-
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
 		slog.Error("Error", "Errorstring", err)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		w.Write([]byte("Error unexpected request format"))
+		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
 
 	c.Models = setupPayload.Models
 	c.DockerClient = apiClient
 
-	go c.Setup(ctx)
+	c.Setup(ctx)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -97,9 +96,10 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 // - mode string, mode of prompt struture to use.
 func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
 	var payload chainRequest
-	var wg sync.WaitGroup
 
-	ctx := req.Context()
+	// use this to scope the context to the request
+	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(3*time.Minute))
+	defer cancel()
 
 	err := json.NewDecoder(req.Body).Decode(&payload)
 	if err != nil {
@@ -118,12 +118,10 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 		http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
 	}
 	if c.Thinking {
-		wg.Add(1)
-		go c.getThoughts(ctx)
+		c.getThoughts(ctx)
 	}
 
 	// wait on go routines then generate a response
-	wg.Wait()
 	result, err := c.Generate(ctx, payload.Prompt, promptChoice, maxtokens)
 	if err != nil {
 		slog.Error("Error", "ErrorString", err)
@@ -150,7 +148,11 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 }
 
 func (c *ChainofModels) Setup(ctx context.Context) error {
-	reader, err := PullImage(c.DockerClient, ctx, c.ContainerImage)
+
+	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
+	defer cancel()
+
+	reader, err := PullImage(c.DockerClient, childctx, c.ContainerImage)
 	if err != nil {
 		slog.Error("Error", "Errorstring", err)
 		return err
@@ -165,7 +167,7 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 			c.DockerClient,
 			"800"+strconv.Itoa(i),
 			"",
-			ctx,
+			childctx,
 			model,
 			c.ContainerImage,
 			c.GPU,
@@ -180,6 +182,14 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 		slog.Info("%s", createResponse.ID)
 		c.containers = append(c.containers, createResponse)
 	}
+
+	// start container
+	err = (c.DockerClient).ContainerStart(childctx, c.containers[0].ID, container.StartOptions{})
+	if err != nil {
+		slog.Error("Error", "ErrorString", err)
+		return err
+	}
+	slog.Info("Info", "Starting Container", c.containers[0].ID)
 
 	return nil
 }
@@ -292,8 +302,8 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 // ChainofModels.Shutdown handles the shutdown of the pipelines models.
 func (c *ChainofModels) Shutdown(w http.ResponseWriter, req *http.Request) {
 
-    childctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
-    defer cancel()
+	childctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
+	defer cancel()
 
 	// turn off the containers if they aren't already off
 	for _, model := range c.containers {

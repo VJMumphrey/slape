@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/StoneG24/slape/internal/vars"
@@ -69,6 +68,7 @@ type (
 
 // DebatePipelineSetupRequest, handlerfunc expects POST method and returns nothing
 func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
+	var setupPayload debateSetupPayload
 	ctx := req.Context()
 
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -76,8 +76,6 @@ func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *
 		slog.Error("Error", "Errorstring", err)
 		return
 	}
-
-	var setupPayload debateSetupPayload
 
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
@@ -96,10 +94,11 @@ func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *
 
 // DebatePipelineGenerateRequest is used to handle the request for a debate style thought process.
 func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	var wg sync.WaitGroup
 	var payload debateRequest
 
-	ctx := req.Context()
+	// use this to scope the context to the request
+	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(3*time.Minute))
+	defer cancel()
 
 	err := json.NewDecoder(req.Body).Decode(&payload)
 	if err != nil {
@@ -118,12 +117,10 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 		http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
 	}
 	if d.Thinking {
-		wg.Add(1)
-		go d.getThoughts(ctx)
+		d.getThoughts(ctx)
 	}
 
 	// wait for all tasks to complete then generate a response
-	wg.Wait()
 	result, err := d.Generate(ctx, payload.Prompt, promptChoice, maxtokens)
 	if err != nil {
 		slog.Error("Error", "Errostring", err)
@@ -152,6 +149,9 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 // InitDebateofModels creates a DebateofModels pipeline for debates.
 // Includes a ContextBox and all models needed.
 func (d *DebateofModels) Setup(ctx context.Context) error {
+	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
+	defer cancel()
+
 	reader, err := PullImage(d.DockerClient, ctx, d.ContainerImage)
 	if err != nil {
 		slog.Error("Error", "Errostring", err)
@@ -172,6 +172,14 @@ func (d *DebateofModels) Setup(ctx context.Context) error {
 		slog.Info("%s", createResponse.ID)
 		d.Models[i] = createResponse.ID
 	}
+
+	// start container
+	err = (d.DockerClient).ContainerStart(childctx, d.containers[0].ID, container.StartOptions{})
+	if err != nil {
+		slog.Error("Error", "ErrorString", err)
+		return err
+	}
+	slog.Info("Info", "Starting Container", d.containers[0].ID)
 
 	return nil
 }
