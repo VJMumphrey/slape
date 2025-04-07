@@ -97,7 +97,7 @@ func (c *ContextBox) getThoughts(ctx context.Context) {
 	result, err := GenerateCompletion(ctx, param, "", *vars.OpenaiClient)
 	log.Println(result)
 	if err != nil {
-        c.Thoughts = "None"
+		c.Thoughts = "None"
 	}
 
 	slog.Debug("Debug", "DebugValue", result)

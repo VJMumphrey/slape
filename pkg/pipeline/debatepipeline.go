@@ -15,7 +15,6 @@ import (
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/daemon/logger"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
@@ -308,5 +307,5 @@ func (d *DebateofModels) Shutdown(w http.ResponseWriter, req *http.Request) {
 		(d.DockerClient).ContainerRemove(childctx, d.Models[i], container.RemoveOptions{})
 	}
 
-	logger.Info("Shutting Down...")
+	slog.Info("Shutting Down...")
 }

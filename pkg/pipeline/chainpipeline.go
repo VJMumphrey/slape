@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/StoneG24/slape/internal/logging"
 	"github.com/StoneG24/slape/internal/vars"
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/docker/docker/api/types/container"
@@ -97,8 +96,6 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 // - models array of strings, an array of strings containing three models to use.
 // - mode string, mode of prompt struture to use.
 func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	logger := logging.CreateLogger()
-
 	var payload chainRequest
 
 	// use this to scope the context to the request
@@ -134,7 +131,7 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 	}
 
 	// for debugging streaming
-	logger.Info(result)
+	slog.Info(result)
 
 	respPayload := chainResponse{
 		Answer: result,
@@ -161,7 +158,7 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 		slog.Error("Error", "Errorstring", err)
 		return err
 	}
-	logger.Info("Pulling Image...")
+	slog.Info("Pulling Image...")
 	// prints out the status of the download
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
@@ -183,7 +180,7 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 			return err
 		}
 
-		logger.Info("%s", createResponse.ID)
+		slog.Info("%s", createResponse.ID)
 		c.containers = append(c.containers, createResponse)
 	}
 
@@ -210,7 +207,7 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 			slog.Error("Error", "Errorstring", err)
 			return "", err
 		}
-		logger.Info("Starting container %d...", i)
+		slog.Info("Starting container %d...", i)
 
 		for {
 			// sleep and give server guy a break
@@ -225,7 +222,7 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 			option.WithBaseURL("http://localhost:800" + strconv.Itoa(i) + "/v1"),
 		)
 
-		logger.Debug("Debug: %s%s", systemprompt, prompt)
+		slog.Debug("Debug: %s%s", systemprompt, prompt)
 
 		err = c.PromptBuilder(result)
 		if err != nil {
@@ -319,5 +316,5 @@ func (c *ChainofModels) Shutdown(w http.ResponseWriter, req *http.Request) {
 		(c.DockerClient).ContainerRemove(childctx, model.ID, container.RemoveOptions{})
 	}
 
-	logger.Info("Shutting Down...")
+	slog.Info("Shutting Down...")
 }
