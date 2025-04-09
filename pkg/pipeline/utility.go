@@ -15,7 +15,7 @@ func processPrompt(mode string) (string, int64) {
 
 	switch mode {
 	case "simple":
-		promptChoice = prompt.SimplePrompt
+		promptChoice = prompt.SecurityPrompt
 		maxtokens = 1024
 	case "cot":
 		promptChoice = prompt.CoTPrompt

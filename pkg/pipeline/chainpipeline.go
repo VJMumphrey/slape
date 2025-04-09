@@ -180,7 +180,7 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 			return err
 		}
 
-		slog.Info("%s", createResponse.ID)
+		slog.Info("ContainerCreated", "CreateReponse", createResponse.ID)
 		c.containers = append(c.containers, createResponse)
 	}
 
@@ -207,7 +207,7 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 			slog.Error("Error", "Errorstring", err)
 			return "", err
 		}
-		slog.Info("Starting container %d...", i)
+		slog.Info("StartingContainer", "ContainerIndex", i)
 
 		for {
 			// sleep and give server guy a break
@@ -222,7 +222,7 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 			option.WithBaseURL("http://localhost:800" + strconv.Itoa(i) + "/v1"),
 		)
 
-		slog.Debug("Debug: %s%s", systemprompt, prompt)
+		slog.Debug("Debug", "SystemPrompt", systemprompt, "Prompt", prompt)
 
 		err = c.PromptBuilder(result)
 		if err != nil {

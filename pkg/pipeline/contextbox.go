@@ -68,8 +68,10 @@ func (c *ContextBox) PromptBuilder(previousAnswer string) error {
 // This will not be good for slms but llms that are centered around reasoning
 func (c *ContextBox) getThoughts(ctx context.Context) {
 
-	prompt := `Think through the given statement and return your thoughts.
-    These thoughts should contain initial ideas, thoughts, and contraints regarding the problem.
+	prompt := `
+    You are tasked with solving a problem. Start by carefully considering and listing all the known facts surrounding the scenario. What do you already know about the situation? What information is available to you?
+    Next, identify the constraints based on these facts. What limitations or conditions must you take into account when approaching the problem? Consider factors like time, resources, and external influences that may affect the solution.
+    Once you’ve fully considered the facts and constraints, generate potential solutions to the problem. Think creatively and strategically, taking into account the constraints you’ve identified. Focus on generating ideas that are practical, feasible, and innovative. Provide a rationale for each idea, considering how well it aligns with the constraints and solves the problem at hand.
     `
 
 	param := openai.ChatCompletionNewParams{
@@ -81,7 +83,7 @@ func (c *ContextBox) getThoughts(ctx context.Context) {
 		Seed: openai.Int(0),
 		//Model:       openai.String(pipeline.Model),
 		Temperature: openai.Float(0.4),
-		//MaxTokens:   openai.Int(maxtokens),
+		MaxTokens:   openai.Int(16348),
 	}
 
 	for {

@@ -69,7 +69,9 @@ type (
 // DebatePipelineSetupRequest, handlerfunc expects POST method and returns nothing
 func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
 	var setupPayload debateSetupPayload
-	ctx := req.Context()
+
+	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
+	defer cancel()
 
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -87,7 +89,7 @@ func (d *DebateofModels) DebatePipelineSetupRequest(w http.ResponseWriter, req *
 	d.Models = setupPayload.Models
 	d.DockerClient = apiClient
 
-	go d.Setup(ctx)
+	d.Setup(ctx)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -149,6 +151,7 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 // InitDebateofModels creates a DebateofModels pipeline for debates.
 // Includes a ContextBox and all models needed.
 func (d *DebateofModels) Setup(ctx context.Context) error {
+
 	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
 	defer cancel()
 
@@ -157,20 +160,29 @@ func (d *DebateofModels) Setup(ctx context.Context) error {
 		slog.Error("Error", "Errostring", err)
 		return err
 	}
+	slog.Info("Pulling Image...")
 	// prints out the status of the download
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
 
-	for i := 0; i < len(d.Models)-1; i++ {
-		createResponse, err := CreateContainer(d.DockerClient, "800"+strconv.Itoa(i), "", ctx, d.Models[i], d.ContainerImage, d.GPU)
+	for i, model := range d.Models {
+		createResponse, err := CreateContainer(
+			d.DockerClient,
+			"800"+strconv.Itoa(i),
+			"",
+			ctx,
+			model,
+			d.ContainerImage,
+			d.GPU,
+		)
 		if err != nil {
 			slog.Warn("%s", createResponse.Warnings)
 			slog.Error("Error", "Errostring", err)
 			return err
 		}
 
-		slog.Info("%s", createResponse.ID)
-		d.Models[i] = createResponse.ID
+		slog.Info("CreatedContainer", "ContainerID", createResponse.ID)
+		d.containers = append(d.containers, createResponse)
 	}
 
 	// start container
@@ -188,7 +200,7 @@ func (d *DebateofModels) Generate(ctx context.Context, prompt string, systemprom
 	var result string
 
 	for j := 0; j < rounds; j++ {
-
+        slog.Info("RoundStatus", "RoundCount", j+1)
 		for i, model := range d.containers {
 			// start container
 			err := (d.DockerClient).ContainerStart(ctx, model.ID, container.StartOptions{})
@@ -196,7 +208,7 @@ func (d *DebateofModels) Generate(ctx context.Context, prompt string, systemprom
 				slog.Error("Error", "errorstring", err)
 				return "", err
 			}
-			slog.Info("Starting container %d...", i)
+			slog.Info("Starting container...", "ContainerIndex", i)
 
 			for {
 				// sleep and give server guy a break
@@ -211,7 +223,7 @@ func (d *DebateofModels) Generate(ctx context.Context, prompt string, systemprom
 				option.WithBaseURL("http://localhost:800" + strconv.Itoa(i) + "/v1"),
 			)
 
-			slog.Debug("Debug: %s%s", systemprompt, prompt)
+			slog.Debug("Debug", "SystemPrompt", systemprompt, "Prompt", prompt)
 
 			err = d.PromptBuilder(result)
 			if err != nil {
@@ -284,7 +296,7 @@ func (d *DebateofModels) Generate(ctx context.Context, prompt string, systemprom
 
 			d.FutureQuestions = result
 
-			slog.Info("Stopping container %d...", i)
+			slog.Info("Stopping container...", "ContainerIndex", i)
 			(d.DockerClient).ContainerStop(ctx, model.ID, container.StopOptions{})
 		}
 	}

@@ -96,7 +96,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	var simplePayload simpleRequest
 
 	// use this to scope the context to the request
-	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(3*time.Minute))
+	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(5*time.Minute))
 	defer cancel()
 
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)
