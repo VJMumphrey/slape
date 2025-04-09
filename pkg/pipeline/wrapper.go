@@ -2,13 +2,12 @@ package pipeline
 
 import (
 	"context"
-	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
@@ -25,17 +24,17 @@ func PullImage(apiClient *client.Client, ctx context.Context, containerImage str
 	return reader, err
 }
 
-func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string, containerImage string) (container.CreateResponse, error) {
+func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string, containerImage string, gpuTrue bool) (container.CreateResponse, error) {
 
 	portSet := nat.PortSet{
-		nat.Port(portNum + "/tcp"): struct{}{}, // map 11434 TCP port
+		nat.Port("8000/tcp"): struct{}{}, // map 11434 TCP port
 	}
 
 	portBindings := nat.PortMap{
-		nat.Port(portNum + "/tcp"): []nat.PortBinding{
+		nat.Port("8000/tcp"): []nat.PortBinding{
 			{
 				HostIP:   "0.0.0.0",
-				HostPort: "8000",
+				HostPort: portNum,
 			},
 		},
 	}
@@ -45,12 +44,12 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	if runtime.GOOS == "windows" {
 		ex, err := os.Executable()
 		if err != nil {
-			fmt.Println("Vito are less gay")
+			slog.Error("idk something else")
 		}
 
 		currentPath := filepath.Dir(ex)
 
-		fmt.Println(currentPath)
+		slog.Debug(currentPath)
 
 		mountString = currentPath + "\\models"
 	}
@@ -59,14 +58,21 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 		mountString = os.Getenv("PWD") + "/models"
 	}
 
+	var cmds []string
+	if gpuTrue {
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-ngl", "-1", "-fa", "--no-webui", "-c", "16384"}
+	} else {
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--no-webui", "-c", "16384"}
+	}
+
 	// create container
 	createResponse, err := apiClient.ContainerCreate(ctx, &container.Config{
 		ExposedPorts: portSet,
 		Image:        containerImage,
-		Cmd:          []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-n", "32678", "-fa"},
+		Cmd:          cmds,
 	}, &container.HostConfig{
 		// TODO check for gpu, if true set to use nvidia runtime, rocm, or cdi
-		//Runtime: "nvidia",
+		//Runtime:      "nvidia",
 		PortBindings: portBindings,
 		Mounts: []mount.Mount{{
 			Type:   mount.TypeBind,
@@ -83,11 +89,11 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 //
 // prompt comes from a user and is the question being asked.
 // systemprompt is the systemprompt chosen based on the prompting style requested.
-func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion string, openaiClient openai.Client) (string, error) {
+func GenerateCompletion(ctx context.Context, param openai.ChatCompletionNewParams, followupQuestion string, openaiClient openai.Client) (string, error) {
 
 	var result string
 
-	stream := openaiClient.Chat.Completions.NewStreaming(context.Background(), param)
+	stream := openaiClient.Chat.Completions.NewStreaming(ctx, param)
 
 	// optionally, an accumulator helper can be used
 	acc := openai.ChatCompletionAccumulator{}
@@ -97,9 +103,11 @@ func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion s
 		//w.Write([]byte(chunk.Choices[0].Delta.Content))
 		acc.AddChunk(chunk)
 
-		if content, ok := acc.JustFinishedContent(); ok {
-			println("Content stream finished:", content)
-		}
+		/*
+			if content, ok := acc.JustFinishedContent(); ok {
+				println("Content stream finished:", content)
+			}
+		*/
 
 		// if using tool calls
 		//if tool, ok := acc.JustFinishedToolCall(); ok {
@@ -112,9 +120,10 @@ func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion s
 
 		// it's best to use chunks after handling JustFinished events
 		if len(chunk.Choices) > 0 {
-			println(chunk.Choices[0].Delta.Content)
+			print(chunk.Choices[0].Delta.Content)
 		}
 	}
+	println("\n")
 
 	if err := stream.Err(); err != nil {
 		return "", err
@@ -130,21 +139,13 @@ func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion s
 	return result, nil
 }
 
-// FindContainer finds a specific container based on the nomenclature of /name.
-// Useful making checks before
-func FindContainer(apiClient *client.Client, ctx context.Context) (types.Container, bool) {
-	status := false
+// GenerateEmbedding is used as a helper function for generating embeddings.
+func GenerateEmbedding(ctx context.Context, param openai.EmbeddingNewParams, client openai.Client) (*openai.CreateEmbeddingResponse, error) {
 
-	containers, err := apiClient.ContainerList(ctx, container.ListOptions{All: true})
+	embeddings, err := client.Embeddings.New(ctx, param)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	for _, container := range containers {
-		if container.Names[len(container.Names)-1] == "/llamacpp" {
-			return container, true
-		}
-	}
-
-	return types.Container{}, status
+	return embeddings, nil
 }

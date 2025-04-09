@@ -1,0 +1,3 @@
+[submodule "MiniRAG"]
+	path = MiniRAG
+	url = https://github.com/HKUDS/MiniRAG
