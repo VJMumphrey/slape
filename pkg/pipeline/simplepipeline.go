@@ -66,8 +66,7 @@ type (
 
 // SimplePipelineSetupRequest, handlerfunc expects POST method and returns no content
 func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
-	// create the logger for this
-	logger := logging.CreateLogger()
+	var setupPayload simpleSetupPayload
 
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -75,12 +74,6 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 		return
 	}
 
-	if req.Method != http.MethodPost {
-		http.Error(w, "Wrong method used for endpoint", http.StatusBadRequest)
-		return
-	}
-
-	var setupPayload simpleSetupPayload
 
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
@@ -92,7 +85,7 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 	s.Models = setupPayload.Models
 	s.DockerClient = apiClient
 
-	go s.Setup(context.Background(), logger)
+	s.Setup(ctx)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -159,12 +152,16 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 func (s *SimplePipeline) Setup(ctx context.Context, logger *slog.Logger) error {
 
-	reader, err := PullImage(s.DockerClient, ctx, s.ContainerImage)
+	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
+	defer cancel()
+
+	slog.Debug("Debug", "PullingImage", s.ContainerImage)
+
+	reader, err := PullImage(s.DockerClient, childctx, s.ContainerImage)
 	if err != nil {
-		logger.Error("Error", "ErrorString", err)
+		slog.Error("Error", "ErrorPullingContainerImage", err)
 		return err
 	}
-	logger.Info("Pulling Image...")
 	// prints out the status of the download
 	// worth while for big images
 	io.Copy(os.Stdout, reader)

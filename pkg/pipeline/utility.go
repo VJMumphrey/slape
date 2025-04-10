@@ -43,7 +43,6 @@ func processPrompt(mode string) (string, int64) {
 	return promptChoice, maxtokens
 }
 
-// TODO(v) PickImage should be made global for all pipelines and be ran in main as preprocess step
 func PickImage() string {
 	gpuTrue := IsGPU()
 	if gpuTrue {
@@ -51,10 +50,14 @@ func PickImage() string {
 		if err != nil {
 			return vars.CpuImage
 		}
-		// BUG(v,t): fix idk what the value is.
 		// After reading upstream, he reads the devices mounted
 		// with $ ll /sys/class/drm/
-		for _, gpu := range gpus {
+		for i, gpu := range gpus {
+			// TODO(v) this behavior is mostly for laptops and needs to get looked at again later.
+			// onboard graphics card usually is index 0.
+			if i == 0 {
+				continue
+			}
 			switch gpu.DeviceInfo.Vendor.Name {
 			case "NVIDIA Corporation":
 				return vars.CudagpuImage
@@ -75,17 +78,17 @@ func IsGPU() bool {
 	}
 
 	// for debugging
-	slog.Debug("%s", gpuInfo.GraphicsCards)
+	//slog.Debug("Debug", "Debug", gpuInfo.GraphicsCards)
 
 	if len(gpuInfo.GraphicsCards) == 0 {
 		slog.Warn("No GPUs to use, switching to cpu only")
 		return false
+	} else {
+		return true
 	}
 
 	// This guy nil derefernce panics when the gpu isn't actually a graphics card
 	// fmt.Println(gpuInfo.GraphicsCards[0].Node.Memory)
-
-	return false
 }
 
 // CheckMemoryUsage is used to check the availble memory of a machine.

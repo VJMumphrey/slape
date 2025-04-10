@@ -84,6 +84,8 @@ func main() {
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
 
+	// Default Mux for our server.
+	// For auth in the future we will want to setup a different set.
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /simple/generate", s.SimplePipelineGenerateRequest)
