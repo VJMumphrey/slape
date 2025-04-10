@@ -60,9 +60,9 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 
 	var cmds []string
 	if gpuTrue {
-		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-ngl", "-1", "-fa", "--no-webui", "-c", "32768"}
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-ngl", "-1", "-fa", "--no-webui", "-c", "16384"}
 	} else {
-		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--no-webui", "-c", "32768"}
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--no-webui", "-c", "16384"}
 	}
 
 	// create container
@@ -89,11 +89,11 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 //
 // prompt comes from a user and is the question being asked.
 // systemprompt is the systemprompt chosen based on the prompting style requested.
-func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion string, openaiClient openai.Client) (string, error) {
+func GenerateCompletion(ctx context.Context, param openai.ChatCompletionNewParams, followupQuestion string, openaiClient openai.Client) (string, error) {
 
 	var result string
 
-	stream := openaiClient.Chat.Completions.NewStreaming(context.Background(), param)
+	stream := openaiClient.Chat.Completions.NewStreaming(ctx, param)
 
 	// optionally, an accumulator helper can be used
 	acc := openai.ChatCompletionAccumulator{}
@@ -123,7 +123,7 @@ func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion s
 			print(chunk.Choices[0].Delta.Content)
 		}
 	}
-    println("\n")
+	println("\n")
 
 	if err := stream.Err(); err != nil {
 		return "", err
@@ -140,9 +140,9 @@ func GenerateCompletion(param openai.ChatCompletionNewParams, followupQuestion s
 }
 
 // GenerateEmbedding is used as a helper function for generating embeddings.
-func GenerateEmbedding(param openai.EmbeddingNewParams, client openai.Client) (*openai.CreateEmbeddingResponse, error) {
+func GenerateEmbedding(ctx context.Context, param openai.EmbeddingNewParams, client openai.Client) (*openai.CreateEmbeddingResponse, error) {
 
-	embeddings, err := client.Embeddings.New(context.Background(), param)
+	embeddings, err := client.Embeddings.New(ctx, param)
 	if err != nil {
 		return nil, err
 	}

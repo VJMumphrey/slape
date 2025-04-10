@@ -13,6 +13,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -77,13 +78,13 @@ func main() {
 	// Change to Debug so we get debug logs
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
-	logging.CreateLogFile()
-
-    logger := logging.CreateLogger()
+	go logging.CreateLogFile()
 
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
 
+	// Default Mux for our server.
+	// For auth in the future we will want to setup a different set.
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /simple/generate", s.SimplePipelineGenerateRequest)
@@ -112,7 +113,7 @@ func main() {
 	}
 
 	// Start the server in a goroutine.
-	logger.Info("[+] Server started on :8080")
+	slog.Info("[+] Server started on :8080")
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe(): %s", err)
@@ -126,6 +127,17 @@ func main() {
 	// Block until a signal is received.
 	<-sigChan
 
+	err := shutdownPipelines()
+	if err != nil {
+		slog.Error("Error", "ErrorString", err)
+	}
+	/*
+	   s.DockerClient.Close()
+	   c.DockerClient.Close()
+	   d.DockerClient.Close()
+	   e.DockerClient.Close()
+	*/
+
 	// Create a context with a timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -138,11 +150,7 @@ func main() {
 	// Close the pipeline to stop adding new pipelines
 	// close(keystone)
 
-	s.Shutdown(nil, nil)
-	c.Shutdown(nil, nil)
-	d.Shutdown(nil, nil)
-
-	logger.Info("[+] Server gracefully stopped")
+	slog.Info("[+] Server gracefully stopped")
 }
 
 type Coors struct {
@@ -152,8 +160,6 @@ type Coors struct {
 // ServeHTTP handles the request by passing it to the real
 // handler and logging the request details
 func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	//start := time.Now()
-
 	if origin := req.Header.Get("Origin"); origin != "" {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -173,4 +179,23 @@ func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // NewCoors constructs a new Logger middleware handler
 func NewCoors(handlerToWrap http.Handler) *Coors {
 	return &Coors{handlerToWrap}
+}
+
+// need to shutdown pipelines with
+// a remote request since the shutdown functions now need a req struct
+func shutdownPipelines() error {
+
+	url := "http://localhost:8080/%s/shutdown"
+	pipelines := []string{"simple", "cot", "deb", "emb"}
+
+	for _, pipeline := range pipelines {
+		requrl := fmt.Sprintf(url, pipeline)
+		resp, err := http.Get(requrl)
+		if err != nil {
+			return err
+		}
+		resp.Body.Close()
+	}
+
+	return nil
 }

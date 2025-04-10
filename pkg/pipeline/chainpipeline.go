@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/StoneG24/slape/internal/logging"
 	"github.com/StoneG24/slape/internal/vars"
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/docker/docker/api/types/container"
@@ -65,33 +64,28 @@ type (
 // ChainPipelineSetupRequest, expects POST method and returns nothing. Runs the startup
 // process for a chain pipeline.
 func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *http.Request) {
-	logger := logging.CreateLogger()
+	var setupPayload chainSetupPayload
+
+	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
+	defer cancel()
 
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		logger.Error("%s", err)
+		slog.Error("Error", "Errorstring", err)
 		return
 	}
-
-	if req.Method != http.MethodPost {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	var setupPayload chainSetupPayload
 
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
-		logger.Error("%s", err)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		w.Write([]byte("Error unexpected request format"))
+		slog.Error("Error", "Errorstring", err)
+		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
 
 	c.Models = setupPayload.Models
 	c.DockerClient = apiClient
 
-	go c.Setup(context.Background(), logger)
+	c.Setup(ctx)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -102,44 +96,42 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 // - models array of strings, an array of strings containing three models to use.
 // - mode string, mode of prompt struture to use.
 func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	logger := logging.CreateLogger()
-
 	var payload chainRequest
+
+	// use this to scope the context to the request
+	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(3*time.Minute))
+	defer cancel()
 
 	err := json.NewDecoder(req.Body).Decode(&payload)
 	if err != nil {
-		logger.Error("Error", "Errorstring", err)
+		slog.Error("Error", "ErrorString", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
 
 	promptChoice, maxtokens := processPrompt(payload.Mode)
+
 	c.ContextBox.SystemPrompt = promptChoice
 	c.ContextBox.Prompt = payload.Prompt
 	c.Thinking, err = strconv.ParseBool(payload.Thinking)
 	if err != nil {
-		logger.Error("Error", "Errorstring", err)
+		slog.Error("Error", "Errorstring", err)
 		http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
 	}
 	if c.Thinking {
-		thoughts, err := c.getThoughts()
-		if err != nil {
-			logger.Error("Error", "Errorstring", err)
-			http.Error(w, "Error gathering thoughts", http.StatusInternalServerError)
-		}
-		c.ContextBox.Thoughts = thoughts
+		c.getThoughts(ctx)
 	}
 
-	// generate a response
-	result, err := c.Generate(payload.Prompt, promptChoice, maxtokens, logger)
+	// wait on go routines then generate a response
+	result, err := c.Generate(ctx, payload.Prompt, promptChoice, maxtokens)
 	if err != nil {
-		logger.Error("Error", "Errorstring", err)
+		slog.Error("Error", "ErrorString", err)
 		http.Error(w, "Error getting generation from model", http.StatusOK)
 		return
 	}
 
 	// for debugging streaming
-	logger.Info(result)
+	slog.Info(result)
 
 	respPayload := chainResponse{
 		Answer: result,
@@ -147,7 +139,7 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 
 	json, err := json.Marshal(respPayload)
 	if err != nil {
-		logger.Error("%s", err)
+		slog.Error("Error", "ErrorString", err)
 		http.Error(w, "Error marshaling your response from model", http.StatusOK)
 		return
 	}
@@ -156,13 +148,17 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 	w.Write(json)
 }
 
-func (c *ChainofModels) Setup(ctx context.Context, logger *slog.Logger) error {
-	reader, err := PullImage(c.DockerClient, ctx, c.ContainerImage)
+func (c *ChainofModels) Setup(ctx context.Context) error {
+
+	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
+	defer cancel()
+
+	reader, err := PullImage(c.DockerClient, childctx, c.ContainerImage)
 	if err != nil {
-		logger.Error("Error", "Errorstring", err)
+		slog.Error("Error", "Errorstring", err)
 		return err
 	}
-	logger.Info("Pulling Image...")
+	slog.Info("Pulling Image...")
 	// prints out the status of the download
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
@@ -172,42 +168,50 @@ func (c *ChainofModels) Setup(ctx context.Context, logger *slog.Logger) error {
 			c.DockerClient,
 			"800"+strconv.Itoa(i),
 			"",
-			ctx,
+			childctx,
 			model,
 			c.ContainerImage,
 			c.GPU,
 		)
 
 		if err != nil {
-			logger.Warn("%s", createResponse.Warnings)
-			logger.Error("%s", err)
+			slog.Warn("Warning", createResponse.Warnings)
+			slog.Error("Error", "Errorstring", err)
 			return err
 		}
 
-		logger.Info("%s", createResponse.ID)
+		slog.Info("ContainerCreated", "CreateReponse", createResponse.ID)
 		c.containers = append(c.containers, createResponse)
 	}
+
+	// start container
+	err = (c.DockerClient).ContainerStart(childctx, c.containers[0].ID, container.StartOptions{})
+	if err != nil {
+		slog.Error("Error", "ErrorString", err)
+		return err
+	}
+	slog.Info("Info", "Starting Container", c.containers[0].ID)
 
 	return nil
 }
 
 // ChainofModels.Generate is the facilitator of model orchestration based on the chain of model pipeline.
 // Since the pipeline is based on the Chan of Thought prompting technique, it follows this style, mimicing its behavior.
-func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens int64, logger *slog.Logger) (string, error) {
+func (c *ChainofModels) Generate(ctx context.Context, prompt string, systemprompt string, maxtokens int64) (string, error) {
 	var result string
 
 	for i, model := range c.containers {
 		// start container
-		err := (c.DockerClient).ContainerStart(context.Background(), model.ID, container.StartOptions{})
+		err := (c.DockerClient).ContainerStart(ctx, model.ID, container.StartOptions{})
 		if err != nil {
-			logger.Error("%s", err)
+			slog.Error("Error", "Errorstring", err)
 			return "", err
 		}
-		logger.Info("Starting container %d...", i)
+		slog.Info("StartingContainer", "ContainerIndex", i)
 
 		for {
 			// sleep and give server guy a break
-			time.Sleep(time.Duration(5 * time.Second))
+			time.Sleep(time.Duration(2 * time.Second))
 
 			if api.UpDog("800" + strconv.Itoa(i)) {
 				break
@@ -218,7 +222,7 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 			option.WithBaseURL("http://localhost:800" + strconv.Itoa(i) + "/v1"),
 		)
 
-		logger.Debug("Debug: %s%s", systemprompt, prompt)
+		slog.Debug("Debug", "SystemPrompt", systemprompt, "Prompt", prompt)
 
 		err = c.PromptBuilder(result)
 		if err != nil {
@@ -239,9 +243,9 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 			MaxTokens:   openai.Int(maxtokens),
 		}
 
-		result, err = GenerateCompletion(param, "", *openaiClient)
+		result, err = GenerateCompletion(ctx, param, "", *openaiClient)
 		if err != nil {
-			logger.Error("%s", err)
+			slog.Error("Error", "Errorstring", err)
 			return "", err
 		}
 
@@ -260,9 +264,9 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 			MaxTokens:   openai.Int(maxtokens),
 		}
 
-		result, err = GenerateCompletion(param, "", *openaiClient)
+		result, err = GenerateCompletion(ctx, param, "", *openaiClient)
 		if err != nil {
-			logger.Error("%s", err)
+			slog.Error("Error", "Errorstring", err)
 			return "", err
 		}
 
@@ -281,16 +285,16 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 			MaxTokens:   openai.Int(maxtokens),
 		}
 
-		result, err = GenerateCompletion(param, "", *openaiClient)
+		result, err = GenerateCompletion(ctx, param, "", *openaiClient)
 		if err != nil {
-			logger.Error("%s", err)
+			slog.Error("Error", "Errorstring", err)
 			return "", err
 		}
 
 		c.FutureQuestions = result
 
-		logger.Info("Stopping container %d...", i)
-		(c.DockerClient).ContainerStop(context.Background(), model.ID, container.StopOptions{})
+		slog.Info("Stopping Container", "ContainerIndex", i)
+		(c.DockerClient).ContainerStop(ctx, model.ID, container.StopOptions{})
 	}
 
 	return result, nil
@@ -298,17 +302,19 @@ func (c *ChainofModels) Generate(prompt string, systemprompt string, maxtokens i
 
 // ChainofModels.Shutdown handles the shutdown of the pipelines models.
 func (c *ChainofModels) Shutdown(w http.ResponseWriter, req *http.Request) {
-    logger := logging.CreateLogger()
+
+	childctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
+	defer cancel()
 
 	// turn off the containers if they aren't already off
 	for _, model := range c.containers {
-		(c.DockerClient).ContainerStop(context.Background(), model.ID, container.StopOptions{})
+		(c.DockerClient).ContainerStop(childctx, model.ID, container.StopOptions{})
 	}
 
 	// remove the containers, seperate incase it's already stopped
 	for _, model := range c.containers {
-		(c.DockerClient).ContainerRemove(context.Background(), model.ID, container.RemoveOptions{})
+		(c.DockerClient).ContainerRemove(childctx, model.ID, container.RemoveOptions{})
 	}
 
-	logger.Info("Shutting Down...")
+	slog.Info("Shutting Down...")
 }
