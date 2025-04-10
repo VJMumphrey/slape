@@ -45,6 +45,7 @@ func processPrompt(mode string) (string, int64) {
 
 func PickImage() string {
 	gpuTrue := IsGPU()
+    println(gpuTrue)
 	if gpuTrue {
 		gpus, err := GatherGPUs()
 		if err != nil {
@@ -73,7 +74,7 @@ func IsGPU() bool {
 	gpuInfo, err := ghw.GPU()
 	// if there is an error continue without using a GPU
 	if err != nil {
-		slog.Error("Error", "Errorstring", err)
+		slog.Error("Error", "ErrorGettingGPUStruct", err)
 		slog.Warn("Continuing without GPU...")
 	}
 
@@ -81,7 +82,7 @@ func IsGPU() bool {
 	//slog.Debug("Debug", "Debug", gpuInfo.GraphicsCards)
 
 	if len(gpuInfo.GraphicsCards) == 0 {
-		slog.Warn("No GPUs to use, switching to cpu only")
+		slog.Warn("Warning", "No GPUs, CPU only")
 		return false
 	} else {
 		return true

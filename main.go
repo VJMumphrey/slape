@@ -27,15 +27,18 @@ import (
 )
 
 var (
+    isGPU = pipeline.IsGPU()
+    image = pipeline.PickImage()
+
 	s = pipeline.SimplePipeline{
 		// updates after created
 		Models:         []string{},
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
 		Active:         true,
-		ContainerImage: pipeline.PickImage(),
+		ContainerImage: image,
 		DockerClient:   nil,
-		GPU:            pipeline.IsGPU(),
+		GPU:            isGPU,
 	}
 
 	c = pipeline.ChainofModels{
@@ -44,9 +47,9 @@ var (
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
 		Active:         true,
-		ContainerImage: pipeline.PickImage(),
+		ContainerImage: image,
 		DockerClient:   nil,
-		GPU:            pipeline.IsGPU(),
+		GPU:            isGPU,
 	}
 
 	d = pipeline.DebateofModels{
@@ -55,16 +58,16 @@ var (
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
 		Active:         true,
-		ContainerImage: pipeline.PickImage(),
+		ContainerImage: image,
 		DockerClient:   nil,
-		GPU:            pipeline.IsGPU(),
+		GPU:            isGPU,
 	}
 
 	e = pipeline.EmbeddingPipeline{
 		// updates after created
 		DockerClient:   nil,
-		ContainerImage: pipeline.PickImage(),
-		GPU:            pipeline.IsGPU(),
+		ContainerImage: image,
+		GPU:            isGPU,
 	}
 )
 
