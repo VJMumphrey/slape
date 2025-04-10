@@ -21,10 +21,22 @@ export default function Pipelines() {
       "This pipeline sends a request to one model to get a simple I/O response. This is mainly meant for simple questions.",
   };
 
-  const testModel2 = {
-    pipeline: "TestPipelines",
-    displayName: "TestPipelines",
-    description: "Tests to see how multiple cards look",
+  const cotPipeline = {
+    pipeline: "cot",
+    displayName: "Chain of Thought",
+    description: "This pipeline is designed to pass individual thoughts between a chain of models.",
+  };
+
+  const debatePipeline = {
+    pipeline: "deb",
+    displayName: "Debate Pipeline",
+    description: "Utilizes multiple models in order to debate on a prompt.",
+  };
+
+  const embeddingPipeline = {
+    pipeline: "emb",
+    displayName: "Embedding Pipeline",
+    description: "Utilized to embed prompts?",
   };
 
   async function savePipeline() {
@@ -59,17 +71,14 @@ export default function Pipelines() {
         <div onClick={() => {setCurrentPipeline(simplePipeline.pipeline)}}>
           <PipelineCard {...simplePipeline}></PipelineCard>
         </div>
-        <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
-          <PipelineCard {...testModel2}></PipelineCard>
+        <div onClick={() => {setCurrentPipeline(cotPipeline.pipeline)}}>
+          <PipelineCard {...cotPipeline}></PipelineCard>
         </div>
-        <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
-          <PipelineCard {...testModel2}></PipelineCard>
+        <div onClick={() => {setCurrentPipeline(debatePipeline.pipeline)}}>
+          <PipelineCard {...debatePipeline}></PipelineCard>
         </div>
-        <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
-          <PipelineCard {...testModel2}></PipelineCard>
-        </div>
-        <div onClick={() => {setCurrentPipeline(testModel2.pipeline)}}>
-          <PipelineCard {...testModel2}></PipelineCard>
+        <div onClick={() => {setCurrentPipeline(embeddingPipeline.pipeline)}}>
+          <PipelineCard {...embeddingPipeline}></PipelineCard>
         </div>
       </div>
       <div className={`${themeColor}_footer`}>
