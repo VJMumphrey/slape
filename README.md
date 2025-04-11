@@ -2,7 +2,30 @@
 
 ### About
 
-An application designed to leverage the efficiency of small language models by implementing prompt engineering, and inferencing techniques to increase their accuracy.
+An application designed to leverage the efficiency of small language models by implementing prompt engineering, inferencing techniques, and external tooling to increase their accuracy.
+
+We do this by creating what we call pipelines. Pipelines are a way of orchestrating models in a linear fashion to create better answers using multiple models versus one large model.
+This is a test to prove that small models (SLMs) can punch above their size and get the job done. Our project is useful in scenarios where there is little memory to work with.
+
+We currently have four pipelines.
+1. Simple
+2. Chain of Models
+3. Debate
+4. Embedding
+
+All pipelines, except Embedding, have access to the tools and functionality.
+
+##### Simple Pipeline
+This pipeline is meant to be used to when only a single language model is desired.
+
+##### Chain of Models
+This pipeline is meant to be used when you want to emulate a Chain of Thought process. This first model in the pipeline generates initial thoughts and answers the question.
+The final model generates the answer that is returned to the client. The intermediate models will operate on the previous answer, either affirming it or correcting it.
+
+##### Debate of Models
+This pipeline is meant to be used when you want models to debate on a topic. It has been found that debate helps models to generate better answers.
+This is especially true when there is expert level knowledge present in the debate which usually challenging to attain when you can't run LLMs. With this pipeline, the SLMs can each
+act as a expert.
 
 ### Installation
 

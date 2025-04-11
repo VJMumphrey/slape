@@ -57,7 +57,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter,
 	// setup values needed for pipeline
 	e.DockerClient = apiClient
 
-	go e.Setup(ctx)
+	e.Setup(ctx)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -147,7 +147,7 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 
 	// start container
     /*
-	err = (e.DockerClient).ContainerStart(context.Background(), gencreateResponse.ID, container.StartOptions{})
+	err = (e.DockerClient).ContainerStart(ctx, gencreateResponse.ID, container.StartOptions{})
 	if err != nil {
 		slog.Error("Error", "Errostring", err)
 		return err
@@ -155,7 +155,7 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
     */
 
 	// start container
-	err = (e.DockerClient).ContainerStart(context.Background(), embedcreateResponse.ID, container.StartOptions{})
+	err = (e.DockerClient).ContainerStart(ctx, embedcreateResponse.ID, container.StartOptions{})
 	if err != nil {
 		slog.Error("Error", "Errostring", err)
 		return err
