@@ -1,6 +1,8 @@
 package vars
 
 import (
+	"log/slog"
+
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
@@ -28,5 +30,9 @@ var (
     // This should be used to match the context length with the max generation length.
     ContextLength = 16348
     MaxGenTokens = 16348
+    MaxGenTokensSimple = 1024
+    MaxGenTokensCoT = 4096
 	ModelTemperature = 0.1
+
+    LogLevel = slog.LevelDebug
 )
