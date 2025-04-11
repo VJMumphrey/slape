@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log/slog"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/openai/openai-go"
@@ -72,13 +72,13 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		slog.Error("Error", "ErrorString", err)
+        log.Println("Error creating the docker client: %s", err)
 		return
 	}
 
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
-		slog.Error("Error", "ErrorString", err)
+        log.Println("Error Request Format: %s", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
@@ -101,7 +101,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)
 	if err != nil {
-		slog.Error("Error", "ErrorString", err)
+		log.Println("Error Request Format %s", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
@@ -112,24 +112,26 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	s.ContextBox.Prompt = simplePayload.Prompt
 	s.Thinking, err = strconv.ParseBool(simplePayload.Thinking)
 	if err != nil {
-		slog.Error("Error", "Errorstring", err)
+        log.Println("Error Parsing thinking value: %s", err)
 		http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
 	}
 	if s.Thinking {
 		s.getThoughts(ctx)
-	}
+	} else {
+        s.Thoughts = "None"
+    }
 
 	// gather here and then generate
 	result, err := s.Generate(ctx, maxtokens, vars.OpenaiClient)
 	if err != nil {
-		slog.Error("Error", "ErrorString", err)
+		log.Println("Error getting generation from model", err)
 		http.Error(w, "Error getting generation from model", http.StatusInternalServerError)
 
 		return
 	}
 
 	// for debugging streaming
-	slog.Debug(result)
+	log.Println(result)
 
 	respPayload := simpleResponse{
 		Answer: result,
@@ -137,7 +139,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	json, err := json.Marshal(respPayload)
 	if err != nil {
-		slog.Error("Error", "ErrorString", err)
+		log.Println("Error marshaling response from model", err)
 		http.Error(w, "Error marshaling your response from model", http.StatusInternalServerError)
 		return
 	}
@@ -152,11 +154,11 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
 	defer cancel()
 
-	slog.Debug("Debug", "PullingImage", s.ContainerImage)
+    log.Println("PullingImage: %s", s.ContainerImage)
 
 	reader, err := PullImage(s.DockerClient, childctx, s.ContainerImage)
 	if err != nil {
-		slog.Error("Error", "ErrorPullingContainerImage", err)
+        log.Println("Error Pulling Container Image: %s", err)
 		return err
 	}
 	// prints out the status of the download
@@ -175,19 +177,19 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	)
 
 	if err != nil {
-		slog.Warn("Warn", "WarningString", createResponse.Warnings)
-		slog.Error("Error", "ErrorString", err)
+        log.Println("Create Container Warning: %s", createResponse.Warnings)
+        log.Println("Error Creating Container: %s", err)
 		return err
 	}
 
 	// start container
 	err = (s.DockerClient).ContainerStart(childctx, createResponse.ID, container.StartOptions{})
 	if err != nil {
-		slog.Error("Error", "ErrorString", err)
+        log.Println("Error Starting Container: %s", err)
 		return err
 	}
 
-	slog.Info("Info", "Starting Container", createResponse.ID)
+    log.Println("Starting Container: %s", createResponse.ID)
 	s.container = createResponse
 
 	return nil
@@ -197,7 +199,7 @@ func (s *SimplePipeline) Generate(ctx context.Context, maxtokens int64, openaiCl
 	// take care of upDog on our own
 	for {
 		// sleep and give server guy a break
-		time.Sleep(time.Duration(2 * time.Second))
+		time.Sleep(time.Duration(1 * time.Second))
 
 		// Single model, single port, assuming one pipeline is running at a time
 		if api.UpDog("8000") {
@@ -205,14 +207,14 @@ func (s *SimplePipeline) Generate(ctx context.Context, maxtokens int64, openaiCl
 		}
 	}
 
-	slog.Debug("Debug", "SystemPrompt", s.ContextBox.SystemPrompt, "Prompt", s.ContextBox.Prompt)
+    log.Println("SystemPrompt: %s, Prompt: %s", s.ContextBox.SystemPrompt, s.ContextBox.Prompt)
 
 	err := s.PromptBuilder("")
 	if err != nil {
 		return "", err
 	}
 
-	slog.Debug("Debug", "SystemPrompt", s.SystemPrompt)
+    log.Println("SystemPrompt: %s", s.SystemPrompt)
 
 	param := openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
@@ -242,13 +244,13 @@ func (s *SimplePipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
 
 	err := (s.DockerClient).ContainerStop(childctx, s.container.ID, container.StopOptions{})
 	if err != nil {
-		slog.Error("Error", "ErrorString", err)
+        log.Println("Error Stopping Conatainer: %s", err)
 	}
 
 	err = (s.DockerClient).ContainerRemove(childctx, s.container.ID, container.RemoveOptions{})
 	if err != nil {
-		slog.Error("Error", "ErrorString", err)
+        log.Println("Error Removing Container: %s", err)
 	}
 
-	slog.Info("Shutting Down...")
+	log.Println("Shutting Down...")
 }

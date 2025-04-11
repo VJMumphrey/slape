@@ -116,6 +116,7 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	io.Copy(os.Stdout, reader)
 	defer reader.Close()
 
+    /*
 	gencreateResponse, err := CreateContainer(
 		e.DockerClient,
 		"8081",
@@ -125,6 +126,7 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 		e.ContainerImage,
 		e.GPU,
 	)
+    */
 
 	embedcreateResponse, err := CreateContainer(
 		e.DockerClient,
@@ -137,18 +139,20 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	)
 
 	if err != nil {
-		slog.Warn(gencreateResponse.Warnings[0])
+		//slog.Warn(gencreateResponse.Warnings[0])
 		slog.Warn(embedcreateResponse.Warnings[0])
 		slog.Error("Error", err)
 		return err
 	}
 
 	// start container
+    /*
 	err = (e.DockerClient).ContainerStart(context.Background(), gencreateResponse.ID, container.StartOptions{})
 	if err != nil {
 		slog.Error("Error", "Errostring", err)
 		return err
 	}
+    */
 
 	// start container
 	err = (e.DockerClient).ContainerStart(context.Background(), embedcreateResponse.ID, container.StartOptions{})
@@ -158,11 +162,11 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	}
 
 	// For debugging
-	slog.Info("%s", gencreateResponse.ID)
+	//slog.Info("%s", gencreateResponse.ID)
 	slog.Info("%s", embedcreateResponse.ID)
 
     e.containers = append(e.containers, embedcreateResponse)
-    e.containers = append(e.containers, gencreateResponse)
+    //e.containers = append(e.containers, gencreateResponse)
 
 	return nil
 }
@@ -171,10 +175,12 @@ func (e *EmbeddingPipeline) Generate(ctx context.Context, payload string, openai
 	// take care of upDog on our own
 	for {
 		// sleep and give server guy a break
-		time.Sleep(time.Duration(5 * time.Second))
+		time.Sleep(time.Duration(2 * time.Second))
 
 		// Single model, single port, assuming one pipeline is running at a time
-		if api.UpDog("8081") && api.UpDog("8082") {
+		//if api.UpDog("8081") && api.UpDog("8082") {
+		if api.UpDog("8082") {
+
 			break
 		}
 	}

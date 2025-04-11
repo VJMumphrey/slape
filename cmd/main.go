@@ -15,14 +15,12 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/StoneG24/slape/pkg/api"
-	"github.com/StoneG24/slape/pkg/logging"
 	"github.com/StoneG24/slape/pkg/pipeline"
 )
 
@@ -78,11 +76,7 @@ var (
 // @BasePath /
 func main() {
 
-	// Change to Debug so we get debug logs
-	slog.SetLogLoggerLevel(slog.LevelDebug)
-
-	go logging.CreateLogFile()
-    logger := logging.CreateLogger()
+	//logging.CreateLogFile()
 
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
@@ -117,7 +111,7 @@ func main() {
 	}
 
 	// Start the server in a goroutine.
-	logger.Info("[+] Server started on :8080")
+	log.Println("[+] Server started on :8080")
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe(): %s", err)
@@ -133,7 +127,7 @@ func main() {
 
 	err := shutdownPipelines()
 	if err != nil {
-		slog.Error("Error", "ErrorString", err)
+		log.Println("ErrorShuttingDownPipelines: %s", err)
 	}
 	/*
 	   s.DockerClient.Close()
@@ -154,7 +148,8 @@ func main() {
 	// Close the pipeline to stop adding new pipelines
 	// close(keystone)
 
-	slog.Info("[+] Server gracefully stopped")
+    // Extra space is for spacing out logs between runs
+	log.Println("[+] Server gracefully stopped\n")
 }
 
 type Coors struct {
