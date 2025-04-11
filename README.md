@@ -16,7 +16,7 @@ We currently have four pipelines.
 All pipelines, except Embedding, have access to the tools and functionality.
 
 ##### Simple Pipeline
-This pipeline is meant to be used to when only a single language model is desired.
+This pipeline is meant to be used to when only a single language model is desired. This is also benificial if you have a larger model and want to do things that traditional way.
 
 ##### Chain of Models
 This pipeline is meant to be used when you want to emulate a Chain of Thought process. This first model in the pipeline generates initial thoughts and answers the question.
