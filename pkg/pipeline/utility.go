@@ -3,8 +3,8 @@ package pipeline
 import (
 	"log/slog"
 
-	"github.com/StoneG24/slape/cmd/prompt"
-	"github.com/StoneG24/slape/internal/vars"
+	"github.com/StoneG24/slape/pkg/prompt"
+	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/gpu"
 )
@@ -45,7 +45,6 @@ func processPrompt(mode string) (string, int64) {
 
 func PickImage() string {
 	gpuTrue := IsGPU()
-    println(gpuTrue)
 	if gpuTrue {
 		gpus, err := GatherGPUs()
 		if err != nil {
@@ -81,8 +80,9 @@ func IsGPU() bool {
 	// for debugging
 	//slog.Debug("Debug", "Debug", gpuInfo.GraphicsCards)
 
-	if len(gpuInfo.GraphicsCards) == 0 {
-		slog.Warn("Warning", "No GPUs, CPU only")
+    // BUG Onboard doesn't count but this will get us by untill we can fix this later
+	if len(gpuInfo.GraphicsCards) < 2 {
+		slog.Warn("No GPUs, CPU only")
 		return false
 	} else {
 		return true

@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/StoneG24/slape/internal/vars"
+	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"

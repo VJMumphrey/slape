@@ -25,5 +25,8 @@ var (
 		option.WithBaseURL("http://localhost:8082/v1"),
 	)
 
+    // This should be used to match the context length with the max generation length.
+    ContextLength = 16348
+    MaxGenTokens = 16348
 	ModelTemperature = 0.1
 )

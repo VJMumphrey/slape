@@ -10,11 +10,13 @@ import (
 	"github.com/coder/hnsw"
 )
 
-// Utilize HNSW algorithim to create a vector for Internet searching 
+// Utilize HNSW algorithim to create a vector for Internet searching
+type VectoreStore struct {
+}
+
 // This is a simple function to get us going and will need more work in future to implement
-// correctly.
-// Apparently this has some openai cabability
-func Startup() {
+// correctly. Apparently this has some openai compat
+func (v *VectoreStore) Startup() {
 	g := hnsw.NewGraph[int]()
 	g.Add(
 		hnsw.MakeNode(1, []float32{1, 1, 1}),

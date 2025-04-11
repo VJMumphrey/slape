@@ -7,7 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 
+	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
@@ -58,11 +60,39 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 		mountString = os.Getenv("PWD") + "/models"
 	}
 
+	// TODO(v) add --jinja for function calling using the OpenAI API setup
 	var cmds []string
 	if gpuTrue {
-		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-ngl", "-1", "-fa", "--no-webui", "-c", "16384"}
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-ngl", "-1", "-fa", "--no-webui", "-c", strconv.Itoa(vars.ContextLength)}
 	} else {
-		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--no-webui", "-c", "16384"}
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--mlock", "--no-webui", "-c", strconv.Itoa(vars.ContextLength)}
+	}
+
+	var hostconfig container.HostConfig
+
+	// TODO(v) expand past nvidia systems.
+	// ROCm will present interesting challenges. Its simpler but more setups in the config.
+	switch gpuTrue {
+    // BUG(v) This falls to the same problem as the rest of the gpu issues.
+	case true:
+		hostconfig = container.HostConfig{
+			Runtime:      "nvidia",
+			PortBindings: portBindings,
+			Mounts: []mount.Mount{{
+				Type:   mount.TypeBind,
+				Source: mountString,
+				Target: "/models",
+			}},
+		}
+	case false:
+		hostconfig = container.HostConfig{
+			PortBindings: portBindings,
+			Mounts: []mount.Mount{{
+				Type:   mount.TypeBind,
+				Source: mountString,
+				Target: "/models",
+			}},
+		}
 	}
 
 	// create container
@@ -70,16 +100,7 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 		ExposedPorts: portSet,
 		Image:        containerImage,
 		Cmd:          cmds,
-	}, &container.HostConfig{
-		// TODO check for gpu, if true set to use nvidia runtime, rocm, or cdi
-		//Runtime:      "nvidia",
-		PortBindings: portBindings,
-		Mounts: []mount.Mount{{
-			Type:   mount.TypeBind,
-			Source: mountString,
-			Target: "/models",
-		}},
-	}, nil, nil, name)
+	}, &hostconfig, nil, nil, name)
 
 	return createResponse, err
 }

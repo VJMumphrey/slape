@@ -21,14 +21,14 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/StoneG24/slape/internal/logging"
 	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/pkg/logging"
 	"github.com/StoneG24/slape/pkg/pipeline"
 )
 
 var (
-    isGPU = pipeline.IsGPU()
-    image = pipeline.PickImage()
+	isGPU = pipeline.IsGPU()
+	image = pipeline.PickImage()
 
 	s = pipeline.SimplePipeline{
 		// updates after created
@@ -82,6 +82,7 @@ func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	go logging.CreateLogFile()
+    logger := logging.CreateLogger()
 
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
@@ -116,7 +117,7 @@ func main() {
 	}
 
 	// Start the server in a goroutine.
-	slog.Info("[+] Server started on :8080")
+	logger.Info("[+] Server started on :8080")
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe(): %s", err)
