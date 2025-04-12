@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/openai/openai-go"
@@ -200,7 +200,7 @@ func (d *DebateofModels) Generate(ctx context.Context, prompt string, systemprom
 	var result string
 
 	for j := 0; j < rounds; j++ {
-        slog.Info("RoundStatus", "RoundCount", j+1)
+		slog.Info("RoundStatus", "RoundCount", j+1)
 		for i, model := range d.containers {
 			// start container
 			err := (d.DockerClient).ContainerStart(ctx, model.ID, container.StartOptions{})
@@ -233,18 +233,18 @@ func (d *DebateofModels) Generate(ctx context.Context, prompt string, systemprom
 			// Answer the initial question.
 			// If it's the first model, there will not be any questions from the previous model.
 			param := openai.ChatCompletionNewParams{
-				Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+				Messages: []openai.ChatCompletionMessageParamUnion{
 					openai.SystemMessage(d.SystemPrompt),
 					openai.UserMessage(d.Prompt),
 					openai.UserMessage(d.FutureQuestions),
-				}),
+				},
 				Seed:        openai.Int(0),
-				Model:       openai.String(d.Models[i]),
+				Model:       d.Models[i],
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}
 
-			result, err = GenerateCompletion(ctx, param, "", *openaiClient)
+			result, err = GenerateCompletion(ctx, param, "", openaiClient)
 			if err != nil {
 				slog.Error("Error", "Errostring", err)
 				return "", err
@@ -254,18 +254,18 @@ func (d *DebateofModels) Generate(ctx context.Context, prompt string, systemprom
 			// This apparently makes it easier for the next models to digest the information.
 			summarizePrompt := fmt.Sprintf("Given this answer %s, can you summarize it", result)
 			param = openai.ChatCompletionNewParams{
-				Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+				Messages: []openai.ChatCompletionMessageParamUnion{
 					openai.SystemMessage(d.SystemPrompt),
 					openai.UserMessage(summarizePrompt),
 					//openai.UserMessage(s.FutureQuestions),
-				}),
+				},
 				Seed:        openai.Int(0),
-				Model:       openai.String(d.Models[i]),
+				Model:       d.Models[i],
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}
 
-			result, err = GenerateCompletion(ctx, param, "", *openaiClient)
+			result, err = GenerateCompletion(ctx, param, "", openaiClient)
 			if err != nil {
 				slog.Error("Error", "Errostring", err)
 				return "", err

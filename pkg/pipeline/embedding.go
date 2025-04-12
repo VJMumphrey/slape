@@ -36,7 +36,7 @@ type (
 	}
 
 	embeddingRequst struct {
-		Prompt string `json:"prompt"`
+		Prompt []string `json:"prompt"`
 	}
 
 	embeddingResponse struct {
@@ -77,7 +77,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 
 	// generate a response
 	// TODO rewrite for embedding and rag
-	result, err := e.Generate(ctx, payload.Prompt, vars.EmbeddingClient)
+	result, err := e.Generate(ctx, payload.Prompt, &vars.EmbeddingClient)
 	if err != nil {
 		slog.Error("Error", "Errostring", err)
 		http.Error(w, "Error getting generation from model", http.StatusOK)
@@ -171,7 +171,7 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	return nil
 }
 
-func (e *EmbeddingPipeline) Generate(ctx context.Context, payload string, openaiClient *openai.Client) (*openai.CreateEmbeddingResponse, error) {
+func (e *EmbeddingPipeline) Generate(ctx context.Context, payload []string, openaiClient *openai.Client) (*openai.CreateEmbeddingResponse, error) {
 	// take care of upDog on our own
 	for {
 		// sleep and give server guy a break
@@ -186,8 +186,8 @@ func (e *EmbeddingPipeline) Generate(ctx context.Context, payload string, openai
 	}
 
 	param := openai.EmbeddingNewParams{
-		Input:      openai.F(openai.EmbeddingNewParamsInputUnion(openai.EmbeddingNewParamsInputArrayOfStrings{payload})),
-		Model:      openai.String(embedmodel),
+		Input:      openai.EmbeddingNewParamsInputUnion{OfArrayOfStrings: payload},
+		Model:      embedmodel,
 		Dimensions: openai.Int(1024),
 	}
 

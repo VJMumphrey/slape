@@ -13,7 +13,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -120,6 +122,29 @@ func main() {
 		}
 	}()
 
+	// If we don't run embedding pipeline on startup,
+	// we can remove this as well.
+	log.Println("[+] Checking for models folder...")
+	if _, err := os.Stat("./models"); errors.Is(err, os.ErrNotExist) {
+		log.Println("[+] Creating models folder...")
+		os.Mkdir("models", 1644)
+	}
+
+	// If needed, download the snowflake embedding model
+	// If this is changed to gated model then the code would need to change to accept a token.
+	// Reading from an evironment variable would be the safest option.
+	if _, err := os.Stat("./models/snowflake-arctic-embed-l-v2.0-q4_k_m.gguf"); errors.Is(err, os.ErrNotExist) {
+		log.Println("[+] Downloading Embedding Model...")
+		err := downloadHuggingFaceModel(
+			"Casual-Autopsy/snowflake-arctic-embed-l-v2.0-gguf",
+			"snowflake-arctic-embed-l-v2.0-q4_k_m.gguf",
+		)
+		if err != nil {
+			log.Fatalln("[-] Error Downloading Embedding Model", err)
+		}
+		log.Println("[+] Finished Downloading Embedding Model")
+	}
+
 	// starting up the embedding pipeline
 	url := "http://localhost:8080/emb/setup"
 	resp, err := http.Get(url)
@@ -135,6 +160,7 @@ func main() {
 	}
 
 	// TODO starting up the QuiverDB
+	// It is a seperate application and should be added to deps
 
 	// Create a channel to listen for interrupt signals.
 	sigChan := make(chan os.Signal, 1)
@@ -217,4 +243,34 @@ func shutdownPipelines() error {
 	}
 
 	return nil
+}
+
+// DownloadHuggingFaceModel downloads a given model provided a repo and filename are given.
+// This only really works for our usecase since we are using a gguf model.
+// Note This functionality is already in llamacpp-server
+func downloadHuggingFaceModel(repo string, filename string) error {
+	url := "https://huggingface.co/" + repo + "/resolve/main/" + filename
+
+	// Send HTTP GET request
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Check if status is OK (200)
+	if resp.StatusCode != http.StatusOK {
+		return err
+	}
+
+	// Create the file
+	out, err := os.Create("./models/" + filename)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Write response body to file
+	_, err = io.Copy(out, resp.Body)
+	return err
 }

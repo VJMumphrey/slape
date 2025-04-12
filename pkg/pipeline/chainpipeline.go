@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/openai/openai-go"
@@ -232,18 +232,18 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 		// Answer the initial question.
 		// If it's the first model, there will not be any questions from the previous model.
 		param := openai.ChatCompletionNewParams{
-			Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.SystemMessage(c.SystemPrompt),
 				openai.UserMessage(c.Prompt),
 				openai.UserMessage(c.FutureQuestions),
-			}),
+			},
 			Seed:        openai.Int(0),
-			Model:       openai.String(c.Models[i]),
+			Model:       c.Models[i],
 			Temperature: openai.Float(vars.ModelTemperature),
 			MaxTokens:   openai.Int(maxtokens),
 		}
 
-		result, err = GenerateCompletion(ctx, param, "", *openaiClient)
+		result, err = GenerateCompletion(ctx, param, "", openaiClient)
 		if err != nil {
 			slog.Error("Error", "Errorstring", err)
 			return "", err
@@ -253,18 +253,18 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 		// This apparently makes it easier for the next models to digest the information.
 		summarizePrompt := fmt.Sprintf("Given this answer %s, can you summarize it", result)
 		param = openai.ChatCompletionNewParams{
-			Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.SystemMessage(c.SystemPrompt),
 				openai.UserMessage(summarizePrompt),
 				//openai.UserMessage(s.FutureQuestions),
-			}),
+			},
 			Seed:        openai.Int(0),
-			Model:       openai.String(c.Models[i]),
+			Model:       c.Models[i],
 			Temperature: openai.Float(vars.ModelTemperature),
 			MaxTokens:   openai.Int(maxtokens),
 		}
 
-		result, err = GenerateCompletion(ctx, param, "", *openaiClient)
+		result, err = GenerateCompletion(ctx, param, "", openaiClient)
 		if err != nil {
 			slog.Error("Error", "Errorstring", err)
 			return "", err
@@ -274,18 +274,18 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 		// Then store this answer in the contextbox for the next go around.
 		askFutureQuestions := fmt.Sprintf("Given this answer, %s, can you make some further questions to ask the next model in order to aid in answering the question?", result)
 		param = openai.ChatCompletionNewParams{
-			Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.SystemMessage(c.SystemPrompt),
 				openai.UserMessage(askFutureQuestions),
 				//openai.UserMessage(s.FutureQuestions),
-			}),
+			},
 			Seed:        openai.Int(0),
-			Model:       openai.String(c.Models[i]),
+			Model:       c.Models[i],
 			Temperature: openai.Float(vars.ModelTemperature),
 			MaxTokens:   openai.Int(maxtokens),
 		}
 
-		result, err = GenerateCompletion(ctx, param, "", *openaiClient)
+		result, err = GenerateCompletion(ctx, param, "", openaiClient)
 		if err != nil {
 			slog.Error("Error", "Errorstring", err)
 			return "", err
