@@ -23,6 +23,7 @@ import (
 
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/StoneG24/slape/pkg/pipeline"
+	"github.com/StoneG24/slape/pkg/vars"
 )
 
 var (
@@ -119,19 +120,21 @@ func main() {
 		}
 	}()
 
-    // starting up the embedding pipeline
+	// starting up the embedding pipeline
 	url := "http://localhost:8080/emb/setup"
-    resp, err := http.Get(url)
-    resp.Body.Close()
+	resp, err := http.Get(url)
+	resp.Body.Close()
 
-    // starting up the frontend on port 3000
-    log.Println("[+] Starting Frontend...")
-    cmd := exec.Command("deno", "run", "dev")
-    cmd.Dir = "./SLaMO_Frontend"
-    go cmd.Run()
-    log.Println("[+] Frontend has been started on port 3000")
+	// starting up the frontend on port 3000
+	if vars.Frontend {
+		log.Println("[+] Starting Frontend...")
+		cmd := exec.Command("deno", "run", "dev")
+		cmd.Dir = "./SLaMO_Frontend"
+		go cmd.Run()
+		log.Println("[+] Frontend has been started on port 3000")
+	}
 
-    // TODO starting up the QuiverDB
+	// TODO starting up the QuiverDB
 
 	// Create a channel to listen for interrupt signals.
 	sigChan := make(chan os.Signal, 1)
@@ -144,6 +147,9 @@ func main() {
 	if err != nil {
 		log.Println("ErrorShuttingDownPipelines: %s", err)
 	}
+
+	// TODO(v) clean up docker clients on shutdown. Currently if a pipeline was never created its nil.
+	// Easiest way to do this is have all pipelines share a the client then clean it up.
 	/*
 	   s.DockerClient.Close()
 	   c.DockerClient.Close()
@@ -163,7 +169,7 @@ func main() {
 	// Close the pipeline to stop adding new pipelines
 	// close(keystone)
 
-    // Extra space is for spacing out logs between runs
+	// Extra space is for spacing out logs between runs
 	log.Println("[+] Server gracefully stopped\n")
 }
 
@@ -187,7 +193,6 @@ func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	c.handler.ServeHTTP(w, req)
-	//log.Printf("%s %s %v", req.Method, req.URL.Path, time.Since(start))
 }
 
 // NewCoors constructs a new Logger middleware handler
@@ -195,8 +200,8 @@ func NewCoors(handlerToWrap http.Handler) *Coors {
 	return &Coors{handlerToWrap}
 }
 
-// need to shutdown pipelines with
-// a remote request since the shutdown functions now need a req struct
+// shutdownPipelines is used to shutdown pipelines with
+// a remote request since the shutdown functions are now http.HandleFunc
 func shutdownPipelines() error {
 
 	url := "http://localhost:8080/%s/shutdown"
