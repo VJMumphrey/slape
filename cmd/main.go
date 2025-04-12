@@ -8,7 +8,6 @@ Usage:
 Containerized models are spawned as needed adhering to a pipeline system.
 */
 
-// go:generate go tool swagger generate spec -o ./swagger/swagger.yml --scan-models -c ./pkg --exclude-dep
 package main
 
 import (
@@ -148,6 +147,9 @@ func main() {
 	// starting up the embedding pipeline
 	url := "http://localhost:8080/emb/setup"
 	resp, err := http.Get(url)
+    if err != nil {
+        log.Fatalf("[-] Error while trying to startup the Embedding Pipeline")
+    }
 	resp.Body.Close()
 
 	// starting up the frontend on port 3000
@@ -171,7 +173,7 @@ func main() {
 
 	err = shutdownPipelines()
 	if err != nil {
-		log.Println("ErrorShuttingDownPipelines: %s", err)
+		log.Println("ErrorShuttingDownPipelines:", err)
 	}
 
 	// TODO(v) clean up docker clients on shutdown. Currently if a pipeline was never created its nil.

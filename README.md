@@ -108,8 +108,17 @@ To run the doc server locally run this command
 ```bash
 godoc -index -notes="BUG|TODO|NOTE"
 ```
-
 And travel to this url in your browser http://localhost:6060/pkg/github.com/StoneG24/slape/.
+
+### Security
+To run security checks on the repo run these commands,
+
+```bash
+go vet ./...
+go tool staticcheck ./...
+go tool govulncheck
+```
+All of these binaries should have been installed with golang and this package.
 
 ### Indexing RAG (LightRag/MiniRag)
 
