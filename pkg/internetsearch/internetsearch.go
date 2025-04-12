@@ -30,25 +30,25 @@ type embeddingResponse struct {
 // dangerous if not used properly, hence why it is serperate.
 func InternetSearch(query string) {
 	collyCollector := colly.NewCollector()
+	maxNumLinks := 0
 
 	query = strings.ReplaceAll(query, " ", "+")
+
+	queryurl := fmt.Sprintf("https://html.duckduckgo.com/html/?q=%s&atb=v477-4&ia=web", query)
 
 	// Find and visit all links
 	collyCollector.OnHTML("result__url", func(element *colly.HTMLElement) {
 		//counter used to limit the number of websites
-		maxLinks := 0
-		for maxLinks < 3 {
+		if maxNumLinks < 3 {
 			//searches for links on duckduckgo and creates links to individual sites to be scraped
-			link := element.Attr("href")
-			index := strings.Index(link, "https")
-			link = link[index:]
-			maxLinks++
+			link := "https://" + strings.TrimSpace(element.Text)
+			maxNumLinks++
 
 			scrape(link)
 		}
 	})
 
-	err := collyCollector.Visit(fmt.Sprintf("https://html.duckduckgo/html/?q=%s", query))
+	err := collyCollector.Visit(queryurl)
 	if err != nil {
 		log.Println("error while scraping duckduckgo")
 	}
