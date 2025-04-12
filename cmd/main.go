@@ -17,6 +17,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"time"
 
@@ -118,9 +119,19 @@ func main() {
 		}
 	}()
 
+    // starting up the embedding pipeline
 	url := "http://localhost:8080/emb/setup"
     resp, err := http.Get(url)
     resp.Body.Close()
+
+    // starting up the frontend on port 3000
+    log.Println("[+] Starting Frontend...")
+    cmd := exec.Command("deno", "run", "dev")
+    cmd.Dir = "./SLaMO_Frontend"
+    go cmd.Run()
+    log.Println("[+] Frontend has been started on port 3000")
+
+    // TODO starting up the QuiverDB
 
 	// Create a channel to listen for interrupt signals.
 	sigChan := make(chan os.Signal, 1)

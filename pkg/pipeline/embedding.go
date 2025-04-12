@@ -171,7 +171,7 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	return nil
 }
 
-func (e *EmbeddingPipeline) Generate(ctx context.Context, payload string, openaiClient *openai.Client) (*[]openai.Embedding, error) {
+func (e *EmbeddingPipeline) Generate(ctx context.Context, payload string, openaiClient *openai.Client) (*openai.CreateEmbeddingResponse, error) {
 	// take care of upDog on our own
 	for {
 		// sleep and give server guy a break
@@ -197,7 +197,7 @@ func (e *EmbeddingPipeline) Generate(ctx context.Context, payload string, openai
 		return nil, err
 	}
 
-	return &result.JSON.Data, nil
+	return result, nil
 }
 
 func (e *EmbeddingPipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
