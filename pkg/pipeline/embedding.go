@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/openai/openai-go"
@@ -30,8 +30,8 @@ type (
 		GPU            bool
 
 		// for internal use
-        // 0 is embedding model
-        // 1 is generation model
+		// 0 is embedding model
+		// 1 is generation model
 		containers []container.CreateResponse
 	}
 
@@ -57,7 +57,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter,
 	// setup values needed for pipeline
 	e.DockerClient = apiClient
 
-	go e.Setup(ctx)
+	e.Setup(ctx)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -116,17 +116,17 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	io.Copy(os.Stdout, reader)
 	defer reader.Close()
 
-    /*
-	gencreateResponse, err := CreateContainer(
-		e.DockerClient,
-		"8081",
-		"",
-		ctx,
-		genmodel,
-		e.ContainerImage,
-		e.GPU,
-	)
-    */
+	/*
+		gencreateResponse, err := CreateContainer(
+			e.DockerClient,
+			"8081",
+			"",
+			ctx,
+			genmodel,
+			e.ContainerImage,
+			e.GPU,
+		)
+	*/
 
 	embedcreateResponse, err := CreateContainer(
 		e.DockerClient,
@@ -146,16 +146,16 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	}
 
 	// start container
-    /*
-	err = (e.DockerClient).ContainerStart(context.Background(), gencreateResponse.ID, container.StartOptions{})
-	if err != nil {
-		slog.Error("Error", "Errostring", err)
-		return err
-	}
-    */
+	/*
+		err = (e.DockerClient).ContainerStart(ctx, gencreateResponse.ID, container.StartOptions{})
+		if err != nil {
+			slog.Error("Error", "Errostring", err)
+			return err
+		}
+	*/
 
 	// start container
-	err = (e.DockerClient).ContainerStart(context.Background(), embedcreateResponse.ID, container.StartOptions{})
+	err = (e.DockerClient).ContainerStart(ctx, embedcreateResponse.ID, container.StartOptions{})
 	if err != nil {
 		slog.Error("Error", "Errostring", err)
 		return err
@@ -165,13 +165,13 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	//slog.Info("%s", gencreateResponse.ID)
 	slog.Info("%s", embedcreateResponse.ID)
 
-    e.containers = append(e.containers, embedcreateResponse)
-    //e.containers = append(e.containers, gencreateResponse)
+	e.containers = append(e.containers, embedcreateResponse)
+	//e.containers = append(e.containers, gencreateResponse)
 
 	return nil
 }
 
-func (e *EmbeddingPipeline) Generate(ctx context.Context, payload string, openaiClient *openai.Client) (*openai.CreateEmbeddingResponse, error) {
+func (e *EmbeddingPipeline) Generate(ctx context.Context, payload string, openaiClient *openai.Client) (*[]openai.Embedding, error) {
 	// take care of upDog on our own
 	for {
 		// sleep and give server guy a break
@@ -197,7 +197,7 @@ func (e *EmbeddingPipeline) Generate(ctx context.Context, payload string, openai
 		return nil, err
 	}
 
-	return result, nil
+	return &result.JSON.Data, nil
 }
 
 func (e *EmbeddingPipeline) Shutdown(w http.ResponseWriter, req *http.Request) {

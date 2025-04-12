@@ -118,6 +118,10 @@ func main() {
 		}
 	}()
 
+	url := "http://localhost:8080/emb/setup"
+    resp, err := http.Get(url)
+    resp.Body.Close()
+
 	// Create a channel to listen for interrupt signals.
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
@@ -125,7 +129,7 @@ func main() {
 	// Block until a signal is received.
 	<-sigChan
 
-	err := shutdownPipelines()
+	err = shutdownPipelines()
 	if err != nil {
 		log.Println("ErrorShuttingDownPipelines: %s", err)
 	}
