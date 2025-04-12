@@ -37,7 +37,8 @@ Follow your OS specific instructions to install Docker.
 git clone --recursive https://github.com/StoneG24/slape.git
 ```
 
-3. Create a folder for the models that you want to use. These should probably be _.gguf_ files.
+3. Create a folder named *models*. SLaP-E will create this folder for you, along with checking if that folder exists on startup.
+We also download an embedding model for use in the project. [Casual-Autopsy/snowflake-arctic-embed-l-v2.0-gguf](https://huggingface.co/Casual-Autopsy/snowflake-arctic-embed-l-v2.0-gguf)
 
 #### GPU Support
 
