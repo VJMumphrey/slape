@@ -1,16 +1,24 @@
 package pipeline
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"strings"
 
 	"github.com/gocolly/colly"
+	"github.com/openai/openai-go"
 )
 
 const (
 	// TODO add ?q={query encoded} and maybe some headers for User-agent
 	duckduckgoUrl = "https://html.duckduckgo.com/html/"
 )
+
+type embeddingResponse struct {
+	Response openai.CreateEmbeddingResponse
+}
 
 // InternetSearch is used to search the internet with an models query request
 //
@@ -21,17 +29,17 @@ const (
 // Internet search should not be compared with the rest of tools because it can be
 // dangerous if not used properly, hence why it is serperate.
 func InternetSearch(query string) {
-	c := colly.NewCollector()
+	collyCollector := colly.NewCollector()
 
 	query = strings.ReplaceAll(query, " ", "+")
 
 	// Find and visit all links
-	c.OnHTML("result__url", func(e *colly.HTMLElement) {
+	collyCollector.OnHTML("result__url", func(element *colly.HTMLElement) {
 		//counter used to limit the number of websites
 		maxLinks := 0
 		for maxLinks < 3 {
 			//searches for links on duckduckgo and creates links to individual sites to be scraped
-			link := e.Attr("href")
+			link := element.Attr("href")
 			index := strings.Index(link, "https")
 			link = link[index:]
 			maxLinks++
@@ -40,32 +48,48 @@ func InternetSearch(query string) {
 		}
 	})
 
-	err := c.Visit(fmt.Sprintf("https://html.duckduckgo/html/?q=%s", query))
+	err := collyCollector.Visit(fmt.Sprintf("https://html.duckduckgo/html/?q=%s", query))
 	if err != nil {
-		fmt.Println("error while scraping duckduckgo")
+		log.Println("error while scraping duckduckgo")
 	}
 }
 
 // used to scrape individual sites
 func scrape(link string) {
 
-	c := colly.NewCollector()
+	collyCollector := colly.NewCollector()
 
 	//scrapes all paragraph elements from each webpage
-	c.OnHTML("p", func(e *colly.HTMLElement) {
+	collyCollector.OnHTML("p", func(element *colly.HTMLElement) {
 		//concatenates all text from paragraph elements
-		text := ""
-		text += e.Text
+		text := element.Text
+		embeddingText := strings.NewReader(text)
+		resp, err := http.Post("http://localhost:8082/emb/generate", "application/json", embeddingText)
+		if err != nil {
+			log.Println("Sorry Vito what was that? You cut out.")
+		}
+		defer resp.Body.Close()
+
+		var embeddingResponse embeddingResponse
+
+		err = json.NewDecoder(resp.Body).Decode(&embeddingResponse)
+		if err != nil {
+			log.Println("Failed to Read response body in internet search")
+		}
+
+		vectorizedText := embeddingResponse.Response
+
+		fmt.Println(vectorizedText)
+
 	})
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL)
+	collyCollector.OnRequest(func(req *colly.Request) {
+		log.Println("Visiting", req.URL)
 	})
 
 	//start scraping by visiting the page
-	err := c.Visit(link)
+	err := collyCollector.Visit(link)
 	if err != nil {
-		fmt.Println("error while scraping webpage")
+		log.Println("error while scraping webpage")
 	}
 
-	//TODO add functionality to embed text
 }
