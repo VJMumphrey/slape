@@ -1,23 +1,24 @@
 package pipeline
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 
+	"github.com/coder/hnsw"
 	"github.com/gocolly/colly"
 	"github.com/openai/openai-go"
 )
 
-const (
-	// TODO add ?q={query encoded} and maybe some headers for User-agent
-	duckduckgoUrl = "https://html.duckduckgo.com/html/"
-)
-
 type embeddingResponse struct {
 	Response openai.CreateEmbeddingResponse
+}
+
+type embeddingPrompt struct {
+	prompt []string
 }
 
 // InternetSearch is used to search the internet with an models query request
@@ -28,7 +29,10 @@ type embeddingResponse struct {
 // Once this is done it should web scrape the top five websites, and store it in the contex box.
 // Internet search should not be compared with the rest of tools because it can be
 // dangerous if not used properly, hence why it is serperate.
-func InternetSearch(query string) {
+func InternetSearch(query string) *hnsw.Graph[string] {
+
+	g := hnsw.NewGraph[string]()
+
 	collyCollector := colly.NewCollector()
 	maxNumLinks := 0
 
@@ -44,7 +48,7 @@ func InternetSearch(query string) {
 			link := "https://" + strings.TrimSpace(element.Text)
 			maxNumLinks++
 
-			go scrape(link)
+			scrape(link, g)
 		}
 	})
 
@@ -52,19 +56,26 @@ func InternetSearch(query string) {
 	if err != nil {
 		log.Println("error while scraping duckduckgo")
 	}
+
+	return g
 }
 
 // used to scrape individual sites
-func scrape(link string) {
+func scrape(link string, g *hnsw.Graph[string]) {
 
 	collyCollector := colly.NewCollector()
 
 	//scrapes all paragraph elements from each webpage
 	collyCollector.OnHTML("p", func(element *colly.HTMLElement) {
 		//concatenates all text from paragraph elements
-		text := element.Text
-		embeddingText := strings.NewReader(text)
-		resp, err := http.Post("http://localhost:8082/emb/generate", "application/json", embeddingText)
+		text := []string{element.Text}
+		var prompt embeddingPrompt
+		prompt.prompt = text
+		embeddingPrompt, err := json.Marshal(prompt)
+		if err != nil {
+			log.Println("The fucking json Marshal didn't fucking work you STUPID MOTHERFUCKER")
+		}
+		resp, err := http.Post("http://localhost:8082/emb/generate", "application/json", bytes.NewReader(embeddingPrompt))
 		if err != nil {
 			log.Println("Sorry Vito what was that? You cut out.")
 		}
@@ -77,9 +88,15 @@ func scrape(link string) {
 			log.Println("Failed to Read response body in internet search")
 		}
 
-		vectorizedText := embeddingResponse.Response
+		vectorizedText := embeddingResponse.Response.Data[0].Embedding
+		textVector32 := make([]float32, len(vectorizedText))
+		for i, val := range vectorizedText {
+			textVector32[i] = float32(val)
+		}
 
-		fmt.Println(vectorizedText)
+		g.Add(
+			hnsw.MakeNode(element.Text, textVector32),
+		)
 
 	})
 	collyCollector.OnRequest(func(req *colly.Request) {
