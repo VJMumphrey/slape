@@ -12,6 +12,16 @@ const (
 	RocmgpuImage = "ghcr.io/ggml-org/llama.cpp:server-rocm"
 
 	Logfilename = "logs.txt"
+
+    // change to false to not run frontend
+    Frontend = true
+
+	// This should be used to match the context length with the max generation length.
+	ContextLength      = 16348
+	MaxGenTokens       = 16348
+	MaxGenTokensSimple = 1024
+	MaxGenTokensCoT    = 4096
+	ModelTemperature   = 0.1
 )
 
 var (
@@ -26,11 +36,4 @@ var (
 	EmbeddingClient = openai.NewClient(
 		option.WithBaseURL("http://localhost:8082/v1"),
 	)
-
-	// This should be used to match the context length with the max generation length.
-	ContextLength      = 16348
-	MaxGenTokens       = 16348
-	MaxGenTokensSimple = 1024
-	MaxGenTokensCoT    = 4096
-	ModelTemperature   = 0.1
 )

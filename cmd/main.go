@@ -8,20 +8,24 @@ Usage:
 Containerized models are spawned as needed adhering to a pipeline system.
 */
 
-// go:generate go tool swagger generate spec -o ./swagger/swagger.yml --scan-models -c ./pkg --exclude-dep
 package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"time"
 
 	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/pkg/logging"
 	"github.com/StoneG24/slape/pkg/pipeline"
+	"github.com/StoneG24/slape/pkg/vars"
 )
 
 var (
@@ -76,7 +80,8 @@ var (
 // @BasePath /
 func main() {
 
-	//logging.CreateLogFile()
+	logfile := logging.CreateLogFile()
+	defer logfile.Close()
 
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
@@ -118,9 +123,45 @@ func main() {
 		}
 	}()
 
+	// If we don't run embedding pipeline on startup,
+	// we can remove this as well.
+	log.Println("[+] Checking for models folder...")
+	if _, err := os.Stat("./models"); errors.Is(err, os.ErrNotExist) {
+		log.Println("[+] Creating models folder...")
+		os.Mkdir("models", 1644)
+	}
+
+	// If needed, download the snowflake embedding model
+	// If this is changed to gated model then the code would need to change to accept a token.
+	// Reading from an evironment variable would be the safest option.
+	if _, err := os.Stat("./models/snowflake-arctic-embed-l-v2.0-q4_k_m.gguf"); errors.Is(err, os.ErrNotExist) {
+		log.Println("[+] Downloading Embedding Model...")
+		err := downloadHuggingFaceModel(
+			"Casual-Autopsy/snowflake-arctic-embed-l-v2.0-gguf",
+			"snowflake-arctic-embed-l-v2.0-q4_k_m.gguf",
+		)
+		if err != nil {
+			log.Fatalln("[-] Error Downloading Embedding Model", err)
+		}
+		log.Println("[+] Finished Downloading Embedding Model")
+	}
+
+	// starting up the embedding pipeline
 	url := "http://localhost:8080/emb/setup"
-    resp, err := http.Get(url)
-    resp.Body.Close()
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatalf("[-] Error while trying to startup the Embedding Pipeline")
+	}
+	resp.Body.Close()
+
+	// starting up the frontend on port 3000
+	if vars.Frontend {
+		log.Println("[+] Starting Frontend...")
+		cmd := exec.Command("deno", "run", "dev")
+		cmd.Dir = "./SLaMO_Frontend"
+		go cmd.Run()
+		log.Println("[+] Frontend has been started on port 3000")
+	}
 
 	// Create a channel to listen for interrupt signals.
 	sigChan := make(chan os.Signal, 1)
@@ -131,8 +172,11 @@ func main() {
 
 	err = shutdownPipelines()
 	if err != nil {
-		log.Println("ErrorShuttingDownPipelines: %s", err)
+		log.Println("ErrorShuttingDownPipelines:", err)
 	}
+
+	// TODO(v) clean up docker clients on shutdown. Currently if a pipeline was never created its nil.
+	// Easiest way to do this is have all pipelines share a the client then clean it up.
 	/*
 	   s.DockerClient.Close()
 	   c.DockerClient.Close()
@@ -152,7 +196,7 @@ func main() {
 	// Close the pipeline to stop adding new pipelines
 	// close(keystone)
 
-    // Extra space is for spacing out logs between runs
+	// Extra space is for spacing out logs between runs
 	log.Println("[+] Server gracefully stopped\n")
 }
 
@@ -176,7 +220,6 @@ func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	c.handler.ServeHTTP(w, req)
-	//log.Printf("%s %s %v", req.Method, req.URL.Path, time.Since(start))
 }
 
 // NewCoors constructs a new Logger middleware handler
@@ -184,8 +227,8 @@ func NewCoors(handlerToWrap http.Handler) *Coors {
 	return &Coors{handlerToWrap}
 }
 
-// need to shutdown pipelines with
-// a remote request since the shutdown functions now need a req struct
+// shutdownPipelines is used to shutdown pipelines with
+// a remote request since the shutdown functions are now http.HandleFunc
 func shutdownPipelines() error {
 
 	url := "http://localhost:8080/%s/shutdown"
@@ -201,4 +244,34 @@ func shutdownPipelines() error {
 	}
 
 	return nil
+}
+
+// DownloadHuggingFaceModel downloads a given model provided a repo and filename are given.
+// This only really works for our usecase since we are using a gguf model.
+// Note This functionality is already in llamacpp-server
+func downloadHuggingFaceModel(repo string, filename string) error {
+	url := "https://huggingface.co/" + repo + "/resolve/main/" + filename
+
+	// Send HTTP GET request
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Check if status is OK (200)
+	if resp.StatusCode != http.StatusOK {
+		return err
+	}
+
+	// Create the file
+	out, err := os.Create("./models/" + filename)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Write response body to file
+	_, err = io.Copy(out, resp.Body)
+	return err
 }

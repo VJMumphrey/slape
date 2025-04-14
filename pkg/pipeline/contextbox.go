@@ -74,11 +74,11 @@ func (c *ContextBox) PromptBuilder(previousAnswer string) error {
 func (c *ContextBox) getThoughts(ctx context.Context) {
 
 	param := openai.ChatCompletionNewParams{
-		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(prompt.ThinkingPrompt),
 			openai.UserMessage(c.Prompt),
 			//openai.UserMessage(s.FutureQuestions),
-		}),
+		},
 		Seed: openai.Int(0),
 		//Model:       openai.String(pipeline.Model),
 		Temperature: openai.Float(0.4),
@@ -95,7 +95,7 @@ func (c *ContextBox) getThoughts(ctx context.Context) {
 		}
 	}
 
-	result, err := GenerateCompletion(ctx, param, "", *vars.OpenaiClient)
+	result, err := GenerateCompletion(ctx, param, "", vars.OpenaiClient)
 	log.Println(result)
 	if err != nil {
 		c.Thoughts = "None"

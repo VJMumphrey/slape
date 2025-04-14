@@ -10,12 +10,14 @@ import (
 
 // CreateLogFile is used to check and see if a logfile is already created.
 // It then creates a logger for the log file and returns it.
-func CreateLogFile() {
+func CreateLogFile() *os.File {
+
 	// Open the log file for writing
 	logFile, err := os.OpenFile(vars.Logfilename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("Error creating the log file")
 	}
-	defer logFile.Close()
 	log.SetOutput(logFile)
+
+    return logFile
 }

@@ -37,12 +37,13 @@ Follow your OS specific instructions to install Docker.
 git clone --recursive https://github.com/StoneG24/slape.git
 ```
 
-3. Create a folder for the models that you want to use. These should probably be _.gguf_ files.
+3. Create a folder named *models*. SLaPE will create this folder for you, along with checking if that folder exists on startup.
+We also download an embedding model for use in the project. [Casual-Autopsy/snowflake-arctic-embed-l-v2.0-gguf](https://huggingface.co/Casual-Autopsy/snowflake-arctic-embed-l-v2.0-gguf)
 
 #### GPU Support
 
 After that, if you want to run the containers with a gpu, you'll need to install the nvidia continer toolkit along with the appropriate drivers if needed.
-https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest
+[NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest)
 
 Refer to the proper documentation for rocm.
 
@@ -74,8 +75,9 @@ sudo systemctl stop docker
 For windows this process is managed by docker desktop.
 
 ### Cleanup
-
-Containers are very useful for making reproduceable builds but the can take up a lot of space over time. This coupled with the fact that we also have to save storage space for models means that we need to be more cognicent of that fact. Here are some tips to remove dead resources in this project.
+SLaPE cleans up its resources. In the event of a crash things may not clean up properly.
+To help with this, some commands are included to cleanup those resources. **NOTE** This assumes you are not running any other container setups with docker.
+If you are, then clean up the resources on an individual basis.
 
 This command will tell you how much of your disk is currently being used by docker
 
@@ -106,8 +108,17 @@ To run the doc server locally run this command
 ```bash
 godoc -index -notes="BUG|TODO|NOTE"
 ```
-
 And travel to this url in your browser http://localhost:6060/pkg/github.com/StoneG24/slape/.
+
+### Security
+To run security checks on the repo run these commands,
+
+```bash
+go vet ./...
+go tool staticcheck ./...
+go tool govulncheck
+```
+All of these binaries should have been installed with golang and this package.
 
 ### Indexing RAG (LightRag/MiniRag)
 
