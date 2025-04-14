@@ -3,7 +3,6 @@ package pipeline
 import (
 	"log/slog"
 
-	"github.com/StoneG24/slape/pkg/prompt"
 	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/gpu"
@@ -15,29 +14,29 @@ func processPrompt(mode string) (string, int64) {
 
 	switch mode {
 	case "simple":
-        promptChoice = prompt.SecSimplePrompt
+		promptChoice = vars.SimplePrompt
 		maxtokens = int64(vars.MaxGenTokensSimple)
 	case "cot":
-		promptChoice = prompt.SecCoTPrompt
+		promptChoice = vars.CotPrompt
 		maxtokens = int64(vars.MaxGenTokensCoT)
 	case "tot":
-		promptChoice = prompt.SecToTPrompt
+		promptChoice = vars.TotPrompt
 		maxtokens = int64(vars.MaxGenTokens)
 	case "got":
-		promptChoice = prompt.SecGoTPrompt
+		promptChoice = vars.GotPrompt
 		maxtokens = int64(vars.MaxGenTokens)
 	case "moe":
-		promptChoice = prompt.SecMoEPrompt
+		promptChoice = vars.MoePrompt
 		maxtokens = int64(vars.MaxGenTokens)
 	case "thinkinghats":
-		promptChoice = prompt.SecSixThinkingHats
+		promptChoice = vars.ThinkingHatsPrompt
 		maxtokens = int64(vars.MaxGenTokens)
 	case "goe":
-        // currently not a sec prompt for this
-		promptChoice = prompt.GoEPrompt
+		// currently not a sec prompt for this
+		promptChoice = vars.GoePrompt
 		maxtokens = int64(vars.MaxGenTokens)
 	default:
-		promptChoice = prompt.SecSimplePrompt
+		promptChoice = vars.SimplePrompt
 		maxtokens = int64(vars.MaxGenTokensSimple)
 	}
 
@@ -81,7 +80,7 @@ func IsGPU() bool {
 	// for debugging
 	//slog.Debug("Debug", "Debug", gpuInfo.GraphicsCards)
 
-    // BUG Onboard doesn't count but this will get us by untill we can fix this later
+	// BUG Onboard doesn't count but this will get us by untill we can fix this later
 	if len(gpuInfo.GraphicsCards) < 2 {
 		slog.Warn("No GPUs, CPU only")
 		return false

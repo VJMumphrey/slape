@@ -1,6 +1,7 @@
 package vars
 
 import (
+	"github.com/StoneG24/slape/pkg/prompt"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
@@ -13,8 +14,8 @@ const (
 
 	Logfilename = "logs.txt"
 
-    // change to false to not run frontend
-    Frontend = true
+	// change to false to not run frontend
+	Frontend = true
 
 	// This should be used to match the context length with the max generation length.
 	ContextLength      = 16348
@@ -36,4 +37,13 @@ var (
 	EmbeddingClient = openai.NewClient(
 		option.WithBaseURL("http://localhost:8082/v1"),
 	)
+
+	ThinkingPrompt     = prompt.SecurityReportPrompt
+	SimplePrompt       = prompt.SecSimplePrompt
+	CotPrompt          = prompt.SecCoTPrompt
+	TotPrompt          = prompt.SecToTPrompt
+	GotPrompt          = prompt.SecGoTPrompt
+	MoePrompt          = prompt.SecMoEPrompt
+	ThinkingHatsPrompt = prompt.SecSixThinkingHats
+	GoePrompt          = prompt.GoEPrompt
 )

@@ -25,14 +25,21 @@ var (
     Recommend best practices and guidelines for secure coding that the developers can follow to maintain the security of the code in the future. 
     `
 
-    // This is example prompt following the microprompting sturcture of prompting for slms.
+	// This is example prompt following the microprompting sturcture of prompting for slms.
 	AnalyzeSecurityPrompt = `
     Review the code provided and make edits to improve the security of the code and prevent it from having security bugs.
     "Security Bugs" in this context are bugs that causes security concerns.
     The code can be ranging from C to Python so condsider memory management and vulnerabilities appropriately.
     Return your response in markdown.
     `
-    
+
+	// This is example prompt following the microprompting sturcture of prompting for slms.
+	SecurityReportPrompt = `
+    Review the code provided and make a markdown report assessing the security of the code and prevent it from having security bugs.
+    "Security Bugs" in this context are bugs that causes security concerns.
+    The code can be ranging from JavaScript to Python so condsider injection attacks and vulnerabilities appropriately.
+    `
+
 	// SimplePrompt is used when the model is not required to think.
 	SecSimplePrompt = `
     Acting as an intelligent agent, answer problems simply.

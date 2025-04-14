@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/StoneG24/slape/pkg/api"
-	"github.com/StoneG24/slape/pkg/prompt"
 	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/StoneG24/slape/pkg/vectorstore"
 	"github.com/openai/openai-go"
@@ -21,17 +20,17 @@ import (
 
 // This information should be kept within a pipeline for privacy and safety reasons.
 type ContextBox struct {
-	SystemPrompt          string
-	Thoughts              string
-	Prompt                string
-	ConversationHistory   *[]string
-	FutureQuestions       string
-    // These will come from the internet search package.
+	SystemPrompt        string
+	Thoughts            string
+	Prompt              string
+	ConversationHistory *[]string
+	FutureQuestions     string
+	// These will come from the internet search package.
 	InternetSearchResults *[]string
 
-    // These will come from tool calls
-	ToolResults           *[]string
-	VectorStore           vectorstore.VectoreStore
+	// These will come from tool calls
+	ToolResults *[]string
+	VectorStore vectorstore.VectoreStore
 }
 
 // PromptBuilder takes the ContextBox and builds the system prompt
@@ -75,7 +74,7 @@ func (c *ContextBox) getThoughts(ctx context.Context) {
 
 	param := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(prompt.ThinkingPrompt),
+			openai.SystemMessage(vars.ThinkingPrompt),
 			openai.UserMessage(c.Prompt),
 			//openai.UserMessage(s.FutureQuestions),
 		},
