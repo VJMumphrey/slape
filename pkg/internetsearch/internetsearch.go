@@ -44,7 +44,7 @@ func InternetSearch(query string) {
 			link = link[index:]
 			maxLinks++
 
-			scrape(link)
+			go scrape(link)
 		}
 	})
 
