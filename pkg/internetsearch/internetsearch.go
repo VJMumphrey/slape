@@ -44,7 +44,7 @@ func InternetSearch(query string) {
 			link := "https://" + strings.TrimSpace(element.Text)
 			maxNumLinks++
 
-			scrape(link)
+			go scrape(link)
 		}
 	})
 
