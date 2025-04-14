@@ -161,9 +161,6 @@ func main() {
 		log.Println("[+] Frontend has been started on port 3000")
 	}
 
-	// TODO starting up the QuiverDB
-	// It is a seperate application and should be added to deps
-
 	// Create a channel to listen for interrupt signals.
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
