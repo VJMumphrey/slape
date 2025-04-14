@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/pkg/logging"
 	"github.com/StoneG24/slape/pkg/pipeline"
 	"github.com/StoneG24/slape/pkg/vars"
 )
@@ -79,7 +80,8 @@ var (
 // @BasePath /
 func main() {
 
-	//logging.CreateLogFile()
+	logfile := logging.CreateLogFile()
+	defer logfile.Close()
 
 	// channel for managing pipelines
 	// keystone := make(chan pipeline.Pipeline)
@@ -147,9 +149,9 @@ func main() {
 	// starting up the embedding pipeline
 	url := "http://localhost:8080/emb/setup"
 	resp, err := http.Get(url)
-    if err != nil {
-        log.Fatalf("[-] Error while trying to startup the Embedding Pipeline")
-    }
+	if err != nil {
+		log.Fatalf("[-] Error while trying to startup the Embedding Pipeline")
+	}
 	resp.Body.Close()
 
 	// starting up the frontend on port 3000
