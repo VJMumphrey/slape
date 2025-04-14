@@ -15,28 +15,29 @@ func processPrompt(mode string) (string, int64) {
 
 	switch mode {
 	case "simple":
-        promptChoice = prompt.SimplePrompt
+        promptChoice = prompt.SecSimplePrompt
 		maxtokens = int64(vars.MaxGenTokensSimple)
 	case "cot":
-		promptChoice = prompt.CoTPrompt
+		promptChoice = prompt.SecCoTPrompt
 		maxtokens = int64(vars.MaxGenTokensCoT)
 	case "tot":
-		promptChoice = prompt.ToTPrompt
+		promptChoice = prompt.SecToTPrompt
 		maxtokens = int64(vars.MaxGenTokens)
 	case "got":
-		promptChoice = prompt.GoTPrompt
+		promptChoice = prompt.SecGoTPrompt
 		maxtokens = int64(vars.MaxGenTokens)
 	case "moe":
-		promptChoice = prompt.MoEPrompt
+		promptChoice = prompt.SecMoEPrompt
 		maxtokens = int64(vars.MaxGenTokens)
 	case "thinkinghats":
-		promptChoice = prompt.SixThinkingHats
+		promptChoice = prompt.SecSixThinkingHats
 		maxtokens = int64(vars.MaxGenTokens)
 	case "goe":
+        // currently not a sec prompt for this
 		promptChoice = prompt.GoEPrompt
 		maxtokens = int64(vars.MaxGenTokens)
 	default:
-		promptChoice = prompt.SimplePrompt
+		promptChoice = prompt.SecSimplePrompt
 		maxtokens = int64(vars.MaxGenTokensSimple)
 	}
 

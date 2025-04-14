@@ -72,13 +72,13 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		log.Println("Error creating the docker client: %s", err)
+		log.Println("Error creating the docker client: ", err)
 		return
 	}
 
 	err = json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
-		log.Println("Error Request Format: %s", err)
+		log.Println("Error Request Format: ", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
@@ -101,7 +101,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)
 	if err != nil {
-		log.Println("Error Request Format %s", err)
+		log.Println("Error Request Format", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
@@ -112,7 +112,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	s.ContextBox.Prompt = simplePayload.Prompt
 	s.Thinking, err = strconv.ParseBool(simplePayload.Thinking)
 	if err != nil {
-		log.Println("Error Parsing thinking value: %s", err)
+		log.Println("Error Parsing thinking value:", err)
 		http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
 	}
 	if s.Thinking {
@@ -154,11 +154,11 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
 	defer cancel()
 
-	log.Println("PullingImage: %s", s.ContainerImage)
+	log.Println("PullingImage: ", s.ContainerImage)
 
 	reader, err := PullImage(s.DockerClient, childctx, s.ContainerImage)
 	if err != nil {
-		log.Println("Error Pulling Container Image: %s", err)
+		log.Println("Error Pulling Container Image: ", err)
 		return err
 	}
 	// prints out the status of the download
@@ -177,19 +177,19 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	)
 
 	if err != nil {
-		log.Println("Create Container Warning: %s", createResponse.Warnings)
-		log.Println("Error Creating Container: %s", err)
+		log.Println("Create Container Warning: ", createResponse.Warnings)
+		log.Println("Error Creating Container: ", err)
 		return err
 	}
 
 	// start container
 	err = (s.DockerClient).ContainerStart(childctx, createResponse.ID, container.StartOptions{})
 	if err != nil {
-		log.Println("Error Starting Container: %s", err)
+		log.Println("Error Starting Container: ", err)
 		return err
 	}
 
-	log.Println("Starting Container: %s", createResponse.ID)
+	log.Println("Starting Container: ", createResponse.ID)
 	s.container = createResponse
 
 	return nil
@@ -207,14 +207,14 @@ func (s *SimplePipeline) Generate(ctx context.Context, maxtokens int64, openaiCl
 		}
 	}
 
-	log.Println("SystemPrompt: %s, Prompt: %s", s.ContextBox.SystemPrompt, s.ContextBox.Prompt)
+	log.Println("SystemPrompt: ", s.ContextBox.SystemPrompt, "Prompt: ", s.ContextBox.Prompt)
 
 	err := s.PromptBuilder("")
 	if err != nil {
 		return "", err
 	}
 
-	log.Println("SystemPrompt: %s", s.SystemPrompt)
+	log.Println("SystemPrompt: ", s.SystemPrompt)
 
 	param := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{
@@ -244,12 +244,12 @@ func (s *SimplePipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
 
 	err := (s.DockerClient).ContainerStop(childctx, s.container.ID, container.StopOptions{})
 	if err != nil {
-		log.Println("Error Stopping Conatainer: %s", err)
+		log.Println("Error Stopping Conatainer: ", err)
 	}
 
 	err = (s.DockerClient).ContainerRemove(childctx, s.container.ID, container.RemoveOptions{})
 	if err != nil {
-		log.Println("Error Removing Container: %s", err)
+		log.Println("Error Removing Container: ", err)
 	}
 
 	log.Println("Shutting Down...")

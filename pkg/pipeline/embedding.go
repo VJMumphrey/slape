@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log/slog"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -50,7 +50,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter,
 
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		slog.Error("Error", "Errostring", err)
+		log.Println("Error creating the docker client: ", err)
 		return
 	}
 
@@ -70,7 +70,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 
 	err := json.NewDecoder(req.Body).Decode(&payload)
 	if err != nil {
-		slog.Error("Error", "Errostring", err)
+		log.Println("Error Request Format: ", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
 		return
 	}
@@ -79,14 +79,11 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 	// TODO rewrite for embedding and rag
 	result, err := e.Generate(ctx, payload.Prompt, &vars.EmbeddingClient)
 	if err != nil {
-		slog.Error("Error", "Errostring", err)
-		http.Error(w, "Error getting generation from model", http.StatusOK)
+		log.Println("Error getting generation from model", err)
+		http.Error(w, "Error getting generation from model", http.StatusInternalServerError)
 
 		return
 	}
-
-	// for debugging streaming
-	slog.Info("%s", result)
 
 	respPayload := embeddingResponse{
 		Response: *result,
@@ -94,8 +91,8 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 
 	json, err := json.Marshal(respPayload)
 	if err != nil {
-		slog.Error("Error", "Errostring", err)
-		http.Error(w, "Error marshaling your response from model", http.StatusOK)
+		log.Println("Error marshaling response from model", err)
+		http.Error(w, "Error marshaling your response from model", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -105,12 +102,13 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 
 func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 
+	log.Println("PullingImage: ", e.ContainerImage)
+
 	reader, err := PullImage(e.DockerClient, ctx, e.ContainerImage)
 	if err != nil {
-		slog.Error("Error", err)
+		log.Println("Error Pulling Container Image: ", err)
 		return err
 	}
-	slog.Info("Pulling Image...")
 	// prints out the status of the download
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
@@ -139,9 +137,8 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	)
 
 	if err != nil {
-		//slog.Warn(gencreateResponse.Warnings[0])
-		slog.Warn(embedcreateResponse.Warnings[0])
-		slog.Error("Error", err)
+		log.Println("Create Container Warning: ", embedcreateResponse.Warnings)
+		log.Println("Error Creating Container: ", err)
 		return err
 	}
 
@@ -157,13 +154,12 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 	// start container
 	err = (e.DockerClient).ContainerStart(ctx, embedcreateResponse.ID, container.StartOptions{})
 	if err != nil {
-		slog.Error("Error", "Errostring", err)
+		log.Println("Error Starting Container: ", err)
 		return err
 	}
 
-	// For debugging
 	//slog.Info("%s", gencreateResponse.ID)
-	slog.Info("%s", embedcreateResponse.ID)
+	log.Println("Starting Container: ", embedcreateResponse.ID)
 
 	e.containers = append(e.containers, embedcreateResponse)
 	//e.containers = append(e.containers, gencreateResponse)
@@ -215,5 +211,5 @@ func (e *EmbeddingPipeline) Shutdown(w http.ResponseWriter, req *http.Request) {
 		(e.DockerClient).ContainerRemove(childctx, model.ID, container.RemoveOptions{})
 	}
 
-	slog.Info("Shutting Down...")
+	log.Println("Shutting Down...")
 }
