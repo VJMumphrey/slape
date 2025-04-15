@@ -1,4 +1,4 @@
-package pipeline
+package internetsearch
 
 import (
 	"bytes"

@@ -124,11 +124,12 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 		log.Println("Error Parsing InternetSearch value:", err)
 		http.Error(w, "Error parsing InternetSearch value. Expecting sound boolean definitions.", http.StatusBadRequest)
 	}
-    if s.InternetSearch {
-        s.getInternetSearch(ctx)
-    } else {
-        s.InternetSearchResults = &[]string{"None"}
-    }
+	// TODO create workgroup for these guys
+	if s.InternetSearch {
+		s.getInternetSearch(ctx)
+	} else {
+		s.InternetSearchResults = "None"
+	}
 	if s.Thinking {
 		s.getThoughts(ctx)
 	} else {
@@ -223,7 +224,7 @@ func (s *SimplePipeline) Generate(ctx context.Context, maxtokens int64, openaiCl
 
 	log.Println("SystemPrompt: ", s.ContextBox.SystemPrompt, "Prompt: ", s.ContextBox.Prompt)
 
-	err := s.PromptBuilder("")
+	err := s.promptBuilder("")
 	if err != nil {
 		return "", err
 	}

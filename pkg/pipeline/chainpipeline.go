@@ -222,7 +222,7 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 
 		log.Println("SystemPrompt", systemprompt, "Prompt", prompt)
 
-		err = c.PromptBuilder(result)
+		err = c.promptBuilder(result)
 		if err != nil {
 			return "", err
 		}
