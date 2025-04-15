@@ -60,7 +60,8 @@ var (
 	// ToTPrompt uses a structured approach to generating human-like responses to questions or prompts.
 	// It involves breaking down complex problems into simpler, more manageable components,
 	// and then generating responses using experts in a MoE style.
-	ToTPrompt = `Imagine three different experts.
+	ToTPrompt = `
+    Imagine three different experts.
     All experts will write down 1 step of their thinking, then share it with the group.
     Then all experts will go on to the next step, etc.
     If any expert realises they're wrong at any point then they leave.
@@ -77,7 +78,8 @@ var (
 	// The graph of thought prompting is used to identify patterns, make predictions, and gain insights into the problem or situation being analyzed.
 	//
 	// In our case we use a MoE style as well for the nodes.
-	GoTPrompt = `Imagine there are three different experts.
+	GoTPrompt = `
+    Imagine there are three different experts.
     All experts will write down 1 step of their thinking, then share it with the group.
     Next all experts will try to connect their ideas if they have any connections in order to help formulate comparisons.
     Then all experts will go on to the next step, etc.

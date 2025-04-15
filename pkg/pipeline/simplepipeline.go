@@ -31,6 +31,7 @@ type (
 		DockerClient   *client.Client
 		GPU            bool
 		Thinking       bool
+		InternetSearch bool
 
 		// for internal use
 		container container.CreateResponse
@@ -48,6 +49,9 @@ type (
 
 		// Should thinking be included in the process
 		Thinking string `json:"thinking"`
+
+		// Should Internet Search be included in the process
+		InternetSearch string `json:"search"`
 	}
 
 	simpleSetupPayload struct {
@@ -115,6 +119,16 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 		log.Println("Error Parsing thinking value:", err)
 		http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
 	}
+	s.InternetSearch, err = strconv.ParseBool(simplePayload.InternetSearch)
+	if err != nil {
+		log.Println("Error Parsing InternetSearch value:", err)
+		http.Error(w, "Error parsing InternetSearch value. Expecting sound boolean definitions.", http.StatusBadRequest)
+	}
+    if s.InternetSearch {
+        s.getInternetSearch(ctx)
+    } else {
+        s.InternetSearchResults = &[]string{"None"}
+    }
 	if s.Thinking {
 		s.getThoughts(ctx)
 	} else {
