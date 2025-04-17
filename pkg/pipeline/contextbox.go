@@ -9,7 +9,6 @@ import (
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/StoneG24/slape/pkg/internetsearch"
 	"github.com/StoneG24/slape/pkg/vars"
-	"github.com/coder/hnsw"
 	"github.com/openai/openai-go"
 )
 
@@ -65,7 +64,8 @@ func (c *ContextBox) promptBuilder(previousAnswer string) error {
 // getThought is used to generate initial thoughts about a given question.
 // This is supposed to create some guardrails for thought.
 // This will not be good for slms but llms that are centered around reasoning
-func (c *ContextBox) getThoughts(ctx context.Context) {
+func (c *ContextBox) getThoughts(ctx context.Context, done chan bool) {
+	defer close(done)
 
 	param := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{
@@ -96,18 +96,20 @@ func (c *ContextBox) getThoughts(ctx context.Context) {
 	}
 
 	log.Println("Debug Thinking result", result)
+	done <- true
 
 	c.Thoughts = result
 }
 
 // getInternetSearch is used to generate initial context about a given question.
-func (c *ContextBox) getInternetSearch(ctx context.Context) error {
+func (c *ContextBox) getInternetSearch(ctx context.Context, done chan bool) error {
+	defer close(done)
 
 	// this gets converted to f32 with iterative process
 	embCh := make(chan []float64, 1)
-	searchCh := make(chan *hnsw.Graph[string], 1)
-	defer close(embCh)
-	defer close(searchCh)
+	searchCh := make(chan internetsearch.VectorList, 1)
+	// defer close(embCh)
+	//defer close(searchCh)
 
 	// Generate embedding of prompt
 	go func(context.Context, chan []float64) {
@@ -133,11 +135,11 @@ func (c *ContextBox) getInternetSearch(ctx context.Context) error {
 			return
 		}
 		embCh <- result.Data[0].Embedding
-		close(embCh)
+		//close(embCh)
 	}(ctx, embCh)
 
 	// Generate the query and run internetsearch
-	go func(context.Context, chan *hnsw.Graph[string]) {
+	go func(context.Context, chan internetsearch.VectorList) {
 		// take care of upDog on our own
 		for {
 			// sleep and give server guy a break
@@ -150,8 +152,9 @@ func (c *ContextBox) getInternetSearch(ctx context.Context) error {
 		}
 
 		queryPrompt := `
-        Act as a internet guru who knows how to search up anything on duckduckgo.com.
-        you are given a request and your job is to create a search query that captures that request to the fullest.
+        Act as a internet search analyist who knows how to search up anything on duckduckgo.com.
+        Generate a query to use for internet search using the provided question.
+        Only reaturn the question simply.
         `
 
 		param := openai.ChatCompletionNewParams{
@@ -163,25 +166,26 @@ func (c *ContextBox) getInternetSearch(ctx context.Context) error {
 			Seed: openai.Int(0),
 			//Model:       s.Models[0],
 			Temperature: openai.Float(vars.ModelTemperature),
-			MaxTokens:   openai.Int(100),
+			MaxTokens:   openai.Int(25),
 		}
 
 		result, err := GenerateCompletion(ctx, param, "", vars.OpenaiClient)
 		if err != nil {
 			log.Println("Error generating query for internet search", err)
+			c.InternetSearchResults = "None"
 			return
 		}
 
 		// take the result and run the internetsearch
-		graph := internetsearch.InternetSearch(result)
+		vecs := internetsearch.InternetSearch(ctx, result)
 
-		searchCh <- graph
-		close(searchCh)
+		searchCh <- vecs
+		//close(searchCh)
 	}(ctx, searchCh)
 
 	// Combine the two and search the graph for relative neighbors
 	var embedding []float64
-	var graph *hnsw.Graph[string]
+	var vecs internetsearch.VectorList
 	for i := 0; i < 2; i++ {
 		select {
 		case vector, ok := <-embCh:
@@ -189,24 +193,19 @@ func (c *ContextBox) getInternetSearch(ctx context.Context) error {
 				embedding = vector
 				log.Println("Embedding Retrieved Properly")
 			}
-		case g, ok := <-searchCh:
+		case v, ok := <-searchCh:
 			if ok {
-				graph = g
-				log.Println("Graph Retrieved Properly")
+				vecs = v
+				log.Println("Neighbors Retrieved Properly")
 			}
 		}
 	}
 
-	// iteratate and convert float64 to float32
-	var embedding32 []float32
-	for i, component := range embedding {
-		embedding32[i] = float32(component)
-	}
-
-	neighbors := graph.Search(
-		// embedding vector
-		embedding32,
+	neighbors := internetsearch.KnnSearch(
 		// nearest neighbors
+		vecs.Points,
+		// embedding vector
+		embedding,
 		// change this to get less results back from the vector store
 		5,
 	)
@@ -214,11 +213,13 @@ func (c *ContextBox) getInternetSearch(ctx context.Context) error {
 	log.Println("Internet Search result [nearest neighbors]", neighbors)
 
 	for _, neighbor := range neighbors {
-		c.InternetSearchResults += neighbor.Key
+		c.InternetSearchResults += vecs.Elements[neighbor.Point.ID]
 		c.InternetSearchResults += "\n"
 	}
 
 	log.Println("Internet Search result ", c.InternetSearchResults)
+
+	done <- true
 
 	return nil
 }

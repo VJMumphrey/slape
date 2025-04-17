@@ -15,7 +15,7 @@ const (
 	Logfilename = "logs.txt"
 
 	// change to false to not run frontend
-	Frontend = true
+	Frontend = false
 
 	// This should be used to match the context length with the max generation length.
 	ContextLength      = 16348

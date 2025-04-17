@@ -35,11 +35,11 @@ type (
 		containers []container.CreateResponse
 	}
 
-	embeddingRequst struct {
+	EmbeddingRequest struct {
 		Prompt []string `json:"prompt"`
 	}
 
-	embeddingResponse struct {
+	EmbeddingResponse struct {
 		Response openai.CreateEmbeddingResponse
 	}
 )
@@ -64,7 +64,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineSetupRequest(w http.ResponseWriter,
 
 // simplerequest is used to handle simple requests as needed.
 func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWriter, req *http.Request) {
-	var payload embeddingRequst
+	var payload EmbeddingRequest
 
 	ctx := req.Context()
 
@@ -85,7 +85,7 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 		return
 	}
 
-	respPayload := embeddingResponse{
+	respPayload := EmbeddingResponse{
 		Response: *result,
 	}
 
@@ -193,7 +193,7 @@ func (e *EmbeddingPipeline) Generate(ctx context.Context, payload []string, open
 		return nil, err
 	}
 
-	return result, nil
+	return &result, nil
 }
 
 func (e *EmbeddingPipeline) Shutdown(w http.ResponseWriter, req *http.Request) {

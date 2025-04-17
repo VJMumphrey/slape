@@ -38,6 +38,7 @@ type (
 		DockerClient   *client.Client
 		GPU            bool
 		Thinking       bool
+		InternetSearch bool
 
 		// for internal use only
 		containers []container.CreateResponse
@@ -55,6 +56,8 @@ type (
 
 		// Should thinking be a step in the process
 		Thinking string `json:"thinking"`
+
+		InternetSearch string `json:"search"`
 	}
 
 	debateSetupPayload struct {
@@ -118,8 +121,34 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 		log.Println("Error Parsing thinking value:", err)
 		http.Error(w, "Error parsing thinking value. Expecting sound boolean definitions.", http.StatusBadRequest)
 	}
+	d.InternetSearch, err = strconv.ParseBool(payload.InternetSearch)
+	if err != nil {
+		log.Println("Error Parsing InternetSearch value:", err)
+		http.Error(w, "Error parsing InternetSearch value. Expecting sound boolean definitions.", http.StatusBadRequest)
+	}
+
+	done1 := make(chan bool)
+	done2 := make(chan bool)
+	if d.InternetSearch {
+		go d.getInternetSearch(ctx, done1)
+	} else {
+		d.InternetSearchResults = "None"
+	}
 	if d.Thinking {
-		d.getThoughts(ctx)
+		go d.getThoughts(ctx, done2)
+	} else {
+		d.Thoughts = "None"
+	}
+
+	select {
+	case _, ok := <-done1:
+		if ok {
+			log.Println("Internet search returned with results")
+		}
+	case _, ok := <-done2:
+		if ok {
+			log.Println("Thoughts have been gathered")
+		}
 	}
 
 	// wait for all tasks to complete then generate a response

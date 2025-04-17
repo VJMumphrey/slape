@@ -73,7 +73,7 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	// TODO(v) expand past nvidia systems.
 	// ROCm will present interesting challenges. Its simpler but more setups in the config.
 	switch gpuTrue {
-    // BUG(v) This falls to the same problem as the rest of the gpu issues.
+	// BUG(v) This falls to the same problem as the rest of the gpu issues.
 	case true:
 		hostconfig = container.HostConfig{
 			Runtime:      "nvidia",
@@ -161,12 +161,12 @@ func GenerateCompletion(ctx context.Context, param openai.ChatCompletionNewParam
 }
 
 // GenerateEmbedding is used as a helper function for generating embeddings.
-func GenerateEmbedding(ctx context.Context, param openai.EmbeddingNewParams, client openai.Client) (*openai.CreateEmbeddingResponse, error) {
+func GenerateEmbedding(ctx context.Context, param openai.EmbeddingNewParams, client openai.Client) (openai.CreateEmbeddingResponse, error) {
 
 	embeddings, err := client.Embeddings.New(ctx, param)
 	if err != nil {
-		return nil, err
+		return openai.CreateEmbeddingResponse{}, err
 	}
 
-	return embeddings, nil
+	return *embeddings, nil
 }

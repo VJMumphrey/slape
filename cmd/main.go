@@ -170,6 +170,9 @@ func main() {
 	// Block until a signal is received.
 	<-sigChan
 
+	// TODO(v) need to shutdown frontend process
+	// with every startup we spin up a server with tearing it down
+
 	err = shutdownPipelines()
 	if err != nil {
 		log.Println("ErrorShuttingDownPipelines:", err)
