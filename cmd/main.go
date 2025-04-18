@@ -171,7 +171,12 @@ func main() {
 	<-sigChan
 
 	// TODO(v) need to shutdown frontend process
-	// with every startup we spin up a server with tearing it down
+	// with every startup we spin up a server without tearing it down
+	log.Println("[+] Shuting Down Frontend...")
+	cmd := exec.Command("fuser", "-k", "3000")
+	cmd.Dir = "./SLaMO_Frontend"
+    cmd.Run()
+	log.Println("[+] Frontend has been stopped")
 
 	err = shutdownPipelines()
 	if err != nil {

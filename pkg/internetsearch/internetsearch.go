@@ -159,7 +159,7 @@ func (v *VectorList) addGuy(embeddings []openai.Embedding) {
 
 	for i := 0; i < len(embeddings); i++ {
 		// add point to the array of data
-		point := Point{i , embeddings[i].Embedding}
+		point := Point{i, embeddings[i].Embedding}
 		fmt.Println(point)
 
 		v.Points = append(v.Points, point)
