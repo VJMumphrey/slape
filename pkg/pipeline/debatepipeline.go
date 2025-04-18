@@ -140,14 +140,16 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 		d.Thoughts = "None"
 	}
 
-	select {
-	case _, ok := <-done1:
-		if ok {
-			log.Println("Internet search returned with results")
-		}
-	case _, ok := <-done2:
-		if ok {
-			log.Println("Thoughts have been gathered")
+	if d.InternetSearch || d.Thinking {
+		select {
+		case _, ok := <-done1:
+			if ok {
+				log.Println("Internet search returned with results")
+			}
+		case _, ok := <-done2:
+			if ok {
+				log.Println("Thoughts have been gathered")
+			}
 		}
 	}
 

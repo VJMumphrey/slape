@@ -138,14 +138,16 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 		s.Thoughts = "None"
 	}
 
-	select {
-	case _, ok := <-done1:
-		if ok {
-			log.Println("Internet search returned with results")
-		}
-	case _, ok := <-done2:
-		if ok {
-			log.Println("Thoughts have been gathered")
+	if s.InternetSearch || s.Thinking {
+		select {
+		case _, ok := <-done1:
+			if ok {
+				log.Println("Internet search returned with results")
+			}
+		case _, ok := <-done2:
+			if ok {
+				log.Println("Thoughts have been gathered")
+			}
 		}
 	}
 

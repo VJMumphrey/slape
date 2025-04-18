@@ -138,14 +138,16 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 		c.Thoughts = "None"
 	}
 
-	select {
-	case _, ok := <-done1:
-		if ok {
-			log.Println("Internet search returned with results")
-		}
-	case _, ok := <-done2:
-		if ok {
-			log.Println("Thoughts have been gathered")
+	if c.InternetSearch || c.Thinking {
+		select {
+		case _, ok := <-done1:
+			if ok {
+				log.Println("Internet search returned with results")
+			}
+		case _, ok := <-done2:
+			if ok {
+				log.Println("Thoughts have been gathered")
+			}
 		}
 	}
 

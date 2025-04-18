@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"time"
 
 	"github.com/StoneG24/slape/pkg/api"
@@ -170,12 +171,20 @@ func main() {
 	// Block until a signal is received.
 	<-sigChan
 
-	// TODO(v) need to shutdown frontend process
+	// TODO(v) need to shutdown frontend process for windows
 	// with every startup we spin up a server without tearing it down
+	// windows would require a admin priv to remove the server by port like this
 	log.Println("[+] Shuting Down Frontend...")
-	cmd := exec.Command("fuser", "-k", "3000")
-	cmd.Dir = "./SLaMO_Frontend"
-    cmd.Run()
+	if runtime.GOOS == "linux" {
+		cmd := exec.Command("fuser", "-k", "3000")
+		cmd.Run()
+	}
+	if runtime.GOOS == "windows" {
+		//taskkill /f /pid $(netstat -ano | findstr ":3000")
+
+		cmd := exec.Command("taskkill", "/f", "/pid", "$(netstat -ano | findstr ':3000')")
+		cmd.Run()
+	}
 	log.Println("[+] Frontend has been stopped")
 
 	err = shutdownPipelines()
