@@ -43,6 +43,11 @@ type (
 
 const (
 	embedmodel = "snowflake-arctic-embed-l-v2.0-q4_k_m.gguf"
+	//Typical values:
+	// > 0.9 → very close (same idea, rephrased)
+	// 0.7–0.9 → somewhat related
+	// < 0.7 → probably not related
+	similarityThreshold = 0.60
 )
 
 // InternetSearch is used to search the internet with an models query request
@@ -63,6 +68,7 @@ func InternetSearch(ctx context.Context, query string) VectorList {
 	vecs := VectorList{data, elements, index}
 
 	query = strings.ReplaceAll(query, " ", "+")
+	query = strings.ReplaceAll(query, "\n", "")
 	queryurl := fmt.Sprintf("https://html.duckduckgo.com/html/?q=%s", query)
 
 	log.Println(queryurl)
@@ -85,7 +91,7 @@ func InternetSearch(ctx context.Context, query string) VectorList {
 
 	err := collyCollector.Visit(queryurl)
 	if err != nil {
-		log.Println("error while scraping duckduckgo")
+		log.Println("error while scraping duckduckgo", err)
 	}
 
 	// send the vecs to embedding
@@ -167,29 +173,60 @@ func (v *VectorList) addGuy(embeddings []openai.Embedding) {
 	}
 }
 
-func cosineSimilarity(a, b []float64) float64 {
-	var dot, normA, normB float64
-	for i := range a {
-		dot += a[i] * b[i]
-		normA += a[i] * a[i]
-		normB += b[i] * b[i]
+func normalize(vec []float64) []float64 {
+	var norm float64
+	for _, v := range vec {
+		norm += v * v
 	}
+	norm = math.Sqrt(norm)
+	for i := range vec {
+		vec[i] /= norm
+	}
+	return vec
+}
+
+/*
+func cosineSimilarity(vec1, vec2 []float64) float64 {
+	var dot, normA, normB float64
+	for i := 0; i < len(vec1); i++ {
+		dot += vec1[i] * vec2[i]
+		normA += vec1[i] * vec1[i]
+		normB += vec2[i] * vec2[i]
+	}
+
 	if normA == 0 || normB == 0 {
 		return 0
 	}
 	return dot / (math.Sqrt(normA) * math.Sqrt(normB))
 }
+*/
+
+func cosineSimilarity(vec1, vec2 []float64) float64 {
+	var dot float64
+	for i := 0; i < len(vec1); i++ {
+		dot += vec1[i] * vec2[i]
+	}
+	return dot
+}
 
 func KnnSearch(data []Point, query []float64, k int) []Neighbor {
 	var neighbors []Neighbor
+	normquery := normalize(query)
 	for _, point := range data {
-		dist := cosineSimilarity(query, point.Vector)
-		neighbors = append(neighbors, Neighbor{Point: point, Distance: dist})
+		normpoint := normalize(point.Vector)
+		dist := cosineSimilarity(normquery, normpoint)
+		log.Println("Simularity Score", dist)
+		if dist >= similarityThreshold {
+			neighbors = append(neighbors, Neighbor{Point: point, Distance: dist})
+		}
 	}
 
 	sort.Slice(neighbors, func(i, j int) bool {
 		return neighbors[i].Distance < neighbors[j].Distance
 	})
 
+	if len(neighbors) > k {
+		return neighbors
+	}
 	return neighbors[:k]
 }

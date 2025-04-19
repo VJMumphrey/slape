@@ -76,12 +76,12 @@ func (c *ContextBox) getThoughts(ctx context.Context, done chan bool) {
 		Seed: openai.Int(0),
 		//Model:       openai.String(pipeline.Model),
 		Temperature: openai.Float(0.4),
-		MaxTokens:   openai.Int(16348),
+		MaxTokens:   openai.Int(vars.MaxGenTokens),
 	}
 
 	for {
 		// sleep and give server guy a break
-		time.Sleep(time.Duration(5 * time.Second))
+		time.Sleep(time.Duration(1 * time.Second))
 
 		// Single model, single port, assuming one pipeline is running at a time
 		if api.UpDog("8000") {
@@ -152,9 +152,9 @@ func (c *ContextBox) getInternetSearch(ctx context.Context, done chan bool) erro
 		}
 
 		queryPrompt := `
-        Act as a internet search analyist who knows how to search up anything on duckduckgo.com.
-        Generate a query to use for internet search using the provided question.
-        Only reaturn the question simply.
+        Act as a internet search guru who knows how to search up anything on duckduckgo.com.
+        Generate a query, using the provided question, for searching the internet.
+        Only return the question.
         `
 
 		param := openai.ChatCompletionNewParams{
