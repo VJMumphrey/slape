@@ -99,6 +99,22 @@ docker image prune
 docker builder prune
 ```
 
+## Configureation
+To configure the project we used a simple and unorthodox approach.
+Instead of using a yaml file, we used a go file that maintains global constants and variables in the program.
+These variables are referenced throughtout the program and make it easy to make changes to prompts and numerical values.
+
+these live in the [defs file](pkg/vars/defs.go).
+
+For prompts we also have go files that store the strings that encapsulate the prompts.
+
+these live in [prompts](pkg/pipeline/prompts.go).
+**NOTE** we also a have set of security prompts for use in demos in [security promtps](pkg/pipeline/secprompts.go).
+
+This was choice was made to keep the logic simple and create a binary that could be bundled and moved to remote servers if needed.
+A replacement for this would be embedding a yaml file and reading the values at runtime. 
+This was originally to complex for the scope of the project.
+
 ## Documentation
 Our code uses go doc comments as a way of effectively documenting our code.
 
