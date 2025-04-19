@@ -108,7 +108,7 @@ these live in the [defs file](pkg/vars/defs.go).
 
 For prompts we also have go files that store the strings that encapsulate the prompts.
 
-these live in [prompts](pkg/prompt/prompts.go).
+these live in [prompts](pkg/prompt/prompt.go).
 **NOTE** we also a have set of security prompts for use in demos in [security promtps](pkg/prompt/secprompts.go).
 
 This was choice was made to keep the logic simple and create a binary that could be bundled and moved to remote servers if needed.
