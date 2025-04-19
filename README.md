@@ -99,7 +99,7 @@ docker image prune
 docker builder prune
 ```
 
-## Configureation
+## Configuration
 To configure the project we used a simple and unorthodox approach.
 Instead of using a yaml file, we used a go file that maintains global constants and variables in the program.
 These variables are referenced throughtout the program and make it easy to make changes to prompts and numerical values.
