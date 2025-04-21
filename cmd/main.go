@@ -74,18 +74,11 @@ var (
 	}
 )
 
-// @title My API
-// @version 1.0
-// @description This is a sample API
-// @host localhost:8080
-// @BasePath /
 func main() {
 
 	logfile := logging.CreateLogFile()
+	defer logging.CloseLogging(logfile)
 	defer logfile.Close()
-
-	// channel for managing pipelines
-	// keystone := make(chan pipeline.Pipeline)
 
 	// Default Mux for our server.
 	// For auth in the future we will want to setup a different set.
@@ -176,7 +169,7 @@ func main() {
 	// windows would require a admin priv to remove the server by port like this
 	log.Println("[+] Shuting Down Frontend...")
 	if runtime.GOOS == "linux" {
-		cmd := exec.Command("fuser", "-k", "3000")
+		cmd := exec.Command("fuser", "-k", "3000/tcp")
 		cmd.Run()
 	}
 	if runtime.GOOS == "windows" {

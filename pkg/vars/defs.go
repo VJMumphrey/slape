@@ -13,9 +13,10 @@ const (
 	RocmgpuImage = "ghcr.io/ggml-org/llama.cpp:server-rocm"
 
 	Logfilename = "logs.txt"
+	Trunkfilename = "trunk.txt"
 
 	// change to false to not run frontend
-	Frontend = false
+	Frontend = true
 
 	// This should be used to match the context length with the max generation length.
 	ContextLength      = 16348
@@ -38,7 +39,7 @@ var (
 		option.WithBaseURL("http://localhost:8082/v1"),
 	)
 
-	ThinkingPrompt     = prompt.SecurityReportPrompt
+	ThinkingPrompt     = prompt.SecThinkingPrompt
 	SimplePrompt       = prompt.SecSimplePrompt
 	CotPrompt          = prompt.SecCoTPrompt
 	TotPrompt          = prompt.SecToTPrompt

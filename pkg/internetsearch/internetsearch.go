@@ -185,7 +185,6 @@ func normalize(vec []float64) []float64 {
 	return vec
 }
 
-/*
 func cosineSimilarity(vec1, vec2 []float64) float64 {
 	var dot, normA, normB float64
 	for i := 0; i < len(vec1); i++ {
@@ -198,15 +197,6 @@ func cosineSimilarity(vec1, vec2 []float64) float64 {
 		return 0
 	}
 	return dot / (math.Sqrt(normA) * math.Sqrt(normB))
-}
-*/
-
-func cosineSimilarity(vec1, vec2 []float64) float64 {
-	var dot float64
-	for i := 0; i < len(vec1); i++ {
-		dot += vec1[i] * vec2[i]
-	}
-	return dot
 }
 
 func KnnSearch(data []Point, query []float64, k int) []Neighbor {
@@ -225,7 +215,7 @@ func KnnSearch(data []Point, query []float64, k int) []Neighbor {
 		return neighbors[i].Distance < neighbors[j].Distance
 	})
 
-	if len(neighbors) > k {
+	if len(neighbors) < k {
 		return neighbors
 	}
 	return neighbors[:k]

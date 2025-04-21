@@ -16,7 +16,6 @@ import (
 // group of strings that contains context on a given problem.
 // This is coupled with the system prompt chosen is what makes the models understand
 // the gven situation more.
-
 // This information should be kept within a pipeline for privacy and safety reasons.
 type ContextBox struct {
 	// Simple prompt components
@@ -151,11 +150,13 @@ func (c *ContextBox) getInternetSearch(ctx context.Context, done chan bool) erro
 			}
 		}
 
+        /*
 		queryPrompt := `
         Act as a internet search guru who knows how to search up anything on duckduckgo.com.
         Generate a query, using the provided question, for searching the internet.
         Only return the question.
         `
+
 
 		param := openai.ChatCompletionNewParams{
 			Messages: []openai.ChatCompletionMessageParamUnion{
@@ -168,16 +169,16 @@ func (c *ContextBox) getInternetSearch(ctx context.Context, done chan bool) erro
 			Temperature: openai.Float(vars.ModelTemperature),
 			MaxTokens:   openai.Int(25),
 		}
-
 		result, err := GenerateCompletion(ctx, param, "", vars.OpenaiClient)
 		if err != nil {
 			log.Println("Error generating query for internet search", err)
 			c.InternetSearchResults = "None"
 			return
 		}
+        */
 
 		// take the result and run the internetsearch
-		vecs := internetsearch.InternetSearch(ctx, result)
+		vecs := internetsearch.InternetSearch(ctx, c.Prompt)
 
 		searchCh <- vecs
 		//close(searchCh)
