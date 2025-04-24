@@ -199,7 +199,7 @@ div.Light_output{
 }
 
 input.Pink_prompt {
-    width: 70%;
+    width: 60%;
     height: 20px;
     color: white;
     font-family: inherit;
@@ -322,5 +322,9 @@ button.Pink_promptSubmit
   font-weight: 500;
   font-family: inherit;
   margin-left: 45px;
+
+}
+
+div.Light_checkBoxDiv {
 
 }

@@ -47,7 +47,7 @@ const (
 	// > 0.9 → very close (same idea, rephrased)
 	// 0.7–0.9 → somewhat related
 	// < 0.7 → probably not related
-	similarityThreshold = 0.60
+	similarityThreshold = 0.50
 )
 
 // InternetSearch is used to search the internet with an models query request
@@ -117,6 +117,12 @@ func (v *VectorList) scrape(ctx context.Context, link string) {
 		fmt.Println(v.Elements)
 		v.index++
 	})
+	collyCollector.OnHTML("code", func(element *colly.HTMLElement) {
+		log.Println(element.Text)
+		v.Elements = append(v.Elements, element.Text)
+		fmt.Println(v.Elements)
+		v.index++
+	})
 	collyCollector.OnRequest(func(req *colly.Request) {
 		log.Println("Visiting", req.URL)
 	})
@@ -130,7 +136,17 @@ func (v *VectorList) scrape(ctx context.Context, link string) {
 
 func (v *VectorList) embedGuy() []openai.Embedding {
 
+	var chunkedText []string
 	text := v.Elements[:v.index]
+	bulkText := strings.Join(text, " ")
+	for index := 0; index < len(bulkText); index += 200 {
+		if index+250 > (len(bulkText) - 1) {
+			chunkedText = append(chunkedText, bulkText[index:])
+		} else {
+			chunkedText = append(chunkedText, bulkText[index:index+250])
+		}
+	}
+	text = chunkedText
 	var prompt EmbeddingRequest
 	prompt.Prompt = text
 	embeddingPrompt, err := json.Marshal(prompt)
@@ -202,10 +218,13 @@ func cosineSimilarity(vec1, vec2 []float64) float64 {
 func KnnSearch(data []Point, query []float64, k int) []Neighbor {
 	var neighbors []Neighbor
 	normquery := normalize(query)
+	fmt.Println("We get into KnnSearch")
 	for _, point := range data {
+		fmt.Println("We got into da loop")
 		normpoint := normalize(point.Vector)
 		dist := cosineSimilarity(normquery, normpoint)
 		log.Println("Simularity Score", dist)
+		fmt.Println("Sim Score: ", dist)
 		if dist >= similarityThreshold {
 			neighbors = append(neighbors, Neighbor{Point: point, Distance: dist})
 		}
@@ -218,5 +237,6 @@ func KnnSearch(data []Point, query []float64, k int) []Neighbor {
 	if len(neighbors) < k {
 		return neighbors
 	}
+	fmt.Println(neighbors[:k])
 	return neighbors[:k]
 }

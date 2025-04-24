@@ -10,7 +10,8 @@ export default function Prompt() {
   const [PromptInfo, setPromptInfo] = useState(""); //used to contain the current value, and to set the new value
   const [ResponseAnswer, setResponseAnswer] = useState("... Awaiting Response");
   const [PromptMode, setPromptMode] = useState("simple");
-  const [ ThinkingMode, setThinkingMode ] = useState(1);
+  const [ ThinkingMode, setThinkingMode ] = useState(false);
+  const [ InternetSearchMode, setInternetSearchMode ] = useState(false);
   const [loadingAnimation, setloadingAnimation] = useState("");
 
   if (localStorage.getItem("PromptSetting") == null)
@@ -28,11 +29,6 @@ export default function Prompt() {
     {name: "Thinking Hats", type: "thinkinghats"},
     {name: "Mixture of Experts", type: "moe"},
   ];
-
-  const thinkingTypes = [
-    {name: "Thinking", type: 1},
-    {name: "No Thinking", type: 0}
-  ]
 
   async function handleSubmit(event: {preventDefault: () => void}) {
     setPromptInfo(""); //clears the prompt box after submission
@@ -55,6 +51,7 @@ export default function Prompt() {
         body: JSON.stringify({
           prompt: PromptInfo,
           thinking: String(ThinkingMode),
+          search: String(InternetSearchMode),
           mode: PromptMode,
         }),
       });
@@ -96,12 +93,24 @@ export default function Prompt() {
               callBack={setPromptMode}
               optionObject={promptTypes}
             />
-            <DropDownButton
-              className="thinkingDropDown"
-              value={ThinkingMode}
-              callBack={setThinkingMode}
-              optionObject={thinkingTypes}
-            />
+            <label>
+              <input
+                className={`${themeColor}_thinkingBox`}
+                type="checkbox"
+                checked={ThinkingMode}
+                onChange={() => {setThinkingMode(!ThinkingMode)}}
+              />
+              <span>Thinking</span>
+            </label>
+            <label>
+              <input
+                className={`${themeColor}_internetSearchBox`}
+                type="checkbox"
+                checked={InternetSearchMode}
+                onChange={() => {setInternetSearchMode(!InternetSearchMode)}}
+              />
+              <span>Internet Search</span>
+            </label>
             <button className={`${themeColor}_promptSubmit`}> Submit</button>
           </label>
         </form>
