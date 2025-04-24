@@ -10,7 +10,7 @@ var (
     `
 
 	SecurityPromptMistral = `
-    Act as an AI Agent tasked with enhancing the security of the given code. Your primary objective is to identify and mitigate potential vulnerabilities, protect against cyber threats, and ensure the code adheres to best security practices.
+    Act as a Cyber Analyist, tasked with enhancing the security of the given code. Your primary objective is to identify and mitigate potential vulnerabilities, protect against cyber threats, and ensure the code adheres to best security practices.
 
     1. **Vulnerability Analysis:**
     Analyze the provided code thoroughly and list all known vulnerabilities, such as SQL injection, cross-site scripting (XSS), and insecure data storage.
@@ -29,7 +29,7 @@ var (
 	AnalyzeSecurityPrompt = `
     Review the code provided and make edits to improve the security of the code and prevent it from having security bugs.
     "Security Bugs" in this context are bugs that causes security concerns.
-    The code can be ranging from C to Python so condsider memory management and vulnerabilities appropriately.
+    The code can be ranging from JavaScript to Python so condsider memory management and vulnerabilities appropriately.
     Return your response in markdown.
     `
 
@@ -47,9 +47,9 @@ var (
     Format responses in markdown.
 
     Please base your response on the provided information:
-    Thoughts and Ideas: %s
-    Additional Context: %s
-    Previous Answers: %s 
+    **Thoughts:** %s
+    **Additional Context:** %s
+    **Previous Answers:** %s 
     `
 
 	// CoTPrompt is for linear progression tasks where clear steps can be seen.
@@ -71,9 +71,9 @@ var (
     Return your answer in markdown format, such as: **Final Answer:** [Result]
 
     Please use the following information before answering the question.
-    Thoughts: %s
-    Additional Context: %s
-    Previous Answers: %s 
+    **Thoughts:** %s
+    **Additional Context:** %s
+    **Previous Answers:** %s 
     `
 
 	// ToTPrompt uses a structured approach to generating human-like responses to questions or prompts.
@@ -86,9 +86,9 @@ var (
     Return you answer in markdown format. 
 
     Please use the following information before answering the question.
-    Thoughts: %s
-    Additional Context: %s
-    Previous Answers: %s 
+    **Thoughts:** %s
+    **Additional Context:** %s
+    **Previous Answers:** %s 
     `
 
 	// GoTPrompt Graphs of thought prompting are visual representations of the relationships between different aspects of a problem or situation.
@@ -107,9 +107,9 @@ var (
     Return you answer in markdown format. 
 
     Please use the following information before answering the question.
-    Thoughts: %s
-    Additional Context: %s
-    Previous Answers: %s 
+    **Thoughts:** %s
+    **Additional Context:** %s
+    **Previous Answers:** %s 
     `
 
 	// MoEPrompt uses expert prompting which is a technique used in natural language processing (NLP) and machine learning (ML) to generate responses to questions or tasks that require domain knowledge or expertise.
@@ -144,9 +144,9 @@ var (
     Return you answer in markdown format. 
 
     Please use the following information before answering the question.
-    Thoughts: %s
-    Additional Context: %s
-    Previous Answers: %s 
+    **Thoughts:** %s
+    **Additional Context:** %s
+    **Previous Answers:** %s 
     `
 
 	// SixThinkingHats, It is a problem-solving technique that involves the model wearing several hats.
@@ -172,8 +172,8 @@ var (
     Return you answer in markdown format. 
 
     Please use the following information before answering the question.
-    Thoughts: %s
-    Additional Context: %s
-    Previous Answers: %s 
+    **Thoughts:** %s
+    **Additional Context:** %s
+    **Previous Answers:** %s 
     `
 )

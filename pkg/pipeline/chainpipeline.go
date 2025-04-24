@@ -125,30 +125,15 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 		http.Error(w, "Error parsing InternetSearch value. Expecting sound boolean definitions.", http.StatusBadRequest)
 	}
 
-	done1 := make(chan bool)
-	done2 := make(chan bool)
 	if c.InternetSearch {
-		go c.getInternetSearch(ctx, done1)
+		c.getInternetSearch(ctx)
 	} else {
 		c.InternetSearchResults = "None"
 	}
 	if c.Thinking {
-		go c.getThoughts(ctx, done2)
+		c.getThoughts(ctx)
 	} else {
 		c.Thoughts = "None"
-	}
-
-	if c.InternetSearch || c.Thinking {
-		select {
-		case _, ok := <-done1:
-			if ok {
-				log.Println("Internet search returned with results")
-			}
-		case _, ok := <-done2:
-			if ok {
-				log.Println("Thoughts have been gathered")
-			}
-		}
 	}
 
 	// wait on go routines then generate a response

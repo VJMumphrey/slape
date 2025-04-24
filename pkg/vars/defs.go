@@ -12,7 +12,7 @@ const (
 	CudagpuImage = "ghcr.io/ggml-org/llama.cpp:server-cuda"
 	RocmgpuImage = "ghcr.io/ggml-org/llama.cpp:server-rocm"
 
-	Logfilename = "logs.txt"
+	Logfilename   = "logs.txt"
 	Trunkfilename = "trunk.txt"
 
 	// change to false to not run frontend
@@ -39,8 +39,9 @@ var (
 		option.WithBaseURL("http://localhost:8082/v1"),
 	)
 
-	ThinkingPrompt     = prompt.SecThinkingPrompt
-	SimplePrompt       = prompt.SecSimplePrompt
+	ThinkingPrompt = prompt.ThinkingPrompt
+	SimplePrompt   = prompt.SimplePrompt
+	// todo sec prompts
 	CotPrompt          = prompt.SecCoTPrompt
 	TotPrompt          = prompt.SecToTPrompt
 	GotPrompt          = prompt.SecGoTPrompt

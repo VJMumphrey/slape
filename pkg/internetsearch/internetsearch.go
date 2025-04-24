@@ -114,13 +114,11 @@ func (v *VectorList) scrape(ctx context.Context, link string) {
 		// add the guy to the element list
 		log.Println(element.Text)
 		v.Elements = append(v.Elements, element.Text)
-		fmt.Println(v.Elements)
 		v.index++
 	})
 	collyCollector.OnHTML("code", func(element *colly.HTMLElement) {
 		log.Println(element.Text)
 		v.Elements = append(v.Elements, element.Text)
-		fmt.Println(v.Elements)
 		v.index++
 	})
 	collyCollector.OnRequest(func(req *colly.Request) {
@@ -171,21 +169,17 @@ func (v *VectorList) embedGuy() []openai.Embedding {
 
 	vectorizedText := embeddingResponse.Response.Data
 
-	fmt.Println(vectorizedText)
-
 	return vectorizedText
 }
 
 func (v *VectorList) addGuy(embeddings []openai.Embedding) {
-	fmt.Println(embeddings)
 
-	for i := 0; i < len(embeddings); i++ {
+	for i := range len(embeddings) {
 		// add point to the array of data
 		point := Point{i, embeddings[i].Embedding}
-		fmt.Println(point)
+		log.Println(point)
 
 		v.Points = append(v.Points, point)
-		fmt.Println(v.Points)
 	}
 }
 
@@ -203,7 +197,7 @@ func normalize(vec []float64) []float64 {
 
 func cosineSimilarity(vec1, vec2 []float64) float64 {
 	var dot, normA, normB float64
-	for i := 0; i < len(vec1); i++ {
+	for i := range len(vec1) {
 		dot += vec1[i] * vec2[i]
 		normA += vec1[i] * vec1[i]
 		normB += vec2[i] * vec2[i]
@@ -218,13 +212,10 @@ func cosineSimilarity(vec1, vec2 []float64) float64 {
 func KnnSearch(data []Point, query []float64, k int) []Neighbor {
 	var neighbors []Neighbor
 	normquery := normalize(query)
-	fmt.Println("We get into KnnSearch")
 	for _, point := range data {
-		fmt.Println("We got into da loop")
 		normpoint := normalize(point.Vector)
 		dist := cosineSimilarity(normquery, normpoint)
 		log.Println("Simularity Score", dist)
-		fmt.Println("Sim Score: ", dist)
 		if dist >= similarityThreshold {
 			neighbors = append(neighbors, Neighbor{Point: point, Distance: dist})
 		}
@@ -237,6 +228,5 @@ func KnnSearch(data []Point, query []float64, k int) []Neighbor {
 	if len(neighbors) < k {
 		return neighbors
 	}
-	fmt.Println(neighbors[:k])
 	return neighbors[:k]
 }

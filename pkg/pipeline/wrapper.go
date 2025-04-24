@@ -63,9 +63,9 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	// TODO(v) add --jinja for function calling using the OpenAI API setup
 	var cmds []string
 	if gpuTrue {
-		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-ngl", "-1", "-fa", "--no-webui", "-c", strconv.Itoa(vars.ContextLength)}
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-ngl", "-1", "-fa", "--no-webui", "-c", strconv.Itoa(vars.ContextLength), "-cb"}
 	} else {
-		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--mlock", "--no-webui", "-c", strconv.Itoa(vars.ContextLength)}
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--mlock", "--no-webui", "-c", strconv.Itoa(vars.ContextLength), "-cb"}
 	}
 
 	var hostconfig container.HostConfig

@@ -127,30 +127,15 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 		http.Error(w, "Error parsing InternetSearch value. Expecting sound boolean definitions.", http.StatusBadRequest)
 	}
 
-	done1 := make(chan bool)
-	done2 := make(chan bool)
 	if d.InternetSearch {
-		go d.getInternetSearch(ctx, done1)
+		d.getInternetSearch(ctx)
 	} else {
 		d.InternetSearchResults = "None"
 	}
 	if d.Thinking {
-		go d.getThoughts(ctx, done2)
+		d.getThoughts(ctx)
 	} else {
 		d.Thoughts = "None"
-	}
-
-	if d.InternetSearch || d.Thinking {
-		select {
-		case _, ok := <-done1:
-			if ok {
-				log.Println("Internet search returned with results")
-			}
-		case _, ok := <-done2:
-			if ok {
-				log.Println("Thoughts have been gathered")
-			}
-		}
 	}
 
 	// wait for all tasks to complete then generate a response

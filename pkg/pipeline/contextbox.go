@@ -63,12 +63,14 @@ func (c *ContextBox) promptBuilder(previousAnswer string) error {
 // getThought is used to generate initial thoughts about a given question.
 // This is supposed to create some guardrails for thought.
 // This will not be good for slms but llms that are centered around reasoning
-func (c *ContextBox) getThoughts(ctx context.Context, done chan bool) {
-	defer close(done)
+func (c *ContextBox) getThoughts(ctx context.Context) {
+
+    fmt.Println(c.InternetSearchResults)
+	prompt := vars.ThinkingPrompt + "\n**Internet Search Results:**\n" + c.InternetSearchResults
 
 	param := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(vars.ThinkingPrompt),
+			openai.SystemMessage(prompt),
 			openai.UserMessage(c.Prompt),
 			//openai.UserMessage(s.FutureQuestions),
 		},
@@ -77,6 +79,8 @@ func (c *ContextBox) getThoughts(ctx context.Context, done chan bool) {
 		Temperature: openai.Float(0.4),
 		MaxTokens:   openai.Int(vars.MaxGenTokens),
 	}
+
+    fmt.Println(param.Messages)
 
 	for {
 		// sleep and give server guy a break
@@ -95,14 +99,12 @@ func (c *ContextBox) getThoughts(ctx context.Context, done chan bool) {
 	}
 
 	log.Println("Debug Thinking result", result)
-	done <- true
 
 	c.Thoughts = result
 }
 
 // getInternetSearch is used to generate initial context about a given question.
-func (c *ContextBox) getInternetSearch(ctx context.Context, done chan bool) error {
-	defer close(done)
+func (c *ContextBox) getInternetSearch(ctx context.Context) error {
 
 	// this gets converted to f32 with iterative process
 	embCh := make(chan []float64, 1)
@@ -150,33 +152,13 @@ func (c *ContextBox) getInternetSearch(ctx context.Context, done chan bool) erro
 			}
 		}
 
-        /*
-		queryPrompt := `
-        Act as a internet search guru who knows how to search up anything on duckduckgo.com.
-        Generate a query, using the provided question, for searching the internet.
-        Only return the question.
-        `
-
-
-		param := openai.ChatCompletionNewParams{
-			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(queryPrompt),
-				openai.UserMessage(c.Prompt),
-				//openai.UserMessage(s.FutureQuestions),
-			},
-			Seed: openai.Int(0),
-			//Model:       s.Models[0],
-			Temperature: openai.Float(vars.ModelTemperature),
-			MaxTokens:   openai.Int(25),
-		}
-		result, err := GenerateCompletion(ctx, param, "", vars.OpenaiClient)
-		if err != nil {
-			log.Println("Error generating query for internet search", err)
-			c.InternetSearchResults = "None"
-			return
-		}
-        */
-
+		/*
+		   queryPrompt := `
+		   Act as a internet search guru who knows how to search up anything on duckduckgo.com.
+		   Generate a query, using the provided question, for searching the internet.
+		   Only return the question.
+		   `
+		*/
 		// take the result and run the internetsearch
 		vecs := internetsearch.InternetSearch(ctx, c.Prompt)
 
@@ -219,8 +201,6 @@ func (c *ContextBox) getInternetSearch(ctx context.Context, done chan bool) erro
 	}
 
 	log.Println("Internet Search result ", c.InternetSearchResults)
-
-	done <- true
 
 	return nil
 }

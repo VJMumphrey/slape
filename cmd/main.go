@@ -76,9 +76,8 @@ var (
 
 func main() {
 
-	logfile := logging.CreateLogFile()
-	defer logging.CloseLogging(logfile)
-	defer logfile.Close()
+	logging.CreateLogFile()
+	defer logging.CloseLogging()
 
 	// Default Mux for our server.
 	// For auth in the future we will want to setup a different set.
@@ -206,8 +205,7 @@ func main() {
 	// Close the pipeline to stop adding new pipelines
 	// close(keystone)
 
-	// Extra space is for spacing out logs between runs
-	log.Println("[+] Server gracefully stopped\n")
+	log.Println("[+] Server gracefully stopped")
 }
 
 type Coors struct {
