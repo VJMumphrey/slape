@@ -25,15 +25,17 @@ type (
 	// ChainofModels forces the models to talk in sequential order
 	// like the name suggests.
 	ChainofModels struct {
-		Models []string
-		ContextBox
-		Tools
-		Active         bool
+		Models         []string
+		Prompts        []string
 		ContainerImage string
-		DockerClient   *client.Client
-		GPU            bool
 		Thinking       bool
 		InternetSearch bool
+		GPU            bool
+		DockerClient   *client.Client
+
+		// embedded structs
+		ContextBox
+		Tools
 
 		// for internal use to store the models in
 		containers []container.CreateResponse
@@ -73,13 +75,7 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
 	defer cancel()
 
-	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		log.Println("Error creating the docker client: ", err)
-		return
-	}
-
-	err = json.NewDecoder(req.Body).Decode(&setupPayload)
+    err := json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
 		log.Println("Error Request Format: ", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
@@ -87,7 +83,6 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 	}
 
 	c.Models = setupPayload.Models
-	c.DockerClient = apiClient
 
 	c.Setup(ctx)
 
@@ -100,7 +95,7 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 	var payload chainRequest
 
 	// use this to scope the context to the request
-	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(3*time.Minute))
+	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(vars.GenerationTimeout*time.Minute))
 	defer cancel()
 
 	err := json.NewDecoder(req.Body).Decode(&payload)

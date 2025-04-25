@@ -23,18 +23,20 @@ type (
 	// This is good for a giving a single model access to tools
 	// like internet search.
 	SimplePipeline struct {
-		Models []string
-		ContextBox
-		Tools
-		Active         bool
+		Models         []string
+		Prompts        []string
 		ContainerImage string
-		DockerClient   *client.Client
-		GPU            bool
 		Thinking       bool
 		InternetSearch bool
+		GPU            bool
+		DockerClient *client.Client
+
+		// embedded structs
+		ContextBox
+		Tools
 
 		// for internal use
-		container container.CreateResponse
+		container    container.CreateResponse
 	}
 
 	simpleRequest struct {
@@ -74,13 +76,7 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
 	defer cancel()
 
-	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		log.Println("Error creating the docker client: ", err)
-		return
-	}
-
-	err = json.NewDecoder(req.Body).Decode(&setupPayload)
+    err := json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
 		log.Println("Error Request Format: ", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
@@ -88,7 +84,6 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 	}
 
 	s.Models = setupPayload.Models
-	s.DockerClient = apiClient
 
 	s.Setup(ctx)
 
@@ -100,7 +95,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	var simplePayload simpleRequest
 
 	// use this to scope the context to the request
-	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(5*time.Minute))
+	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(vars.GenerationTimeout*time.Minute))
 	defer cancel()
 
 	err := json.NewDecoder(req.Body).Decode(&simplePayload)

@@ -30,18 +30,20 @@ type (
 	// According to the paper, Improving Factuality and Reasoning in Language Models through Multiagent Debate, pg8, https://arxiv.org/abs/2305.14325,
 	// 3-4 rounds was the best range. There wasn't much of an improvement from 3 to 4 and greater. Since we are constrained on resources and compute time, we'll use 3.
 	DebateofModels struct {
-		Models []string
-		ContextBox
-		Tools
-		Active         bool
+		Models         []string
+		Prompts        []string
 		ContainerImage string
-		DockerClient   *client.Client
-		GPU            bool
 		Thinking       bool
 		InternetSearch bool
+		GPU            bool
+		DockerClient *client.Client
+
+		// embedded structs
+		ContextBox
+		Tools
 
 		// for internal use only
-		containers []container.CreateResponse
+		containers   []container.CreateResponse
 	}
 
 	debateRequest struct {
@@ -102,7 +104,7 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 	var payload debateRequest
 
 	// use this to scope the context to the request
-	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(3*time.Minute))
+	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(vars.GenerationTimeout*time.Minute))
 	defer cancel()
 
 	err := json.NewDecoder(req.Body).Decode(&payload)

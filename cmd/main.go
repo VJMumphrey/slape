@@ -27,6 +27,7 @@ import (
 	"github.com/StoneG24/slape/pkg/logging"
 	"github.com/StoneG24/slape/pkg/pipeline"
 	"github.com/StoneG24/slape/pkg/vars"
+	"github.com/docker/docker/client"
 )
 
 var (
@@ -38,9 +39,8 @@ var (
 		Models:         []string{},
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
-		Active:         true,
-		ContainerImage: image,
 		DockerClient:   nil,
+		ContainerImage: image,
 		GPU:            isGPU,
 	}
 
@@ -49,9 +49,8 @@ var (
 		Models:         []string{},
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
-		Active:         true,
-		ContainerImage: image,
 		DockerClient:   nil,
+		ContainerImage: image,
 		GPU:            isGPU,
 	}
 
@@ -60,9 +59,8 @@ var (
 		Models:         []string{},
 		ContextBox:     pipeline.ContextBox{},
 		Tools:          pipeline.Tools{},
-		Active:         true,
-		ContainerImage: image,
 		DockerClient:   nil,
+		ContainerImage: image,
 		GPU:            isGPU,
 	}
 
@@ -75,6 +73,13 @@ var (
 )
 
 func main() {
+
+	apiclient := createClient()
+
+	s.DockerClient = apiclient
+	c.DockerClient = apiclient
+	d.DockerClient = apiclient
+	e.DockerClient = apiclient
 
 	logging.CreateLogFile()
 	defer logging.CloseLogging()
@@ -184,14 +189,11 @@ func main() {
 		log.Println("ErrorShuttingDownPipelines:", err)
 	}
 
-	// TODO(v) clean up docker clients on shutdown. Currently if a pipeline was never created its nil.
-	// Easiest way to do this is have all pipelines share a the client then clean it up.
-	/*
-	   s.DockerClient.Close()
-	   c.DockerClient.Close()
-	   d.DockerClient.Close()
-	   e.DockerClient.Close()
-	*/
+    // clean up docker clients and free up sockets
+	s.DockerClient.Close()
+	c.DockerClient.Close()
+	d.DockerClient.Close()
+	e.DockerClient.Close()
 
 	// Create a context with a timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -282,4 +284,14 @@ func downloadHuggingFaceModel(repo string, filename string) error {
 	// Write response body to file
 	_, err = io.Copy(out, resp.Body)
 	return err
+}
+
+func createClient() *client.Client {
+	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		log.Println("Error creating the docker client: ", err)
+		return nil
+	}
+
+	return apiClient
 }

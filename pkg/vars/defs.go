@@ -24,6 +24,9 @@ const (
 	MaxGenTokensSimple = 1024
 	MaxGenTokensCoT    = 4096
 	ModelTemperature   = 0.1
+
+	// Timeout for generation (mins)
+	GenerationTimeout = 10
 )
 
 var (
