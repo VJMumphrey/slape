@@ -154,6 +154,9 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 		return
 	}
 
+    s.InternetSearchResults = ""
+    s.Thoughts = ""
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
