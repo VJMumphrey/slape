@@ -137,13 +137,17 @@ func (v *VectorList) embedGuy() []openai.Embedding {
 	var chunkedText []string
 	text := v.Elements[:v.index]
 	bulkText := strings.Join(text, " ")
+	v.index = 0
 	for index := 0; index < len(bulkText); index += 200 {
 		if index+250 > (len(bulkText) - 1) {
 			chunkedText = append(chunkedText, bulkText[index:])
+			v.index++
 		} else {
 			chunkedText = append(chunkedText, bulkText[index:index+250])
+			v.index++
 		}
 	}
+	v.Elements = chunkedText
 	text = chunkedText
 	var prompt EmbeddingRequest
 	prompt.Prompt = text
