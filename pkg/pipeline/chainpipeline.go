@@ -26,7 +26,6 @@ type (
 	// like the name suggests.
 	ChainofModels struct {
 		Models         []string
-		Prompts        []string
 		ContainerImage string
 		Thinking       bool
 		InternetSearch bool
@@ -75,7 +74,7 @@ func (c *ChainofModels) ChainPipelineSetupRequest(w http.ResponseWriter, req *ht
 	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
 	defer cancel()
 
-    err := json.NewDecoder(req.Body).Decode(&setupPayload)
+	err := json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
 		log.Println("Error Request Format: ", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
@@ -152,6 +151,10 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 		http.Error(w, "Error marshaling your response from model", http.StatusInternalServerError)
 		return
 	}
+
+	c.InternetSearchResults = ""
+	c.Thoughts = ""
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
@@ -210,6 +213,11 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 func (c *ChainofModels) Generate(ctx context.Context, prompt string, systemprompt string, maxtokens int64) (string, error) {
 	var result string
 
+	promptTua := fmt.Sprintf(vars.CotPrompt, "your gay")
+	promptTrea := fmt.Sprintf(vars.CotPrompt, "your gay")
+
+	prompts := []string{c.SystemPrompt, promptTua, promptTrea}
+
 	for i, model := range c.containers {
 		// start container
 		err := (c.DockerClient).ContainerStart(ctx, model.ID, container.StartOptions{})
@@ -243,7 +251,7 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 		// If it's the first model, there will not be any questions from the previous model.
 		param := openai.ChatCompletionNewParams{
 			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(c.SystemPrompt),
+				openai.SystemMessage(prompts[i]),
 				openai.UserMessage(c.Prompt),
 				openai.UserMessage(c.FutureQuestions),
 			},
@@ -259,49 +267,51 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 			return "", err
 		}
 
-		// Summarize the answer generate.
-		// This apparently makes it easier for the next models to digest the information.
-		summarizePrompt := fmt.Sprintf("Given this answer %s, can you summarize it", result)
-		param = openai.ChatCompletionNewParams{
-			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(c.SystemPrompt),
-				openai.UserMessage(summarizePrompt),
-				//openai.UserMessage(s.FutureQuestions),
-			},
-			Seed:        openai.Int(0),
-			Model:       c.Models[i],
-			Temperature: openai.Float(vars.ModelTemperature),
-			MaxTokens:   openai.Int(maxtokens),
-		}
+		if i != len(c.containers)-1 {
+			// Summarize the answer generate.
+			// This apparently makes it easier for the next models to digest the information.
+			summarizePrompt := fmt.Sprintf("Given this answer %s, can you summarize it", result)
+			param = openai.ChatCompletionNewParams{
+				Messages: []openai.ChatCompletionMessageParamUnion{
+					openai.SystemMessage(c.SystemPrompt),
+					openai.UserMessage(summarizePrompt),
+					//openai.UserMessage(s.FutureQuestions),
+				},
+				Seed:        openai.Int(0),
+				Model:       c.Models[i],
+				Temperature: openai.Float(vars.ModelTemperature),
+				MaxTokens:   openai.Int(maxtokens),
+			}
 
-		result, err = GenerateCompletion(ctx, param, "", openaiClient)
-		if err != nil {
-			log.Println("Error Generating Completion", err)
-			return "", err
-		}
+			result, err = GenerateCompletion(ctx, param, "", openaiClient)
+			if err != nil {
+				log.Println("Error Generating Completion", err)
+				return "", err
+			}
 
-		// Ask the model to generate questions for the model to answer.
-		// Then store this answer in the contextbox for the next go around.
-		askFutureQuestions := fmt.Sprintf("Given this answer, %s, can you make some further questions to ask the next model in order to aid in answering the question?", result)
-		param = openai.ChatCompletionNewParams{
-			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(c.SystemPrompt),
-				openai.UserMessage(askFutureQuestions),
-				//openai.UserMessage(s.FutureQuestions),
-			},
-			Seed:        openai.Int(0),
-			Model:       c.Models[i],
-			Temperature: openai.Float(vars.ModelTemperature),
-			MaxTokens:   openai.Int(maxtokens),
-		}
+			// Ask the model to generate questions for the model to answer.
+			// Then store this answer in the contextbox for the next go around.
+			askFutureQuestions := fmt.Sprintf("Given this answer, %s, can you generate some questions to ask the next model that pertain to the question?", result)
+			param = openai.ChatCompletionNewParams{
+				Messages: []openai.ChatCompletionMessageParamUnion{
+					openai.SystemMessage(c.SystemPrompt),
+					openai.UserMessage(askFutureQuestions),
+					//openai.UserMessage(s.FutureQuestions),
+				},
+				Seed:        openai.Int(0),
+				Model:       c.Models[i],
+				Temperature: openai.Float(vars.ModelTemperature),
+				MaxTokens:   openai.Int(maxtokens),
+			}
 
-		result, err = GenerateCompletion(ctx, param, "", openaiClient)
-		if err != nil {
-			log.Println("Error Generating Completion", err)
-			return "", err
-		}
+			result, err = GenerateCompletion(ctx, param, "", openaiClient)
+			if err != nil {
+				log.Println("Error Generating Completion", err)
+				return "", err
+			}
 
-		c.FutureQuestions = result
+			c.FutureQuestions = result
+		}
 
 		log.Println("Stopping Container, ContainerIndex", i)
 		(c.DockerClient).ContainerStop(ctx, model.ID, container.StopOptions{})

@@ -24,19 +24,18 @@ type (
 	// like internet search.
 	SimplePipeline struct {
 		Models         []string
-		Prompts        []string
 		ContainerImage string
 		Thinking       bool
 		InternetSearch bool
 		GPU            bool
-		DockerClient *client.Client
+		DockerClient   *client.Client
 
 		// embedded structs
 		ContextBox
 		Tools
 
 		// for internal use
-		container    container.CreateResponse
+		container container.CreateResponse
 	}
 
 	simpleRequest struct {
@@ -76,7 +75,7 @@ func (s *SimplePipeline) SimplePipelineSetupRequest(w http.ResponseWriter, req *
 	ctx, cancel := context.WithDeadline(req.Context(), time.Now().Add(30*time.Second))
 	defer cancel()
 
-    err := json.NewDecoder(req.Body).Decode(&setupPayload)
+	err := json.NewDecoder(req.Body).Decode(&setupPayload)
 	if err != nil {
 		log.Println("Error Request Format: ", err)
 		http.Error(w, "Error unexpected request format", http.StatusUnprocessableEntity)
@@ -154,8 +153,8 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 		return
 	}
 
-    s.InternetSearchResults = ""
-    s.Thoughts = ""
+	s.InternetSearchResults = ""
+	s.Thoughts = ""
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

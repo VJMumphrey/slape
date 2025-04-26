@@ -31,19 +31,18 @@ type (
 	// 3-4 rounds was the best range. There wasn't much of an improvement from 3 to 4 and greater. Since we are constrained on resources and compute time, we'll use 3.
 	DebateofModels struct {
 		Models         []string
-		Prompts        []string
 		ContainerImage string
 		Thinking       bool
 		InternetSearch bool
 		GPU            bool
-		DockerClient *client.Client
+		DockerClient   *client.Client
 
 		// embedded structs
 		ContextBox
 		Tools
 
 		// for internal use only
-		containers   []container.CreateResponse
+		containers []container.CreateResponse
 	}
 
 	debateRequest struct {
@@ -158,6 +157,10 @@ func (d *DebateofModels) DebatePipelineGenerateRequest(w http.ResponseWriter, re
 		http.Error(w, "Error marshaling your response from model", http.StatusInternalServerError)
 		return
 	}
+
+	d.InternetSearchResults = ""
+	d.Thoughts = ""
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
