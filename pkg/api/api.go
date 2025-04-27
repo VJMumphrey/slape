@@ -4,9 +4,12 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/StoneG24/slape/pkg/vars"
 )
 
 func UpDog(port string) bool {
@@ -76,4 +79,24 @@ func GetModels(w http.ResponseWriter, req *http.Request) {
 	w.Write(json)
 
 	return
+}
+
+type LogRequest struct {
+	Logs []byte `json:"logs"`
+}
+
+func GetLogs(w http.ResponseWriter, req *http.Request) {
+	contents, err := os.ReadFile("./logs/" + vars.Logfilename)
+	if err != nil {
+		log.Panicln("Error getting logs for frontend", err)
+	}
+
+	logs := LogRequest{
+		Logs: contents,
+	}
+
+	jsonLogs, err := json.Marshal(logs)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonLogs)
 }

@@ -103,6 +103,7 @@ func main() {
 	//mux.HandleFunc("/moe", simplerequest)
 	//mux.HandleFunc("/up", upDog)
 	mux.HandleFunc("GET /getmodels", api.GetModels)
+	mux.HandleFunc("GET /getlogs", api.GetLogs)
 
 	// This is against my religion
 	wrappingMux := NewCoors(mux)
@@ -189,7 +190,7 @@ func main() {
 		log.Println("ErrorShuttingDownPipelines:", err)
 	}
 
-    // clean up docker clients and free up sockets
+	// clean up docker clients and free up sockets
 	s.DockerClient.Close()
 	c.DockerClient.Close()
 	d.DockerClient.Close()
