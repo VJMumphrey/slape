@@ -127,7 +127,7 @@ func main() {
 	log.Println("[+] Checking for models folder...")
 	if _, err := os.Stat("./models"); errors.Is(err, os.ErrNotExist) {
 		log.Println("[+] Creating models folder...")
-		os.Mkdir("models", 1644)
+		os.Mkdir("models", 0744)
 	}
 
 	// If needed, download the snowflake embedding model
