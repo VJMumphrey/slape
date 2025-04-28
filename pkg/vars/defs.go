@@ -42,8 +42,8 @@ var (
 		option.WithBaseURL("http://localhost:8082/v1"),
 	)
 
-	ThinkingPrompt = prompt.ThinkingPrompt
-	SimplePrompt   = prompt.SimplePrompt
+	ThinkingPrompt = prompt.SecThinkingPrompt
+	SimplePrompt   = prompt.SecSimplePrompt
 	// todo sec prompts
 	CotPrompt          = prompt.SecCoTPrompt
 	TotPrompt          = prompt.SecToTPrompt

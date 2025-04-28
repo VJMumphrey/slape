@@ -75,6 +75,7 @@ func GetModels(w http.ResponseWriter, req *http.Request) {
 
 	json, err := json.Marshal(respBundle)
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
 
@@ -97,6 +98,7 @@ func GetLogs(w http.ResponseWriter, req *http.Request) {
 
 	jsonLogs, err := json.Marshal(logs)
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonLogs)
 }

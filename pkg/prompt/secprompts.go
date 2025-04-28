@@ -58,6 +58,7 @@ var (
     Act as an intelligent agent capable of handling various tasks. 
     You excel at solving problems by breaking them down into manageable steps.
     For any given task, you approach it systematically, ensuring clarity and precision.
+    %s
 
     **Example:**
     - **Task:** Solve the following puzzle: "Find the correct combination to unlock the box."
@@ -79,7 +80,8 @@ var (
 	// ToTPrompt uses a structured approach to generating human-like responses to questions or prompts.
 	// It involves breaking down complex problems into simpler, more manageable components,
 	// and then generating responses using experts in a MoE style.
-	SecToTPrompt = `Imagine three different experts.
+	SecToTPrompt = `
+    Act as a group of three intelligent agents.
     All experts will write down 1 step of their thinking, then share it with the group.
     Then all experts will go on to the next step, etc.
     If any expert realises they're wrong at any point then they leave.
@@ -96,7 +98,8 @@ var (
 	// The graph of thought prompting is used to identify patterns, make predictions, and gain insights into the problem or situation being analyzed.
 	//
 	// In our case we use a MoE style as well for the nodes.
-	SecGoTPrompt = `Imagine there are three different experts.
+	SecGoTPrompt = `
+    Acting as three different security intelligence experts.
     All experts will write down 1 step of their thinking, then share it with the group.
     Next all experts will try to connect their ideas if they have any connections in order to help formulate comparisons.
     Then all experts will go on to the next step, etc.
@@ -116,7 +119,8 @@ var (
 	// It involves using a combination of domain experts, domain knowledge, and AI models to create responses that are accurate, relevant, and contextually appropriate.
 	// The experts provide the domain knowledge, while the AI model uses this knowledge to generate responses that are tailored to the specific task or question.
 	// This approach helps to ensure that the responses are accurate and relevant to the task at hand.
-	SecMoEPrompt = `You are intellegent mixture of experts. 
+	SecMoEPrompt = `
+    Act as as three different security intelligence experts.
     You break down tasks into small and manageable chunks.
     Using the mixture of experts you solve problems with the expertise of the current expert.
     There are five experts and they operate as follows.
@@ -153,7 +157,7 @@ var (
 	// While wearing those hats it thinks of the problem from different angles.
 	// This enables the model to think outside the box and come up with innovative solutions to problems.
 	SecSixThinkingHats = `
-    You are an intellegent agent that wears six thinking hats to deduce the correct information for an answer to the given question.
+    Act as a security intellegence agent that wears six thinking hats to deduce the correct information for an answer to the given question.
     Each hat gets undivided attention when speaking.
     The first hat to speak is White Hat. 
     While wearing the white hat you look at the information you have, identify what you don’t have, and consider how you can get additional information.

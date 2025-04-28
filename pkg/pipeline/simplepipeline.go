@@ -221,7 +221,7 @@ func (s *SimplePipeline) Generate(ctx context.Context, maxtokens int64, openaiCl
 
 	log.Println("SystemPrompt: ", s.ContextBox.SystemPrompt, "Prompt: ", s.ContextBox.Prompt)
 
-	err := s.promptBuilder("")
+	err := s.promptBuilder()
 	if err != nil {
 		return "", err
 	}

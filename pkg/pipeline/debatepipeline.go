@@ -244,7 +244,7 @@ func (d *DebateofModels) Generate(ctx context.Context, prompt string, systemprom
 
 			log.Println("SystemPrompt: ", d.ContextBox.SystemPrompt, "Prompt: ", d.ContextBox.Prompt)
 
-			err = d.promptBuilder(result)
+			err = d.promptBuilder()
 			if err != nil {
 				return "", err
 			}

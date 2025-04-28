@@ -35,12 +35,12 @@ type ContextBox struct {
 }
 
 // PromptBuilder takes the ContextBox and builds the system prompt
-func (c *ContextBox) promptBuilder(previousAnswer string) error {
+func (c *ContextBox) promptBuilder() error {
 
 	// since we are operating on a parameter its
 	// safer to create a local copy
-	prevAns := previousAnswer
-	if len(previousAnswer) == 0 {
+	prevAns := c.FutureQuestions
+	if len(prevAns) == 0 {
 		prevAns = "None"
 	}
 
@@ -65,7 +65,8 @@ func (c *ContextBox) promptBuilder(previousAnswer string) error {
 // This will not be good for slms but llms that are centered around reasoning
 func (c *ContextBox) getThoughts(ctx context.Context) {
 
-    fmt.Println(c.InternetSearchResults)
+	fmt.Println("Thinking...")
+
 	prompt := vars.ThinkingPrompt + "\n**Internet Search Results:**\n" + c.InternetSearchResults
 
 	param := openai.ChatCompletionNewParams{
@@ -80,7 +81,7 @@ func (c *ContextBox) getThoughts(ctx context.Context) {
 		MaxTokens:   openai.Int(vars.MaxGenTokens),
 	}
 
-    fmt.Println(param.Messages)
+	fmt.Println(param.Messages)
 
 	for {
 		// sleep and give server guy a break
@@ -101,16 +102,18 @@ func (c *ContextBox) getThoughts(ctx context.Context) {
 	log.Println("Debug Thinking result", result)
 
 	c.Thoughts = result
+
+	fmt.Println("Finished thinking")
+
+	return
 }
 
 // getInternetSearch is used to generate initial context about a given question.
 func (c *ContextBox) getInternetSearch(ctx context.Context) error {
+	fmt.Println("Searching the Internet...")
 
-	// this gets converted to f32 with iterative process
 	embCh := make(chan []float64, 1)
 	searchCh := make(chan internetsearch.VectorList, 1)
-	// defer close(embCh)
-	//defer close(searchCh)
 
 	// Generate embedding of prompt
 	go func(context.Context, chan []float64) {
@@ -163,7 +166,6 @@ func (c *ContextBox) getInternetSearch(ctx context.Context) error {
 		vecs := internetsearch.InternetSearch(ctx, c.Prompt)
 
 		searchCh <- vecs
-		//close(searchCh)
 	}(ctx, searchCh)
 
 	// Combine the two and search the graph for relative neighbors
@@ -201,6 +203,8 @@ func (c *ContextBox) getInternetSearch(ctx context.Context) error {
 	}
 
 	log.Println("Internet Search result ", c.InternetSearchResults)
+
+	fmt.Println("Finished searching the internet")
 
 	return nil
 }

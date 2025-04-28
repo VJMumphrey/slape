@@ -213,10 +213,11 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 func (c *ChainofModels) Generate(ctx context.Context, prompt string, systemprompt string, maxtokens int64) (string, error) {
 	var result string
 
+	promptUna := fmt.Sprintf(vars.CotPrompt, "")
 	promptTua := fmt.Sprintf(vars.CotPrompt, "your gay")
 	promptTrea := fmt.Sprintf(vars.CotPrompt, "your gay")
 
-	prompts := []string{c.SystemPrompt, promptTua, promptTrea}
+	prompts := []string{promptUna, promptTua, promptTrea}
 
 	for i, model := range c.containers {
 		// start container
@@ -242,7 +243,7 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 
 		log.Println("SystemPrompt", systemprompt, "Prompt", prompt)
 
-		err = c.promptBuilder(result)
+		err = c.promptBuilder()
 		if err != nil {
 			return "", err
 		}

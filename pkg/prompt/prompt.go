@@ -39,6 +39,7 @@ var (
     Act as an intelligent agent capable of handling various tasks. 
     You excel at solving problems by breaking them down into manageable steps.
     For any given task, you approach it systematically, ensuring clarity and precision.
+    %s
 
     **Example:**
     - **Task:** Solve the following puzzle: "Find the correct combination to unlock the box."

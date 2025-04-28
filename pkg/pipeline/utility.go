@@ -1,7 +1,7 @@
 package pipeline
 
 import (
-	"log/slog"
+	"log"
 
 	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/jaypipes/ghw"
@@ -45,6 +45,7 @@ func processPrompt(mode string) (string, int64) {
 
 func PickImage() string {
 	gpuTrue := IsGPU()
+    log.Println(gpuTrue)
 	if gpuTrue {
 		gpus, err := GatherGPUs()
 		if err != nil {
@@ -73,8 +74,8 @@ func IsGPU() bool {
 	gpuInfo, err := ghw.GPU()
 	// if there is an error continue without using a GPU
 	if err != nil {
-		slog.Error("Error", "ErrorGettingGPUStruct", err)
-		slog.Warn("Continuing without GPU...")
+		log.Println("Error", "ErrorGettingGPUStruct", err)
+		log.Println("Continuing without GPU...")
 	}
 
 	// for debugging
@@ -82,7 +83,7 @@ func IsGPU() bool {
 
 	// BUG Onboard doesn't count but this will get us by untill we can fix this later
 	if len(gpuInfo.GraphicsCards) < 2 {
-		slog.Warn("No GPUs, CPU only")
+		log.Println("No GPUs, CPU only")
 		return false
 	} else {
 		return true
