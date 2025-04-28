@@ -35,3 +35,27 @@
     background-color: #F1F0E8;
     color: black;
 }
+
+.Dark_logTruck {
+    text-align: left;
+    position:fixed;
+    left: 1%;
+    top:10%;
+    width: 99%;
+    height: 88%;
+    overflow: auto;
+    color: White;
+    scrollbar-color: #232C74 #070F2B;
+}
+
+.Light_logTruck {
+    text-align: left;
+    position:fixed;
+    left: 1%;
+    top:10%;
+    width: 99%;
+    height: 88%;
+    overflow: auto;
+    color: black;
+    scrollbar-color: #89A8B2 #F1F0E8;
+}
