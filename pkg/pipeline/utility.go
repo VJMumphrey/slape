@@ -1,10 +1,9 @@
 package pipeline
 
 import (
-	"log/slog"
+	"log"
 
-	"github.com/StoneG24/slape/cmd/prompt"
-	"github.com/StoneG24/slape/internal/vars"
+	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/gpu"
 )
@@ -15,46 +14,51 @@ func processPrompt(mode string) (string, int64) {
 
 	switch mode {
 	case "simple":
-		promptChoice = prompt.SecurityPrompt
-		maxtokens = 1024
+		promptChoice = vars.SimplePrompt
+		maxtokens = int64(vars.MaxGenTokensSimple)
 	case "cot":
-		promptChoice = prompt.CoTPrompt
-		maxtokens = 4096
+		promptChoice = vars.CotPrompt
+		maxtokens = int64(vars.MaxGenTokensCoT)
 	case "tot":
-		promptChoice = prompt.ToTPrompt
-		maxtokens = 16384
+		promptChoice = vars.TotPrompt
+		maxtokens = int64(vars.MaxGenTokens)
 	case "got":
-		promptChoice = prompt.GoTPrompt
-		maxtokens = 16384
+		promptChoice = vars.GotPrompt
+		maxtokens = int64(vars.MaxGenTokens)
 	case "moe":
-		promptChoice = prompt.MoEPrompt
-		maxtokens = 16384
+		promptChoice = vars.MoePrompt
+		maxtokens = int64(vars.MaxGenTokens)
 	case "thinkinghats":
-		promptChoice = prompt.SixThinkingHats
-		maxtokens = 16384
+		promptChoice = vars.ThinkingHatsPrompt
+		maxtokens = int64(vars.MaxGenTokens)
 	case "goe":
-		promptChoice = prompt.GoEPrompt
-		maxtokens = 16384
+		// currently not a sec prompt for this
+		promptChoice = vars.GoePrompt
+		maxtokens = int64(vars.MaxGenTokens)
 	default:
-		promptChoice = prompt.SimplePrompt
-		maxtokens = 1024
+		promptChoice = vars.SimplePrompt
+		maxtokens = int64(vars.MaxGenTokensSimple)
 	}
 
 	return promptChoice, maxtokens
 }
 
-// TODO(v) PickImage should be made global for all pipelines and be ran in main as preprocess step
 func PickImage() string {
 	gpuTrue := IsGPU()
+    log.Println(gpuTrue)
 	if gpuTrue {
 		gpus, err := GatherGPUs()
 		if err != nil {
 			return vars.CpuImage
 		}
-		// BUG(v,t): fix idk what the value is.
 		// After reading upstream, he reads the devices mounted
 		// with $ ll /sys/class/drm/
-		for _, gpu := range gpus {
+		for i, gpu := range gpus {
+			// TODO(v) this behavior is mostly for laptops and needs to get looked at again later.
+			// onboard graphics card usually is index 0.
+			if i == 0 {
+				continue
+			}
 			switch gpu.DeviceInfo.Vendor.Name {
 			case "NVIDIA Corporation":
 				return vars.CudagpuImage
@@ -70,22 +74,23 @@ func IsGPU() bool {
 	gpuInfo, err := ghw.GPU()
 	// if there is an error continue without using a GPU
 	if err != nil {
-		slog.Error("Error", "Errorstring", err)
-		slog.Warn("Continuing without GPU...")
+		log.Println("Error", "ErrorGettingGPUStruct", err)
+		log.Println("Continuing without GPU...")
 	}
 
 	// for debugging
-	slog.Debug("Error", "Errorstring", gpuInfo.GraphicsCards)
+	//slog.Debug("Debug", "Debug", gpuInfo.GraphicsCards)
 
-	if len(gpuInfo.GraphicsCards) == 0 {
-		slog.Warn("No GPUs to use, switching to cpu only")
+	// BUG Onboard doesn't count but this will get us by untill we can fix this later
+	if len(gpuInfo.GraphicsCards) < 2 {
+		log.Println("No GPUs, CPU only")
 		return false
+	} else {
+		return true
 	}
 
 	// This guy nil derefernce panics when the gpu isn't actually a graphics card
 	// fmt.Println(gpuInfo.GraphicsCards[0].Node.Memory)
-
-	return false
 }
 
 // CheckMemoryUsage is used to check the availble memory of a machine.

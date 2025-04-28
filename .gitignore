@@ -1,8 +1,9 @@
 build
 models
+logs
+
 cmd.exe
 slape
 slape.exe
 main.exe
 main
-logs.txt

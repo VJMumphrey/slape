@@ -1,30 +1,35 @@
 import MenuTabs from "./MenuTabs.tsx";
-import logImageImportantDoNotRemove from "./logs.jpg";
+import {useState} from "react";
 
 export default function Logs() {
-
-  function logHandler() {
-    alert("Logger? I hardly know her");
-  }
-
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
   if (localStorage.getItem("StyleSetting") == null)
     localStorage.setItem("StyleSetting", "Dark");
 
   const themeColor: string | null = localStorage.getItem("StyleSetting");
+  const [logText, setlogText] = useState("");
+
+  async function readLogs(): Promise<void> {
+    let responseBody;
+    const response = await fetch("http://localhost:8080/getlogs", {
+      method: "GET",
+    });
+
+    if (response.ok) {
+      responseBody = await response.json();
+      setlogText(atob(responseBody.logs));
+    } else {
+      alert("Error requesting logs");
+    }
+  }
+  readLogs();
 
   return (
     <>
-      <div className={`${themeColor}_background`}/>
+      <div className={`${themeColor}_background`} />
       <MenuTabs />
-      <div>
-        <img
-          onClick={logHandler}
-          src={logImageImportantDoNotRemove}
-          alt="Image"
-        />
-      </div>
+      <pre>{logText}</pre>
     </>
   );
 }

@@ -4,9 +4,12 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/StoneG24/slape/pkg/vars"
 )
 
 func UpDog(port string) bool {
@@ -72,13 +75,30 @@ func GetModels(w http.ResponseWriter, req *http.Request) {
 
 	json, err := json.Marshal(respBundle)
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(json)
 
 	return
 }
 
-// TODO(t) implement this. Download the gguf model into the ./models folder
-// This functionality is already in llamacpp-server just need to bulid the arg
-// for it or something
-func DownloadHuggingFaceModel(w http.ResponseWriter, req *http.Request) {}
+type LogRequest struct {
+	Logs []byte `json:"logs"`
+}
+
+func GetLogs(w http.ResponseWriter, req *http.Request) {
+	contents, err := os.ReadFile("./logs/" + vars.Logfilename)
+	if err != nil {
+		log.Panicln("Error getting logs for frontend", err)
+	}
+
+	logs := LogRequest{
+		Logs: contents,
+	}
+
+	jsonLogs, err := json.Marshal(logs)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonLogs)
+}

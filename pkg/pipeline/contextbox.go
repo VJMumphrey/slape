@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"log/slog"
 	"time"
 
-	"github.com/StoneG24/slape/internal/vars"
 	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/pkg/internetsearch"
+	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/openai/openai-go"
 )
 
@@ -16,47 +16,44 @@ import (
 // group of strings that contains context on a given problem.
 // This is coupled with the system prompt chosen is what makes the models understand
 // the gven situation more.
-
 // This information should be kept within a pipeline for privacy and safety reasons.
 type ContextBox struct {
-	SystemPrompt          string
-	Thoughts              string
-	Prompt                string
-	ConversationHistory   *[]string
-	FutureQuestions       string
-	InternetSearchResults *[]string
-	ToolResults           *[]string
-	//VectorStore           vectorstore.VectorStore{}
+	// Simple prompt components
+	SystemPrompt string
+	Thoughts     string
+	Prompt       string
+	// Currently not in use
+	ConversationHistory *[]string
+	FutureQuestions     string
+
+	// These will come from the internet search package.
+	InternetSearchResults string
+	//VectorStore           *hnsw.Graph[string]
+
+	// These will come from tool calls
+	ToolResults *[]string
 }
 
 // PromptBuilder takes the ContextBox and builds the system prompt
-func (c *ContextBox) PromptBuilder(previousAnswer string) error {
+func (c *ContextBox) promptBuilder() error {
 
 	// since we are operating on a parameter its
 	// safer to create a local copy
-	prevAns := previousAnswer
-
-	// TODO(v,t) Go and gather the additional context from
-
-	// TODO(v) vector store
-	context := ""
-
-	// minirag
-	rag := ""
+	prevAns := c.FutureQuestions
+	if len(prevAns) == 0 {
+		prevAns = "None"
+	}
 
 	// information generated as prelinary thoughts
+	// TODO(v) move to generation functions like thoughts
 	var additionalContex string
-	if len(context) != 0 && len(rag) != 0 {
-		additionalContex = context + rag
+	if len(c.InternetSearchResults) != 0 {
+		additionalContex += c.InternetSearchResults
 	} else {
 		additionalContex = "None"
 	}
 
-	if len(previousAnswer) == 0 {
-		prevAns = "None"
-	}
-
-	slog.Debug(c.Thoughts, additionalContex, prevAns)
+	log.Println(c.Thoughts, additionalContex, prevAns)
 	c.SystemPrompt = fmt.Sprintf(c.SystemPrompt, c.Thoughts, additionalContex, prevAns)
 
 	// TODO(v) do something different for debate where we have question/idea and ask the hats after.
@@ -68,27 +65,27 @@ func (c *ContextBox) PromptBuilder(previousAnswer string) error {
 // This will not be good for slms but llms that are centered around reasoning
 func (c *ContextBox) getThoughts(ctx context.Context) {
 
-	prompt := `
-    You are tasked with solving a problem. Start by carefully considering and listing all the known facts surrounding the scenario. What do you already know about the situation? What information is available to you?
-    Next, identify the constraints based on these facts. What limitations or conditions must you take into account when approaching the problem? Consider factors like time, resources, and external influences that may affect the solution.
-    Once you’ve fully considered the facts and constraints, generate potential solutions to the problem. Think creatively and strategically, taking into account the constraints you’ve identified. Focus on generating ideas that are practical, feasible, and innovative. Provide a rationale for each idea, considering how well it aligns with the constraints and solves the problem at hand.
-    `
+	fmt.Println("Thinking...")
+
+	prompt := vars.ThinkingPrompt + "\n**Internet Search Results:**\n" + c.InternetSearchResults
 
 	param := openai.ChatCompletionNewParams{
-		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(prompt),
 			openai.UserMessage(c.Prompt),
 			//openai.UserMessage(s.FutureQuestions),
-		}),
+		},
 		Seed: openai.Int(0),
 		//Model:       openai.String(pipeline.Model),
 		Temperature: openai.Float(0.4),
-		MaxTokens:   openai.Int(16348),
+		MaxTokens:   openai.Int(vars.MaxGenTokens),
 	}
+
+	fmt.Println(param.Messages)
 
 	for {
 		// sleep and give server guy a break
-		time.Sleep(time.Duration(5 * time.Second))
+		time.Sleep(time.Duration(1 * time.Second))
 
 		// Single model, single port, assuming one pipeline is running at a time
 		if api.UpDog("8000") {
@@ -96,13 +93,118 @@ func (c *ContextBox) getThoughts(ctx context.Context) {
 		}
 	}
 
-	result, err := GenerateCompletion(ctx, param, "", *vars.OpenaiClient)
+	result, err := GenerateCompletion(ctx, param, "", vars.OpenaiClient)
 	log.Println(result)
 	if err != nil {
 		c.Thoughts = "None"
 	}
 
-	slog.Debug("Debug", "DebugValue", result)
+	log.Println("Debug Thinking result", result)
 
 	c.Thoughts = result
+
+	fmt.Println("Finished thinking")
+
+	return
+}
+
+// getInternetSearch is used to generate initial context about a given question.
+func (c *ContextBox) getInternetSearch(ctx context.Context) error {
+	fmt.Println("Searching the Internet...")
+
+	embCh := make(chan []float64, 1)
+	searchCh := make(chan internetsearch.VectorList, 1)
+
+	// Generate embedding of prompt
+	go func(context.Context, chan []float64) {
+		embedparam := openai.EmbeddingNewParams{
+			Input:      openai.EmbeddingNewParamsInputUnion{OfArrayOfStrings: []string{c.Prompt}},
+			Model:      embedmodel,
+			Dimensions: openai.Int(1024),
+		}
+
+		for {
+			// sleep and give server guy a break
+			time.Sleep(time.Duration(2 * time.Second))
+
+			// Single model, single port, assuming one pipeline is running at a time
+			if api.UpDog("8082") {
+				break
+			}
+		}
+
+		result, err := GenerateEmbedding(ctx, embedparam, vars.EmbeddingClient)
+		log.Println(result)
+		if err != nil {
+			return
+		}
+		embCh <- result.Data[0].Embedding
+		//close(embCh)
+	}(ctx, embCh)
+
+	// Generate the query and run internetsearch
+	go func(context.Context, chan internetsearch.VectorList) {
+		// take care of upDog on our own
+		for {
+			// sleep and give server guy a break
+			time.Sleep(time.Duration(1 * time.Second))
+
+			// Single model, single port, assuming one pipeline is running at a time
+			if api.UpDog("8000") {
+				break
+			}
+		}
+
+		/*
+		   queryPrompt := `
+		   Act as a internet search guru who knows how to search up anything on duckduckgo.com.
+		   Generate a query, using the provided question, for searching the internet.
+		   Only return the question.
+		   `
+		*/
+		// take the result and run the internetsearch
+		vecs := internetsearch.InternetSearch(ctx, c.Prompt)
+
+		searchCh <- vecs
+	}(ctx, searchCh)
+
+	// Combine the two and search the graph for relative neighbors
+	var embedding []float64
+	var vecs internetsearch.VectorList
+	for i := 0; i < 2; i++ {
+		select {
+		case vector, ok := <-embCh:
+			if ok {
+				embedding = vector
+				log.Println("Embedding Retrieved Properly")
+			}
+		case v, ok := <-searchCh:
+			if ok {
+				vecs = v
+				log.Println("Neighbors Retrieved Properly")
+			}
+		}
+	}
+
+	neighbors := internetsearch.KnnSearch(
+		// nearest neighbors
+		vecs.Points,
+		// embedding vector
+		embedding,
+		// change this to get less results back from the vector store
+		5,
+	)
+
+	log.Println("Internet Search result [nearest neighbors]", neighbors)
+
+	for _, neighbor := range neighbors {
+		c.InternetSearchResults += vecs.Elements[neighbor.Point.ID]
+		c.InternetSearchResults += "\n"
+	}
+
+	log.Println("Internet Search result ", c.InternetSearchResults)
+
+	fmt.Println("Finished searching the internet")
+
+	return nil
 }

@@ -18,6 +18,7 @@ export default function PipelineCard({
 }: pipelineProperties) {
   const [ModalOpen, setModalOpen] = useState(false);
   const [modelName, setmodelName] = useState("Phi 3");
+  const [ ModelList, setModelList ] = useState([]);
   const [Models, setModels] = useState<object[]>([]);
   const [ AddModelsButtonStatus, setAddModelsButtonStatus ] = useState("addModelActive");
 
@@ -30,6 +31,7 @@ export default function PipelineCard({
 
   const pipelineSettingsButtonHandler = () => {
     setModalOpen(true);
+    getModelsFromVito();
     setModels([]);
     localStorage.removeItem(`${pipeline}Models`);
     setAddModelsButtonStatus("addModelActive");
@@ -40,11 +42,29 @@ export default function PipelineCard({
     localStorage.setItem(`${pipeline}Models`, JSON.stringify(Models));
   };
 
-  const modelNamesDropDownOptions = [
-    {type: "Phi 3", name: "Phi 3"},
-    {type: "Dolphin", name: "Dolphin"},
-  ];
+  async function getModelsFromVito() {
+    const dropDownOptions: {type: string, name: string}[] = [];
+    const response = await fetch(`http://localhost:8080/getmodels`, {
+      method: "GET",
+    });
 
+    let responseBody: {models: string[]};
+    let models: string[] = [];
+
+    if (response.ok) {
+      responseBody = await response.json();
+      models = responseBody.models;
+    } else {
+      alert("Failed to pull models. Please restart front end and ensure backend is running.")
+    }
+
+    models.forEach((element) => {
+      dropDownOptions.push({type: element, name:element.slice(0, -5)})
+    });
+
+    setModelList(dropDownOptions);
+    setmodelName(dropDownOptions[0].name);
+  }
   // function addModelHandler() {
   //   if (localStorage.getItem(`${pipeline}Models`) == null)
   //     localStorage.setItem(`${pipeline}Models`, JSON.stringify([modelName]));
@@ -59,28 +79,9 @@ export default function PipelineCard({
   // }
 
   function addModelHandler() {
-    let modelObject = {name: modelName, fullName: ""};
-    switch (modelName) {
-      case "Phi 3": {
-        modelObject = {
-          ...modelObject,
-          fullName: "Phi-3.5-mini-instruct.Q4_K_M.gguf",
-        };
-        break;
-      }
-
-      case "Dolphin": {
-        modelObject = {
-          ...modelObject,
-          fullName: "Dolphin3.0-Llama3.2-1B-Q4_K_M.gguf",
-        };
-        break;
-      }
-
-      default: {
-        modelObject = {...modelObject, fullName: "kys"};
-      }
-    }
+    console.log(modelName);
+    const modelObject = {name: modelName.slice(0, -5), fullName: modelName};
+    
 
     if (pipeline !== "simple") {
       setModels([...Models, modelObject]);
@@ -127,7 +128,7 @@ export default function PipelineCard({
               className="modelDropdown"
               value={modelName}
               callBack={setmodelName}
-              optionObject={modelNamesDropDownOptions}
+              optionObject={ModelList}
             />
           </p>
         </Modal>,
