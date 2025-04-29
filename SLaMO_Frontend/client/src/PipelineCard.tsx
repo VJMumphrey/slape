@@ -18,9 +18,10 @@ export default function PipelineCard({
 }: pipelineProperties) {
   const [ModalOpen, setModalOpen] = useState(false);
   const [modelName, setmodelName] = useState("Phi 3");
-  const [ ModelList, setModelList ] = useState([]);
+  const [ModelList, setModelList] = useState([]);
   const [Models, setModels] = useState<object[]>([]);
-  const [ AddModelsButtonStatus, setAddModelsButtonStatus ] = useState("addModelActive");
+  const [AddModelsButtonStatus, setAddModelsButtonStatus] =
+    useState("addModelActive");
 
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
@@ -43,7 +44,7 @@ export default function PipelineCard({
   };
 
   async function getModelsFromVito() {
-    const dropDownOptions: {type: string, name: string}[] = [];
+    const dropDownOptions: {type: string; name: string}[] = [];
     const response = await fetch(`http://localhost:8080/getmodels`, {
       method: "GET",
     });
@@ -55,15 +56,17 @@ export default function PipelineCard({
       responseBody = await response.json();
       models = responseBody.models;
     } else {
-      alert("Failed to pull models. Please restart front end and ensure backend is running.")
+      alert(
+        "Failed to pull models. Please restart front end and ensure backend is running."
+      );
     }
 
     models.forEach((element) => {
-      dropDownOptions.push({type: element, name:element.slice(0, -5)})
+      dropDownOptions.push({type: element, name: element.slice(0, -5)});
     });
 
     setModelList(dropDownOptions);
-    setmodelName(dropDownOptions[0].name);
+    setmodelName(dropDownOptions[0].type);
   }
   // function addModelHandler() {
   //   if (localStorage.getItem(`${pipeline}Models`) == null)
@@ -81,7 +84,6 @@ export default function PipelineCard({
   function addModelHandler() {
     console.log(modelName);
     const modelObject = {name: modelName.slice(0, -5), fullName: modelName};
-    
 
     if (pipeline !== "simple") {
       setModels([...Models, modelObject]);

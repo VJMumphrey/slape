@@ -1,5 +1,6 @@
 import MenuTabs from "./MenuTabs.tsx";
 import {useState} from "react";
+import "./logs.css"
 
 export default function Logs() {
   if (localStorage.getItem("PromptSetting") == null)
@@ -29,7 +30,7 @@ export default function Logs() {
     <>
       <div className={`${themeColor}_background`} />
       <MenuTabs />
-      <pre>{logText}</pre>
+      <pre className={`${themeColor}_logTruck`}>{logText}</pre>
     </>
   );
 }
