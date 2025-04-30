@@ -75,7 +75,10 @@ var (
 
 func main() {
 
-	apiclient := createClient()
+	apiclient, err := createClient()
+	if err != nil {
+		return
+	}
 
 	s.DockerClient = apiclient
 	c.DockerClient = apiclient
@@ -288,12 +291,18 @@ func downloadHuggingFaceModel(repo string, filename string) error {
 	return err
 }
 
-func createClient() *client.Client {
+func createClient() (*client.Client, error) {
 	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		log.Println("Error creating the docker client: ", err)
-		return nil
+		return nil, err
 	}
 
-	return apiClient
+	_, err = apiClient.Ping(context.Background())
+	if err != nil {
+		fmt.Println("Error Connecting to Docker Socket, make sure you have docker running and the service runnning.")
+		return nil, err
+	}
+
+	return apiClient, err
 }
