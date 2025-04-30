@@ -66,9 +66,10 @@ var (
 
 	e = pipeline.EmbeddingPipeline{
 		// updates after created
+		// We want to keep the embedding model off of the gpu for right now.
 		DockerClient:   nil,
-		ContainerImage: image,
-		GPU:            isGPU,
+		ContainerImage: vars.CpuImage,
+		GPU:            false,
 	}
 )
 

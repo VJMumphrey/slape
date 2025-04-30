@@ -4,6 +4,7 @@ package logging
 import (
 	"log"
 	"os"
+    "errors"
 
 	"github.com/StoneG24/slape/pkg/vars"
 )
@@ -11,6 +12,14 @@ import (
 // CreateLogFile is used to check and see if a logfile is already created.
 // It then creates a logger for the log file and returns it.
 func CreateLogFile() *os.File {
+	// If we don't run embedding pipeline on startup,
+	// we can remove this as well.
+	log.Println("[+] Checking for logs folder...")
+	if _, err := os.Stat("./models"); errors.Is(err, os.ErrNotExist) {
+		log.Println("[+] Creating logs folder...")
+		os.Mkdir("logs", 0744)
+	}
+
     logFile, err := os.OpenFile("./logs/"+vars.Logfilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Println("Error creating the log file")

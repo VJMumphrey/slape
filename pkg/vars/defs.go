@@ -25,6 +25,9 @@ const (
 	MaxGenTokensCoT    = 4096
 	ModelTemperature   = 0.1
 
+	// A layer count above what the model has should load the entire model.
+	ModelLayers = 100
+
 	// Timeout for generation (mins)
 	GenerationTimeout = 10
 )

@@ -63,7 +63,7 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	// TODO(v) add --jinja for function calling using the OpenAI API setup
 	var cmds []string
 	if gpuTrue {
-		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-ngl", "-1", "-fa", "--no-webui", "-c", strconv.Itoa(vars.ContextLength), "-cb"}
+		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-ngl", strconv.Itoa(vars.ModelLayers), "-fa", "--no-webui", "-c", strconv.Itoa(vars.ContextLength), "-cb"}
 	} else {
 		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--mlock", "--no-webui", "-c", strconv.Itoa(vars.ContextLength), "-cb"}
 	}
@@ -73,7 +73,6 @@ func CreateContainer(apiClient *client.Client, portNum string, name string, ctx 
 	// TODO(v) expand past nvidia systems.
 	// ROCm will present interesting challenges. Its simpler but more setups in the config.
 	switch gpuTrue {
-	// BUG(v) This falls to the same problem as the rest of the gpu issues.
 	case true:
 		hostconfig = container.HostConfig{
 			Runtime:      "nvidia",

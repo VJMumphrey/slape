@@ -71,7 +71,7 @@ var (
     **Output:**
     Return your answer in markdown format, such as: **Final Answer:** [Result]
 
-    Please use the following information before answering the question.
+    Please base your response on the provided information:
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
@@ -87,7 +87,7 @@ var (
     If any expert realises they're wrong at any point then they leave.
     Return you answer in markdown format. 
 
-    Please use the following information before answering the question.
+    Please base your response on the provided information:
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
@@ -109,7 +109,7 @@ var (
     Repeat this until an answer to this question can be decided.
     Return you answer in markdown format. 
 
-    Please use the following information before answering the question.
+    Please base your response on the provided information:
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
@@ -147,7 +147,7 @@ var (
     Given a question, take the question and cycle through each expert, giving a chance to get advice until Expert five thinks the answer is correct.
     Return you answer in markdown format. 
 
-    Please use the following information before answering the question.
+    Please base your response on the provided information:
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
@@ -175,7 +175,7 @@ var (
     Once you have enough information to solve the problem, answer the question.
     Return you answer in markdown format. 
 
-    Please use the following information before answering the question.
+    Please base your response on the provided information:
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
