@@ -213,12 +213,6 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 func (c *ChainofModels) Generate(ctx context.Context, prompt string, systemprompt string, maxtokens int64) (string, error) {
 	var result string
 
-	promptUna := fmt.Sprintf(vars.CotPrompt, "")
-	promptTua := fmt.Sprintf(vars.CotPrompt, "your gay")
-	promptTrea := fmt.Sprintf(vars.CotPrompt, "your gay")
-
-	prompts := []string{promptUna, promptTua, promptTrea}
-
 	for i, model := range c.containers {
 		// start container
 		err := (c.DockerClient).ContainerStart(ctx, model.ID, container.StartOptions{})
@@ -252,7 +246,7 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 		// If it's the first model, there will not be any questions from the previous model.
 		param := openai.ChatCompletionNewParams{
 			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(prompts[i]),
+				openai.SystemMessage(c.SystemPrompt),
 				openai.UserMessage(c.Prompt),
 				openai.UserMessage(c.FutureQuestions),
 			},
