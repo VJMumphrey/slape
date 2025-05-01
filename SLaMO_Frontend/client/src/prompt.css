@@ -39,17 +39,35 @@ div.Pink_spinner {
     justify-content: center;
 }
 
-p.Dark_left{
+.Dark_left{
     z-index: 1;
     text-align: justify;
 }
 
-p.Pink_left{
+.Pink_left{
     z-index: 1;
     text-align: justify;
 }
 
-p.Light_left{
+.Light_left{
+    z-index: 1;
+    text-align: justify;
+}
+
+.Dark_leftTitle{
+    font-size: 25px;
+    z-index: 1;
+    text-align: justify;
+}
+
+.Pink_leftTitle{
+    font-size: 25px;
+    z-index: 1;
+    text-align: justify;
+}
+
+.Light_leftTitle{
+    font-size: 25px;
     z-index: 1;
     text-align: justify;
 }

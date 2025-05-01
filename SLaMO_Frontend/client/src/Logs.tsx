@@ -1,6 +1,6 @@
 import MenuTabs from "./MenuTabs.tsx";
 import {useState} from "react";
-import "./logs.css"
+import "./logs.css";
 
 export default function Logs() {
   if (localStorage.getItem("PromptSetting") == null)
@@ -24,6 +24,7 @@ export default function Logs() {
       alert("Error requesting logs");
     }
   }
+
   readLogs();
 
   return (
