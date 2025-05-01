@@ -256,7 +256,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 			MaxTokens:   openai.Int(maxtokens),
 		}
 
-        // ans the question
+		// ans the question
 		result, err = GenerateCompletion(ctx, param, "", openaiClient)
 		if err != nil {
 			log.Println("Error Generating Completion", err)
@@ -268,7 +268,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 			return "", err
 		}
 
-        c.FutureQuestions = "None"
+		c.FutureQuestions = "None"
 
 		if i != len(c.containers)-1 {
 			// Summarize the answer generate.
@@ -292,7 +292,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 				return "", err
 			}
 
-            c.ConversationHistory = append(c.ConversationHistory, result)
+			c.ConversationHistory = append(c.ConversationHistory, result)
 
 			// Ask the model to generate questions for the model to answer.
 			// Then store this answer in the contextbox for the next go around.
@@ -321,6 +321,8 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 		log.Println("Stopping Container, ContainerIndex", i)
 		(c.DockerClient).ContainerStop(ctx, model.ID, container.StopOptions{})
 	}
+
+	c.ConversationHistory = []string{}
 
 	return result, nil
 }
