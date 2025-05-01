@@ -92,11 +92,11 @@ select.Dark_inference {
 }
 
 select.Light_inference {
-    height: 25px;
+    height: 33px;
     background-color: #CCD5D5;
     color: black;
     border: 0px;
-    border-radius: 0px 0px 0px 0px;
+    border-radius: 0px 8px 8px 0px;
     font-family: inherit;
     font-size: 1em;
     font-weight: 500;
@@ -246,7 +246,7 @@ input.Pink_prompt {
 
 .Light_prompt {
     width: 60%;
-    height: 20px;
+    height: 26px;
     background-color: #CCD5D5;
     color: #697892;
     border: solid 2px;
@@ -257,7 +257,8 @@ input.Pink_prompt {
     border-radius: 8px 0px 0px 8px;
     scrollbar-color: #89A8B2 #CCD5D5;
     position:relative;
-    top: 7px;
+    top: 10px;
+    resize: none;
 }
 
 input.settings {

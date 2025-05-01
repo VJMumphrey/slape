@@ -60,8 +60,8 @@ export default function Prompt() {
     useEffect(() => {
       if (textAreaRef && footerDivRef) {
         const defaultDivHeight = 100;
-        const defaultTextHeight = 20;
-        if (defaultDivHeight + textAreaRef.scrollHeight <= 310 && textAreaRef.scrollHeight > 40) {
+        const defaultTextHeight = 26;
+        if (defaultDivHeight + textAreaRef.scrollHeight <= 310) {
           // We need to reset the height momentarily to get the correct scrollHeight for the textarea
           textAreaRef.style.height = "0px";
           const scrollHeight = textAreaRef.scrollHeight;
@@ -69,11 +69,14 @@ export default function Prompt() {
           // We then set the height directly, outside of the render loop
           // Trying to set this with state or a ref will product an incorrect value.
           textAreaRef.style.height = scrollHeight + "px";
-          footerDivRef.style.height = String(defaultDivHeight + Number(scrollHeight)) + "px";
-          if (value === "") {
-            textAreaRef.style.height = defaultTextHeight + "px";
-            footerDivRef.style.height = defaultDivHeight + "px"
-          }
+          if (textAreaRef.scrollHeight >= defaultTextHeight)
+            footerDivRef.style.height = String((defaultDivHeight - defaultTextHeight) + Number(scrollHeight)) + "px";
+          else
+            footerDivRef.style.height = defaultDivHeight + "px";
+          // if (value === "") {
+          //   textAreaRef.style.height = defaultTextHeight + "px";
+          //   footerDivRef.style.height = defaultDivHeight + "px"
+          // }
         }
       }
     }, [textAreaRef, footerDivRef, value]);
