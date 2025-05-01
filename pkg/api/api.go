@@ -127,5 +127,7 @@ func ShutdownPipelines() error {
 		resp.Body.Close()
 	}
 
+	os.Exit(0)
+
 	return nil
 }

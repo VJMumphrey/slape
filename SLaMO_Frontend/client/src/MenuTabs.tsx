@@ -13,7 +13,6 @@ export default function MenuTabs() {
     await fetch("http://localhost:8080/shutdownpipes", {
       method: "GET",
     });
-    alert("containers closed");
   }
   // You literally just have to do this. I have no idea why.
   const navigate = useNavigate();
