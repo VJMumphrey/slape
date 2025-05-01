@@ -76,3 +76,14 @@
   background-color: #cb3b8d;
   color: white;
 }
+
+.shutdown{
+  float: right;
+  margin-right: 15px;
+  background-color: rgba(252, 6, 6, 0.842);
+}
+
+.shutdown:hover{
+  border-color: red;
+  background-color: red;
+}
