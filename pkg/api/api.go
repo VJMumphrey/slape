@@ -4,9 +4,7 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
-	"log/slog"
 	"net/http"
 	"os"
 
@@ -14,27 +12,21 @@ import (
 )
 
 func UpDog(port string) bool {
-	// swagger:operation GET /updog UpDog
-	//
-	// UpDog is a check to make sure llamacpp is ready for requests.
-	//
-	// Responses:
-	//	200: StatusOk
 	resp, err := http.Get("http://localhost:" + port + "/health")
 	if err != nil {
-		slog.Error("%s", err)
+		log.Println("Error checking model", err)
 		return false
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		slog.Info("Model is ready")
+		log.Println("Model is ready")
 		return true
 	case http.StatusServiceUnavailable:
-		slog.Warn("Model is not ready...")
+		log.Println("Model is not ready...")
 		return false
 	default:
-		slog.Warn("Model is not ready...")
+		log.Println("Model is not ready...")
 		return false
 	}
 }
@@ -46,17 +38,10 @@ type ModelsResponse struct {
 	Models []string `json:"models"`
 }
 
-// swagger:route GET /getmodels
-//
-// get models that the backend can see in the ./models folder
-//
-// Responses:
-//
-//	200: ModelsResponse
 func GetModels(w http.ResponseWriter, req *http.Request) {
 	files, err := os.ReadDir("./models")
 	if err != nil {
-		slog.Error("Error", "Errorstring", err)
+		log.Println("Error reading models folder", err)
 		w.Write([]byte("Error while trying to read models files"))
 	}
 
@@ -102,32 +87,4 @@ func GetLogs(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonLogs)
-}
-
-func ShutdownPipes(w http.ResponseWriter, req *http.Request) {
-	ShutdownPipelines()
-
-	w.WriteHeader(http.StatusOK)
-	return
-}
-
-// shutdownPipelines is used to shutdown pipelines with
-// a remote request since the shutdown functions are now http.HandleFunc
-func ShutdownPipelines() error {
-
-	url := "http://localhost:8080/%s/shutdown"
-	pipelines := []string{"simple", "cot", "deb", "emb"}
-
-	for _, pipeline := range pipelines {
-		requrl := fmt.Sprintf(url, pipeline)
-		resp, err := http.Get(requrl)
-		if err != nil {
-			return err
-		}
-		resp.Body.Close()
-	}
-
-	os.Exit(0)
-
-	return nil
 }

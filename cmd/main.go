@@ -107,7 +107,7 @@ func main() {
 	//mux.HandleFunc("/moe", simplerequest)
 	//mux.HandleFunc("/up", upDog)
 	mux.HandleFunc("GET /getmodels", api.GetModels)
-	mux.HandleFunc("GET /shutdownpipes", api.ShutdownPipes)
+	mux.HandleFunc("GET /shutdownpipes", ShutdownPipes)
 	mux.HandleFunc("GET /getlogs", api.GetLogs)
 
 	// This is against my religion
@@ -174,32 +174,8 @@ func main() {
 	// Block until a signal is received.
 	<-sigChan
 
-	// TODO(v) need to shutdown frontend process for windows
-	// with every startup we spin up a server without tearing it down
-	// windows would require a admin priv to remove the server by port like this
-	log.Println("[+] Shuting Down Frontend...")
-	if runtime.GOOS == "linux" {
-		cmd := exec.Command("fuser", "-k", "3000/tcp")
-		cmd.Run()
-	}
-	if runtime.GOOS == "windows" {
-		//taskkill /f /pid $(netstat -ano | findstr ":3000")
-
-		cmd := exec.Command("taskkill", "/f", "/pid", "$(netstat -ano | findstr ':3000')")
-		cmd.Run()
-	}
-	log.Println("[+] Frontend has been stopped")
-
-	err = api.ShutdownPipelines()
-	if err != nil {
-		log.Println("ErrorShuttingDownPipelines:", err)
-	}
-
-	// clean up docker clients and free up sockets
-	s.DockerClient.Close()
-	c.DockerClient.Close()
-	d.DockerClient.Close()
-	e.DockerClient.Close()
+	shutdownPipelines()
+	gi()
 
 	// Create a context with a timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -287,4 +263,63 @@ func createClient() (*client.Client, error) {
 	}
 
 	return apiClient, err
+}
+
+func ShutdownPipes(w http.ResponseWriter, req *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	shutdownPipelines()
+	gi()
+
+	os.Exit(0)
+}
+
+// shutdownPipelines is used to shutdown pipelines with
+// a remote request since the shutdown functions are now http.HandleFunc
+func shutdownPipelines() error {
+
+	url := "http://localhost:8080/%s/shutdown"
+	pipelines := []string{"simple", "cot", "deb", "emb"}
+
+	for _, pipeline := range pipelines {
+		requrl := fmt.Sprintf(url, pipeline)
+		resp, err := http.Get(requrl)
+		if err != nil {
+			return err
+		}
+		resp.Body.Close()
+	}
+
+	return nil
+}
+
+func gi() {
+
+	// TODO(v) need to shutdown frontend process for windows
+	// with every startup we spin up a server without tearing it down
+	// windows would require a admin priv to remove the server by port like this
+	log.Println("[+] Shuting Down Frontend...")
+	if runtime.GOOS == "linux" {
+		cmd := exec.Command("fuser", "-k", "3000/tcp")
+		cmd.Run()
+	}
+	if runtime.GOOS == "windows" {
+		//taskkill /f /pid $(netstat -ano | findstr ":3000")
+
+		cmd := exec.Command("taskkill", "/f", "/pid", "$(netstat -ano | findstr ':3000')")
+		cmd.Run()
+	}
+	log.Println("[+] Frontend has been stopped")
+
+	err := shutdownPipelines()
+	if err != nil {
+		log.Println("ErrorShuttingDownPipelines:", err)
+	}
+
+	// clean up docker clients and free up sockets
+	s.DockerClient.Close()
+	c.DockerClient.Close()
+	d.DockerClient.Close()
+	e.DockerClient.Close()
+
+	return
 }
