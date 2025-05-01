@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/StoneG24/slape/pkg/api"
@@ -19,11 +20,12 @@ import (
 // This information should be kept within a pipeline for privacy and safety reasons.
 type ContextBox struct {
 	// Simple prompt components
-	SystemPrompt string
-	Thoughts     string
-	Prompt       string
+	SystemPrompt   string
+	Thoughts       string
+	Prompt         string
+	PreviousAnswer string
 	// Currently not in use
-	ConversationHistory *[]string
+	ConversationHistory []string
 	FutureQuestions     string
 
 	// These will come from the internet search package.
@@ -39,9 +41,10 @@ func (c *ContextBox) promptBuilder() error {
 
 	// since we are operating on a parameter its
 	// safer to create a local copy
-	prevAns := c.FutureQuestions
-	if len(prevAns) == 0 {
-		prevAns = "None"
+	if len(c.ConversationHistory) == 0 {
+		c.PreviousAnswer = "None"
+	} else {
+		c.PreviousAnswer = strings.Join(c.ConversationHistory, "\n")
 	}
 
 	// information generated as prelinary thoughts
@@ -53,8 +56,17 @@ func (c *ContextBox) promptBuilder() error {
 		additionalContex = "None"
 	}
 
-	log.Println(c.Thoughts, additionalContex, prevAns)
-	c.SystemPrompt = fmt.Sprintf(c.SystemPrompt, c.Thoughts, additionalContex, prevAns)
+    var questions string
+	if len(c.FutureQuestions) == 0 {
+		questions = "None"
+	} else {
+        questions = c.FutureQuestions
+    }
+
+
+
+	fmt.Println(c.Thoughts, additionalContex, c.PreviousAnswer, questions)
+	c.SystemPrompt = fmt.Sprintf(c.SystemPrompt, c.Thoughts, additionalContex, c.PreviousAnswer, questions)
 
 	// TODO(v) do something different for debate where we have question/idea and ask the hats after.
 	return nil
@@ -80,8 +92,6 @@ func (c *ContextBox) getThoughts(ctx context.Context) {
 		Temperature: openai.Float(0.4),
 		MaxTokens:   openai.Int(vars.MaxGenTokens),
 	}
-
-	fmt.Println(param.Messages)
 
 	for {
 		// sleep and give server guy a break

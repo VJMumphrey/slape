@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/StoneG24/slape/pkg/api"
+	"github.com/StoneG24/slape/pkg/prompt"
 	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -210,7 +211,7 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 
 // ChainofModels.Generate is the facilitator of model orchestration based on the chain of model pipeline.
 // Since the pipeline is based on the Chan of Thought prompting technique, it follows this style, mimicing its behavior.
-func (c *ChainofModels) Generate(ctx context.Context, prompt string, systemprompt string, maxtokens int64) (string, error) {
+func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprompt string, maxtokens int64) (string, error) {
 	var result string
 
 	for i, model := range c.containers {
@@ -235,7 +236,7 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 			option.WithBaseURL("http://localhost:800" + strconv.Itoa(i) + "/v1"),
 		)
 
-		log.Println("SystemPrompt", systemprompt, "Prompt", prompt)
+		log.Println("SystemPrompt", systemprompt, "Prompt", uprompt)
 
 		err = c.promptBuilder()
 		if err != nil {
@@ -248,7 +249,6 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.SystemMessage(c.SystemPrompt),
 				openai.UserMessage(c.Prompt),
-				openai.UserMessage(c.FutureQuestions),
 			},
 			Seed:        openai.Int(0),
 			Model:       c.Models[i],
@@ -256,11 +256,19 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 			MaxTokens:   openai.Int(maxtokens),
 		}
 
+		// ans the question
 		result, err = GenerateCompletion(ctx, param, "", openaiClient)
 		if err != nil {
 			log.Println("Error Generating Completion", err)
 			return "", err
 		}
+
+		err = c.promptBuilder()
+		if err != nil {
+			return "", err
+		}
+
+		c.FutureQuestions = "None"
 
 		if i != len(c.containers)-1 {
 			// Summarize the answer generate.
@@ -268,7 +276,7 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 			summarizePrompt := fmt.Sprintf("Given this answer %s, can you summarize it", result)
 			param = openai.ChatCompletionNewParams{
 				Messages: []openai.ChatCompletionMessageParamUnion{
-					openai.SystemMessage(c.SystemPrompt),
+					openai.SystemMessage(prompt.SimplePrompt),
 					openai.UserMessage(summarizePrompt),
 					//openai.UserMessage(s.FutureQuestions),
 				},
@@ -283,6 +291,8 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 				log.Println("Error Generating Completion", err)
 				return "", err
 			}
+
+			c.ConversationHistory = append(c.ConversationHistory, result)
 
 			// Ask the model to generate questions for the model to answer.
 			// Then store this answer in the contextbox for the next go around.
@@ -311,6 +321,8 @@ func (c *ChainofModels) Generate(ctx context.Context, prompt string, systempromp
 		log.Println("Stopping Container, ContainerIndex", i)
 		(c.DockerClient).ContainerStop(ctx, model.ID, container.StopOptions{})
 	}
+
+	c.ConversationHistory = []string{}
 
 	return result, nil
 }
