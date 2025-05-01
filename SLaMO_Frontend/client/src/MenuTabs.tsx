@@ -1,16 +1,19 @@
+import { useState } from "react";
 import {useNavigate} from "react-router-dom";
 import "./menuTabs.css";
+import { l } from "../../../../../AppData/Local/deno/npm/registry.npmjs.org/react-router/7.1.5/dist/development/fog-of-war-CCAcUMgB.d.ts";
 
-if (localStorage.getItem("PromptSetting") == null)
-  localStorage.setItem("PromptSetting", "Automatic");
 if (localStorage.getItem("StyleSetting") == null)
   localStorage.setItem("StyleSetting", "Dark");
 
-const themeColor: string | null = localStorage.getItem("StyleSetting");
+let themeColor: string | null = localStorage.getItem("StyleSetting");
 
 export default function MenuTabs() {
-  async function shutdownHandler() {
-    await fetch("http://localhost:8080/shutdownpipes", {
+
+  const [ CurrentTheme, setCurrentTheme ] = useState(themeColor==="Light" ? "\u2600" : "\u263D");
+
+  function shutdownHandler() {
+    fetch("http://localhost:8080/shutdown", {
       method: "GET",
     });
   }
@@ -33,6 +36,17 @@ export default function MenuTabs() {
     navigate("/logs");
   };
 
+  const handleThemeButton = () => {
+    if (themeColor === "Light" )  {
+      localStorage.setItem("StyleSetting", "Dark");
+      setCurrentTheme("\u263D");
+    } else {
+      localStorage.setItem("StyleSetting", "Light");
+      setCurrentTheme("\u2600");
+    }
+    globalThis.location.reload();
+  }
+
   return (
     <div className={`${themeColor}_top`}>
       <button
@@ -50,14 +64,11 @@ export default function MenuTabs() {
       >
         Prompting
       </button>
-      <button
-        className={`${themeColor}_tabButton`}
-        onClick={settingsEventHandler}
-      >
-        Settings
+      <button className={`${themeColor}_themeButton`} onClick={handleThemeButton}>
+        {CurrentTheme}
       </button>
       <button className={`shutdown`} onClick={shutdownHandler}>
-        X
+        &times;
       </button>
     </div>
   );

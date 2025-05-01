@@ -87,3 +87,35 @@
   border-color: red;
   background-color: red;
 }
+
+.Light_themeButton {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  width: 55px;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color:  #89A8B2;
+  color: white;
+  float: left;
+  margin-left: 15px;
+}
+
+.Dark_themeButton {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  width: 55px;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color:  #232C74;
+  color: #89A8B2;
+  float: left;
+  margin-left: 15px;
+}

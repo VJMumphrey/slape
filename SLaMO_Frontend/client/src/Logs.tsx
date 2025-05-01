@@ -25,7 +25,7 @@ export default function Logs() {
     }
   }
 
-  readLogs();
+  setInterval(readLogs, 500);
 
   return (
     <>
