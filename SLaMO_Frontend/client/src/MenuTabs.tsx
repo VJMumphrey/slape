@@ -9,10 +9,11 @@ if (localStorage.getItem("StyleSetting") == null)
 const themeColor: string | null = localStorage.getItem("StyleSetting");
 
 export default function MenuTabs() {
-  function shutdownHandler() {
-    fetch("http://localhost:8080/shutdown", {
+  async function shutdownHandler() {
+    await fetch("http://localhost:8080/shutdownpipes", {
       method: "GET",
     });
+    alert("containers closed");
   }
   // You literally just have to do this. I have no idea why.
   const navigate = useNavigate();
