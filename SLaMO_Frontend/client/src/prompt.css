@@ -39,17 +39,35 @@ div.Pink_spinner {
     justify-content: center;
 }
 
-p.Dark_left{
+.Dark_left{
     z-index: 1;
     text-align: justify;
 }
 
-p.Pink_left{
+.Pink_left{
     z-index: 1;
     text-align: justify;
 }
 
-p.Light_left{
+.Light_left{
+    z-index: 1;
+    text-align: justify;
+}
+
+.Dark_leftTitle{
+    font-size: 25px;
+    z-index: 1;
+    text-align: justify;
+}
+
+.Pink_leftTitle{
+    font-size: 25px;
+    z-index: 1;
+    text-align: justify;
+}
+
+.Light_leftTitle{
+    font-size: 25px;
     z-index: 1;
     text-align: justify;
 }
@@ -176,6 +194,7 @@ div.Dark_output{
     font-weight: 500;
     margin-top: 100px;
     margin-bottom: 100px;
+    scrollbar-color: #232C74 #070F2B;
 }
 
 div.Pink_output{
@@ -208,7 +227,7 @@ input.Pink_prompt {
     border-radius: 8px 0px 0px 8px;
 }
 
-input.Dark_prompt {
+.Dark_prompt {
     width: 60%;
     height: 20px;
     background-color: #131C46;
@@ -221,7 +240,7 @@ input.Dark_prompt {
     border-radius: 8px 0px 0px 8px;
 }
 
-input.Light_prompt {
+.Light_prompt {
     width: 60%;
     height: 20px;
     background-color: #CCD5D5;
@@ -232,6 +251,9 @@ input.Light_prompt {
     font-size: 1em;
     font-weight: 505;
     border-radius: 8px 0px 0px 8px;
+    scrollbar-color: #CCD5D5 #CCD5D5;
+    position:relative;
+    top: 7px;
 }
 
 input.settings {
