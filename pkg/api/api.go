@@ -4,6 +4,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -101,4 +102,30 @@ func GetLogs(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonLogs)
+}
+
+func ShutdownPipes(w http.ResponseWriter, req *http.Request) {
+	ShutdownPipelines()
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// shutdownPipelines is used to shutdown pipelines with
+// a remote request since the shutdown functions are now http.HandleFunc
+func ShutdownPipelines() error {
+
+	url := "http://localhost:8080/%s/shutdown"
+	pipelines := []string{"simple", "cot", "deb", "emb"}
+
+	for _, pipeline := range pipelines {
+		requrl := fmt.Sprintf(url, pipeline)
+		resp, err := http.Get(requrl)
+		if err != nil {
+			return err
+		}
+		resp.Body.Close()
+	}
+
+	return nil
 }

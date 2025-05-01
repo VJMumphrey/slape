@@ -107,6 +107,7 @@ func main() {
 	//mux.HandleFunc("/moe", simplerequest)
 	//mux.HandleFunc("/up", upDog)
 	mux.HandleFunc("GET /getmodels", api.GetModels)
+	mux.HandleFunc("GET /shutdownpipes", api.ShutdownPipes)
 	mux.HandleFunc("GET /getlogs", api.GetLogs)
 
 	// This is against my religion
@@ -189,7 +190,7 @@ func main() {
 	}
 	log.Println("[+] Frontend has been stopped")
 
-	err = shutdownPipelines()
+	err = api.ShutdownPipelines()
 	if err != nil {
 		log.Println("ErrorShuttingDownPipelines:", err)
 	}
@@ -240,25 +241,6 @@ func (c *Coors) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // NewCoors constructs a new Logger middleware handler
 func NewCoors(handlerToWrap http.Handler) *Coors {
 	return &Coors{handlerToWrap}
-}
-
-// shutdownPipelines is used to shutdown pipelines with
-// a remote request since the shutdown functions are now http.HandleFunc
-func shutdownPipelines() error {
-
-	url := "http://localhost:8080/%s/shutdown"
-	pipelines := []string{"simple", "cot", "deb", "emb"}
-
-	for _, pipeline := range pipelines {
-		requrl := fmt.Sprintf(url, pipeline)
-		resp, err := http.Get(requrl)
-		if err != nil {
-			return err
-		}
-		resp.Body.Close()
-	}
-
-	return nil
 }
 
 // DownloadHuggingFaceModel downloads a given model provided a repo and filename are given.
