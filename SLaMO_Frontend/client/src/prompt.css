@@ -5,6 +5,8 @@ div.Light_spinner {
     border-color: #B3C8CF #89A8B2;
     border-radius: 50%;
     animation: spin-anim 1.2s linear infinite;
+    z-index: 2;
+
 }
 
 div.Dark_spinner {
@@ -14,6 +16,7 @@ div.Dark_spinner {
     border-color: #494f95 #1B1A55;
     border-radius: 50%;
     animation: spin-anim 1.2s linear infinite;
+    z-index: 2;
 }
 
 div.Pink_spinner {
@@ -184,6 +187,7 @@ div.Light_fixedBottom {
     background-color: #B3C8CF;
     align-content: center;
     color: black;
+    z-index: 3;
 }
 
 div.Dark_output{
@@ -251,7 +255,7 @@ input.Pink_prompt {
     font-size: 1em;
     font-weight: 505;
     border-radius: 8px 0px 0px 8px;
-    scrollbar-color: #CCD5D5 #CCD5D5;
+    scrollbar-color: #89A8B2 #CCD5D5;
     position:relative;
     top: 7px;
 }

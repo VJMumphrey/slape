@@ -58,4 +58,6 @@
     overflow: auto;
     color: black;
     scrollbar-color: #89A8B2 #F1F0E8;
+    display: flex;
+    flex-direction: column-reverse;
 }

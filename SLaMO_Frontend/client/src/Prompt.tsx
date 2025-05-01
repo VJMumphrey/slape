@@ -22,6 +22,8 @@ export default function Prompt() {
   const themeColor: string | null = localStorage.getItem("StyleSetting");
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const footerDivRef = useRef<HTMLDivElement>(null);
+  const responseDivRef = useRef<HTMLDivElement>(null);
 
   const promptTypes = [
     {name: "Simple", type: "simple"},
@@ -52,76 +54,86 @@ export default function Prompt() {
 
   const useAutosizeTextArea = (
     textAreaRef: HTMLTextAreaElement | null,
+    footerDivRef: HTMLDivElement | null,
     value: string
   ) => {
     useEffect(() => {
-      if (textAreaRef) {
-        // We need to reset the height momentarily to get the correct scrollHeight for the textarea
-        textAreaRef.style.height = "0px";
-        const scrollHeight = textAreaRef.scrollHeight;
+      if (textAreaRef && footerDivRef) {
+        const defaultDivHeight = 100;
+        const defaultTextHeight = 20;
+        if (defaultDivHeight + textAreaRef.scrollHeight <= 310 && textAreaRef.scrollHeight > 40) {
+          // We need to reset the height momentarily to get the correct scrollHeight for the textarea
+          textAreaRef.style.height = "0px";
+          const scrollHeight = textAreaRef.scrollHeight;
 
-        // We then set the height directly, outside of the render loop
-        // Trying to set this with state or a ref will product an incorrect value.
-        textAreaRef.style.height = scrollHeight + "px";
+          // We then set the height directly, outside of the render loop
+          // Trying to set this with state or a ref will product an incorrect value.
+          textAreaRef.style.height = scrollHeight + "px";
+          footerDivRef.style.height = String(defaultDivHeight + Number(scrollHeight)) + "px";
+          if (value === "") {
+            textAreaRef.style.height = defaultTextHeight + "px";
+            footerDivRef.style.height = defaultDivHeight + "px"
+          }
+        }
       }
-    }, [textAreaRef, value]);
+    }, [textAreaRef, footerDivRef, value]);
   };
 
   async function handleSubmit(event: {preventDefault: () => void}) {
-    setPromptInfo(""); //clears the prompt box after submission
-    setloadingAnimation(<div className={`${themeColor}_spinner`} />);
-    setResponseAnswer(
-      <>
-        <p className={`${themeColor}_leftTitle`}>Prompt:</p>
-        <p className={`${themeColor}_left`}>{`${PromptInfo}`}</p>{" "}
-        <p className={`${themeColor}_leftTitle`}>Response:</p>
-        <p className={`${themeColor}_left`}>{`Generating Response...`}</p>
-      </>
-    );
-    event.preventDefault(); //makes sure the page doesn't reload when submitting the form
-    if (localStorage.getItem("currentPipeline") !== null) {
-      const response = await fetch(
-        `http://localhost:8080/${JSON.parse(
-          localStorage.getItem("currentPipeline") as string
-        )}/generate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            prompt: PromptInfo,
-            thinking: String(ThinkingMode),
-            search: String(InternetSearchMode),
-            mode: PromptMode,
-          }),
-        }
-      );
-      setloadingAnimation("");
+      setPromptInfo(""); //clears the prompt box after submission
+      setloadingAnimation(<div className={`${themeColor}_spinner`} />);
       setResponseAnswer(
         <>
           <p className={`${themeColor}_leftTitle`}>Prompt:</p>
           <p className={`${themeColor}_left`}>{`${PromptInfo}`}</p>{" "}
           <p className={`${themeColor}_leftTitle`}>Response:</p>
-          <p className={`${themeColor}_left`}>
-            <Markdown>
-              {`${JSON.parse(JSON.stringify(await response.json())).answer}`}
-            </Markdown>
-          </p>
+          <p className={`${themeColor}_left`}>{`Generating Response...`}</p>
         </>
       );
-    } else {
-      alert("Please Select a Pipeline from the Pipelines Tab");
-    }
+      event.preventDefault(); //makes sure the page doesn't reload when submitting the form
+      if (localStorage.getItem("currentPipeline") !== null) {
+        const response = await fetch(
+          `http://localhost:8080/${JSON.parse(
+            localStorage.getItem("currentPipeline") as string
+          )}/generate`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              prompt: PromptInfo,
+              thinking: String(ThinkingMode),
+              search: String(InternetSearchMode),
+              mode: PromptMode,
+            }),
+          }
+        );
+        setloadingAnimation("");
+        setResponseAnswer(
+          <>
+            <p className={`${themeColor}_leftTitle`}>Prompt:</p>
+            <p className={`${themeColor}_left`}>{`${PromptInfo}`}</p>{" "}
+            <p className={`${themeColor}_leftTitle`}>Response:</p>
+            <p className={`${themeColor}_left`}>
+              <Markdown>
+                {`${JSON.parse(JSON.stringify(await response.json())).answer}`}
+              </Markdown>
+            </p>
+          </>
+        );
+      } else {
+        alert("Please Select a Pipeline from the Pipelines Tab");
+      }
   }
 
-  useAutosizeTextArea(textAreaRef.current, PromptInfo);
+  useAutosizeTextArea(textAreaRef.current, footerDivRef.current, PromptInfo);
   return (
     <>
       <div className={`${themeColor}_background`} />
       <MenuTabs />
-      <div className={`${themeColor}_output`}>{ResponseAnswer}</div>
-      <div className={`${themeColor}_fixedBottom`}>
+      <div className={`${themeColor}_output`} ref={responseDivRef}>{ResponseAnswer}</div>
+      <div className={`${themeColor}_fixedBottom`} ref={footerDivRef}>
         <textarea
           className={`${themeColor}_prompt`}
           value={PromptInfo}
@@ -164,12 +176,12 @@ export default function Prompt() {
           />
           <span>Internet Search</span>
         </label>
-        <button className={`${themeColor}_promptSubmit`} onClick={handleSubmit}>
+        <button className={`${themeColor}_promptSubmit`} onClick={(e) => handleSubmit(e)}>
           {" "}
           Submit
         </button>
       </div>
-      <p className="loading">{loadingAnimation}</p>
+      <div className="loading">{loadingAnimation}</div>
     </>
   );
 }
