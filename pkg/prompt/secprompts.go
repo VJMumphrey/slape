@@ -50,6 +50,7 @@ var (
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
+    **Questions to think about:** %s
     `
 
 	// CoTPrompt is for linear progression tasks where clear steps can be seen.
@@ -58,7 +59,6 @@ var (
     Act as an intelligent agent capable of handling various tasks. 
     You excel at solving problems by breaking them down into manageable steps.
     For any given task, you approach it systematically, ensuring clarity and precision.
-    %s
 
     **Example:**
     - **Task:** Solve the following puzzle: "Find the correct combination to unlock the box."
@@ -75,6 +75,7 @@ var (
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
+    **Questions to think about:** %s
     `
 
 	// ToTPrompt uses a structured approach to generating human-like responses to questions or prompts.
@@ -91,6 +92,7 @@ var (
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
+    **Questions to think about:** %s
     `
 
 	// GoTPrompt Graphs of thought prompting are visual representations of the relationships between different aspects of a problem or situation.
@@ -113,6 +115,7 @@ var (
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
+    **Questions to think about:** %s
     `
 
 	// MoEPrompt uses expert prompting which is a technique used in natural language processing (NLP) and machine learning (ML) to generate responses to questions or tasks that require domain knowledge or expertise.
@@ -151,6 +154,7 @@ var (
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
+    **Questions to think about:** %s
     `
 
 	// SixThinkingHats, It is a problem-solving technique that involves the model wearing several hats.
@@ -179,5 +183,6 @@ var (
     **Thoughts:** %s
     **Additional Context:** %s
     **Previous Answers:** %s 
+    **Questions to think about:** %s
     `
 )
