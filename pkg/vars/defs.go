@@ -52,6 +52,6 @@ var (
 	TotPrompt          = prompt.SecToTPrompt
 	GotPrompt          = prompt.SecGoTPrompt
 	MoePrompt          = prompt.SecMoEPrompt
-	ThinkingHatsPrompt = prompt.SecSixThinkingHats
+	ThinkingHatsPrompt = prompt.SecMalwareObfuscation
 	GoePrompt          = prompt.GoEPrompt
 )
