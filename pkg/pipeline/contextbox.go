@@ -65,7 +65,7 @@ func (c *ContextBox) promptBuilder() error {
 
 
 
-	fmt.Println(c.Thoughts, additionalContex, c.PreviousAnswer, questions)
+	//fmt.Println(c.Thoughts, additionalContex, c.PreviousAnswer, questions)
 	c.SystemPrompt = fmt.Sprintf(c.SystemPrompt, c.Thoughts, additionalContex, c.PreviousAnswer, questions)
 
 	// TODO(v) do something different for debate where we have question/idea and ask the hats after.

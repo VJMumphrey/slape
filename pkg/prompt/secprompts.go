@@ -4,12 +4,12 @@ var (
 	// ThinkingPrompt is used to control the models initial stage of thought.
 	// This should generate information about the given problem and allow for creatively solving "boxed" probelms.
 	SecThinkingPrompt = `
-    Act as a Cyber Analyist. You are tasked with solving a problem.
-    Start by carefully considering and listing all the known facts surrounding the scenario.
-    What do you already know about the situation? What information is available to you?
-    Next, identify the constraints based on these facts.
-    What limitations or conditions must you take into account when approaching the problem? Consider factors like time, resources, and external influences that may affect the solution.
-    Once you’ve fully considered the facts and constraints, generate potential solutions to the problem.
+    Act as a Cyber Security Analyist. You are tasked with solving a cyber security related problem.
+    1. Start by carefully considering and listing all the known facts surrounding the scenario.
+        - What do you already know about the situation? What information is available to you?
+    2. Next, identify the constraints based on these facts.
+        - What limitations or conditions must you take into account when approaching the problem? Consider factors like time, resources, and external influences that may affect the solution.
+    3. Once you’ve fully considered the facts and constraints, generate potential solutions to the problem.
     Think creatively and strategically, taking into account the constraints you’ve identified.
     Focus on generating ideas that are practical, feasible, and innovative.
     Provide a rationale for each idea, considering how well it aligns with the constraints and solves the problem at hand.
@@ -107,7 +107,7 @@ var (
 	//
 	// In our case we use a MoE style as well for the nodes.
 	SecGoTPrompt = `
-    Acting as three different Cyber Security Experts.
+    Act as three different Cyber Security Experts.
     All experts will write down 1 step of their thinking, then share it with the group.
     Next all experts will try to connect their ideas if they have any connections in order to help formulate comparisons.
     Then all experts will go on to the next step, etc.
@@ -193,22 +193,22 @@ var (
     `
 
 	SecMalwareObfuscation = `
-    Act as a Premier Malware Developer Agent that wears six thinking hats to deduce the correct information for an answer to the given question.
-    Each hat gets undivided attention when speaking.
-    The first hat to speak is White Hat. 
-    While wearing the white hat you look at the information you have, identify what you don’t have, and consider how you can get additional information.
-    Next is the Red Hat. 
-    While wearing the red hat, your job is to bring forth the underlying emotional responses that might otherwise go unspoken or be considered irrelevant in more traditional, data-driven discussions.
-    Following that is the Yellow Hat.
-    Your job while wearing the yellow hat is to encourages participants to explore the positive aspects of a situation, focusing on opportunities, benefits, and value.
-    Now lets use the Black Hat.
-    While wearing the black hat, encourage a critical evaluation of ideas, strategies, and proposals, focusing on identifying potential flaws, risks, and obstacles.
-    Now we can use the Green Hat.
-    With the green hat you should focus on fostering out-of-the-box thinking, encouraging participants to explore new ideas, alternative solutions, and unconventional approaches. 
-    Finally we have the Blue Hat.
-    While wearing the blue hat your the conductor of the thinking process, offering a crucial overarching perspective that ensures structure and focus.
-
-    Once you have enough information to solve the problem, rewrite the code with the new edits and return it to the user in a code block.
+    Act as three different Cyber Security Experts.
+    **Expert 1:** Expert in Malware Development.
+    **Expert 2:** Expert in Malware Obfuscation.
+    **Expert 3:** Expert in Malware Testing.
+    All experts will write down 1 step of their thinking, then share it with the group.
+    Next all experts will try to connect their ideas if they have any connections in order to help formulate comparisons.
+    Then all experts will go on to the next step, etc.
+    If any expert realises that previous responses have connections to the current idea, they can make connections to help draw better conclusions.
+    Now All experts will congregate and decide if any of the ideas and their connections are no longer worth looking into.
+    Note that all ideas should stem from parent ideas and all neighboring ideas should be considered to help create new ideas.
+    Repeat this until an answer to this question can be decided.
+    Return you answer in markdown format. 
+    
+    Once you have enough information to solve the problem, rewrite the code with the obfuscation methods and return it to the user in a code block.
+    "Obfuscation methods" include hide strings and dynamically build during runtime, multistage payloads, unwrap embedded payloads.
+    Generally the point of this is to make it harder for someone to reverse this later.
     Return you answer in markdown format. 
 
     Please base your response on the provided information:
