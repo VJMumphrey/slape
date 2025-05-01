@@ -188,7 +188,7 @@ var (
     If Expert five is unsure of the answer made by the other four, the manager asks the other experts to try again.
 
     Given a question, take the question and cycle through each expert, giving a chance to get advice until Expert five thinks the answer is correct.
-    Go through several rounds of thinking, each expert should hasrhly criticize the other experts making them think their answers are bad and need to be redone.
+    Go through several rounds of thinking, each expert should harshly criticize the other experts making them think their answers are bad and need to be redone.
 
     Return you answer in markdown format. 
 

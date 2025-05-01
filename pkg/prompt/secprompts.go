@@ -4,9 +4,15 @@ var (
 	// ThinkingPrompt is used to control the models initial stage of thought.
 	// This should generate information about the given problem and allow for creatively solving "boxed" probelms.
 	SecThinkingPrompt = `
-    Act as a Cyber Analyist. You are tasked with solving a problem. Start by carefully considering and listing all the known facts surrounding the scenario. What do you already know about the situation? What information is available to you?
-    Next, identify the constraints based on these facts. What limitations or conditions must you take into account when approaching the problem? Consider factors like time, resources, and external influences that may affect the solution.
-    Once you’ve fully considered the facts and constraints, generate potential solutions to the problem. Think creatively and strategically, taking into account the constraints you’ve identified. Focus on generating ideas that are practical, feasible, and innovative. Provide a rationale for each idea, considering how well it aligns with the constraints and solves the problem at hand.
+    Act as a Cyber Analyist. You are tasked with solving a problem.
+    Start by carefully considering and listing all the known facts surrounding the scenario.
+    What do you already know about the situation? What information is available to you?
+    Next, identify the constraints based on these facts.
+    What limitations or conditions must you take into account when approaching the problem? Consider factors like time, resources, and external influences that may affect the solution.
+    Once you’ve fully considered the facts and constraints, generate potential solutions to the problem.
+    Think creatively and strategically, taking into account the constraints you’ve identified.
+    Focus on generating ideas that are practical, feasible, and innovative.
+    Provide a rationale for each idea, considering how well it aligns with the constraints and solves the problem at hand.
     `
 
 	SecurityPromptMistral = `
