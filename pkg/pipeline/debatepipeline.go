@@ -186,7 +186,7 @@ func (d *DebateofModels) Setup(ctx context.Context) error {
 	io.Copy(os.Stdout, reader)
 
 	for i, model := range d.Models {
-		createResponse, err := CreateContainer(
+		createResponse, err := CreateOllamaContainer(
 			d.DockerClient,
 			"800"+strconv.Itoa(i),
 			"",
@@ -259,7 +259,7 @@ func (d *DebateofModels) Generate(ctx context.Context, maxtokens int64) (string,
 					//openai.UserMessage(d.FutureQuestions),
 				},
 				Seed:        openai.Int(0),
-				Model:       d.Models[i],
+				Model:       "mannix/llama3.1-8b-abliterated",
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}
@@ -280,7 +280,7 @@ func (d *DebateofModels) Generate(ctx context.Context, maxtokens int64) (string,
 					//openai.UserMessage(s.FutureQuestions),
 				},
 				Seed:        openai.Int(0),
-				Model:       d.Models[i],
+				Model:       "mannix/llama3.1-8b-abliterated",
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}
@@ -308,10 +308,10 @@ func (d *DebateofModels) Generate(ctx context.Context, maxtokens int64) (string,
 						openai.UserMessage(summarizePrompt),
 						//openai.UserMessage(s.FutureQuestions),
 					},
-					Seed:        openai.Int(0),
-					Model:       d.Models[i],
-					Temperature: openai.Float(vars.ModelTemperature),
-					MaxTokens:   openai.Int(maxtokens),
+					Seed:        0,
+					Model:       "mannix/llama3.1-8b-abliterated",
+					Temperature: vars.ModelTemperature,
+					MaxTokens:   maxtokens,
 				}
 
 				result, err = GenerateCompletion(ctx, param, "", openaiClient)

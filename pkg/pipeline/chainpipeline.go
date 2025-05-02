@@ -178,7 +178,7 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 	io.Copy(os.Stdout, reader)
 
 	for i, model := range c.Models {
-		createResponse, err := CreateContainer(
+		createResponse, err := CreateOllamaContainer(
 			c.DockerClient,
 			"800"+strconv.Itoa(i),
 			"",
@@ -251,7 +251,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 				openai.UserMessage(c.Prompt),
 			},
 			Seed:        openai.Int(0),
-			Model:       c.Models[i],
+			Model:       "gemma3:4b",
 			Temperature: openai.Float(vars.ModelTemperature),
 			MaxTokens:   openai.Int(maxtokens),
 		}
@@ -281,7 +281,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 					//openai.UserMessage(s.FutureQuestions),
 				},
 				Seed:        openai.Int(0),
-				Model:       c.Models[i],
+				Model:       "gemma3:4b",
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}
@@ -304,7 +304,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 					//openai.UserMessage(s.FutureQuestions),
 				},
 				Seed:        openai.Int(0),
-				Model:       c.Models[i],
+				Model:       "gemma3:4b",
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}
