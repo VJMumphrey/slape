@@ -364,12 +364,12 @@ func (d *DebateofModels) Shutdown(w http.ResponseWriter, req *http.Request) {
 	defer cancel()
 
 	// turn off the containers if they aren't already off
-	for i := range d.containers {
+	for i := range d.Models {
 		(d.DockerClient).ContainerStop(childctx, d.Models[i], container.StopOptions{})
 	}
 
 	// remove the containers
-	for i := range d.containers {
+	for i := range d.Models {
 		(d.DockerClient).ContainerRemove(childctx, d.Models[i], container.RemoveOptions{})
 	}
 

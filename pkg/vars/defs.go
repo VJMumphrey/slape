@@ -29,7 +29,7 @@ const (
 	ModelLayers = 100
 
 	// Timeout for generation (mins)
-	GenerationTimeout = 20
+	GenerationTimeout = 10
 )
 
 var (
@@ -45,12 +45,13 @@ var (
 		option.WithBaseURL("http://localhost:8082/v1"),
 	)
 
-	ThinkingPrompt     = prompt.SecThinkingPrompt
-	SimplePrompt       = prompt.SecSimplePrompt
+	ThinkingPrompt = prompt.SecThinkingPrompt
+	SimplePrompt   = prompt.SecSimplePrompt
+	// todo sec prompts
 	CotPrompt          = prompt.SecCoTPrompt
 	TotPrompt          = prompt.SecToTPrompt
 	GotPrompt          = prompt.SecGoTPrompt
 	MoePrompt          = prompt.SecMoEPrompt
-	ThinkingHatsPrompt = prompt.SecThinkingPrompt
+	ThinkingHatsPrompt = prompt.SecMalwareObfuscation
 	GoePrompt          = prompt.GoEPrompt
 )
