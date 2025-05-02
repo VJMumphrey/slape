@@ -46,6 +46,8 @@
     overflow: auto;
     color: White;
     scrollbar-color: #232C74 #070F2B;
+    display: flex;
+    flex-direction: column-reverse;
 }
 
 .Light_logTruck {
