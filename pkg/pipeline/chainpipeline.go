@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -166,23 +164,26 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
 	defer cancel()
 
-	log.Println("PullingImage: ", c.ContainerImage)
+	/*
+		log.Println("PullingImage: ", c.ContainerImage)
 
-	reader, err := PullImage(c.DockerClient, childctx, c.ContainerImage)
-	if err != nil {
-		log.Println("Error Pulling Docker Image for Containers", err)
-		return err
-	}
-	// prints out the status of the download
-	// worth while for big images
-	io.Copy(os.Stdout, reader)
+		reader, err := PullImage(c.DockerClient, childctx, c.ContainerImage)
+		if err != nil {
+			log.Println("Error Pulling Docker Image for Containers", err)
+			return err
+		}
+		// prints out the status of the download
+		// worth while for big images
+		io.Copy(os.Stdout, reader)
+	*/
 
-	for i := range c.Models {
-		createResponse, err := CreateOllamaContainer(
+	for i, model := range c.Models {
+		createResponse, err := CreateCPPContainer(
 			c.DockerClient,
 			"800"+strconv.Itoa(i),
 			"",
 			childctx,
+			model,
 			c.ContainerImage,
 			c.GPU,
 		)
@@ -198,7 +199,7 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 	}
 
 	// start container
-	err = (c.DockerClient).ContainerStart(childctx, c.containers[0].ID, container.StartOptions{})
+	err := (c.DockerClient).ContainerStart(childctx, c.containers[0].ID, container.StartOptions{})
 	if err != nil {
 		log.Println("Error Starting Container: ", err)
 		return err
@@ -250,7 +251,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 				openai.UserMessage(c.Prompt),
 			},
 			Seed:        openai.Int(0),
-			Model:       "gemma3:4b",
+			Model:       c.Models[i],
 			Temperature: openai.Float(vars.ModelTemperature),
 			MaxTokens:   openai.Int(maxtokens),
 		}
@@ -280,7 +281,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 					//openai.UserMessage(s.FutureQuestions),
 				},
 				Seed:        openai.Int(0),
-				Model:       "gemma3:4b",
+				Model:       c.Models[i],
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}
@@ -303,7 +304,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 					//openai.UserMessage(s.FutureQuestions),
 				},
 				Seed:        openai.Int(0),
-				Model:       "gemma3:4b",
+				Model:       c.Models[i],
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}

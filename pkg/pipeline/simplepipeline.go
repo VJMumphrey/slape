@@ -3,10 +3,8 @@ package pipeline
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -166,6 +164,7 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
 	defer cancel()
 
+    /*
 	log.Println("PullingImage: ", s.ContainerImage)
 
 	reader, err := PullImage(s.DockerClient, childctx, s.ContainerImage)
@@ -177,12 +176,14 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
 	defer reader.Close()
+    */
 
-	createResponse, err := CreateOllamaContainer(
+	createResponse, err := CreateCPPContainer(
 		s.DockerClient,
 		"8000",
 		"",
 		childctx,
+		s.Models[0],
 		s.ContainerImage,
 		s.GPU,
 	)
@@ -234,7 +235,7 @@ func (s *SimplePipeline) Generate(ctx context.Context, maxtokens int64, openaiCl
 			//openai.UserMessage(s.FutureQuestions),
 		},
 		Seed:        openai.Int(0),
-		Model:       "gemma3b:4b",
+		Model:       s.Models[0],
 		Temperature: openai.Float(vars.ModelTemperature),
 		MaxTokens:   openai.Int(maxtokens),
 	}

@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -174,23 +172,26 @@ func (d *DebateofModels) Setup(ctx context.Context) error {
 	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
 	defer cancel()
 
-	log.Println("PullingImage: ", d.ContainerImage)
+	/*
+		log.Println("PullingImage: ", d.ContainerImage)
 
-	reader, err := PullImage(d.DockerClient, ctx, d.ContainerImage)
-	if err != nil {
-		log.Println("Error Pulling Container Image: ", err)
-		return err
-	}
-	// prints out the status of the download
-	// worth while for big images
-	io.Copy(os.Stdout, reader)
+		reader, err := PullImage(d.DockerClient, ctx, d.ContainerImage)
+		if err != nil {
+			log.Println("Error Pulling Container Image: ", err)
+			return err
+		}
+		// prints out the status of the download
+		// worth while for big images
+		io.Copy(os.Stdout, reader)
+	*/
 
-	for i := range d.Models {
-		createResponse, err := CreateOllamaContainer(
+	for i, model := range d.Models {
+		createResponse, err := CreateCPPContainer(
 			d.DockerClient,
 			"800"+strconv.Itoa(i),
 			"",
 			ctx,
+			model,
 			d.ContainerImage,
 			d.GPU,
 		)
@@ -205,7 +206,7 @@ func (d *DebateofModels) Setup(ctx context.Context) error {
 	}
 
 	// start container
-	err = (d.DockerClient).ContainerStart(childctx, d.containers[0].ID, container.StartOptions{})
+	err := (d.DockerClient).ContainerStart(childctx, d.containers[0].ID, container.StartOptions{})
 	if err != nil {
 		log.Println("Error Starting Container: ", err)
 		return err
@@ -258,7 +259,7 @@ func (d *DebateofModels) Generate(ctx context.Context, maxtokens int64) (string,
 					//openai.UserMessage(d.FutureQuestions),
 				},
 				Seed:        openai.Int(0),
-				Model:       "mannix/llama3.1-8b-abliterated",
+				Model:       d.Models[i],
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}
@@ -279,7 +280,7 @@ func (d *DebateofModels) Generate(ctx context.Context, maxtokens int64) (string,
 					//openai.UserMessage(s.FutureQuestions),
 				},
 				Seed:        openai.Int(0),
-				Model:       "mannix/llama3.1-8b-abliterated",
+				Model:       d.Models[i],
 				Temperature: openai.Float(vars.ModelTemperature),
 				MaxTokens:   openai.Int(maxtokens),
 			}
@@ -308,7 +309,7 @@ func (d *DebateofModels) Generate(ctx context.Context, maxtokens int64) (string,
 						//openai.UserMessage(s.FutureQuestions),
 					},
 					Seed:        openai.Int(0),
-					Model:       "mannix/llama3.1-8b-abliterated",
+					Model:       d.Models[i],
 					Temperature: openai.Float(vars.ModelTemperature),
 					MaxTokens:   openai.Int(maxtokens),
 				}

@@ -3,10 +3,8 @@ package pipeline
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/StoneG24/slape/pkg/api"
@@ -102,17 +100,19 @@ func (e *EmbeddingPipeline) EmbeddingPipelineGenerateRequest(w http.ResponseWrit
 
 func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 
-	log.Println("PullingImage: ", e.ContainerImage)
+	/*
+		log.Println("PullingImage: ", e.ContainerImage)
 
-	reader, err := PullImage(e.DockerClient, ctx, e.ContainerImage)
-	if err != nil {
-		log.Println("Error Pulling Container Image: ", err)
-		return err
-	}
-	// prints out the status of the download
-	// worth while for big images
-	io.Copy(os.Stdout, reader)
-	defer reader.Close()
+		reader, err := PullImage(e.DockerClient, ctx, e.ContainerImage)
+		if err != nil {
+			log.Println("Error Pulling Container Image: ", err)
+			return err
+		}
+		// prints out the status of the download
+		// worth while for big images
+		io.Copy(os.Stdout, reader)
+		defer reader.Close()
+	*/
 
 	/*
 		gencreateResponse, err := CreateContainer(
