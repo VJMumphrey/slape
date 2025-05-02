@@ -26,7 +26,7 @@ func PullImage(apiClient *client.Client, ctx context.Context, containerImage str
 	return reader, err
 }
 
-func CreateContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string, containerImage string, gpuTrue bool) (container.CreateResponse, error) {
+func CreateCPPContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string, containerImage string, gpuTrue bool) (container.CreateResponse, error) {
 
 	portSet := nat.PortSet{
 		nat.Port("8000/tcp"): struct{}{}, // map 11434 TCP port

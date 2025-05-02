@@ -178,7 +178,7 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	io.Copy(os.Stdout, reader)
 	defer reader.Close()
 
-	createResponse, err := CreateContainer(
+	createResponse, err := CreateOllamaContainer(
 		s.DockerClient,
 		"8000",
 		"",
@@ -235,7 +235,7 @@ func (s *SimplePipeline) Generate(ctx context.Context, maxtokens int64, openaiCl
 			//openai.UserMessage(s.FutureQuestions),
 		},
 		Seed:        openai.Int(0),
-		Model:       s.Models[0],
+		Model:       "gemma3b:4b",
 		Temperature: openai.Float(vars.ModelTemperature),
 		MaxTokens:   openai.Int(maxtokens),
 	}
