@@ -64,11 +64,14 @@ func CreateOllamaContainer(apiClient *client.Client, portNum string, name string
 		hostconfig = container.HostConfig{
 			Runtime:      "nvidia",
 			PortBindings: portBindings,
-			Mounts: []mount.Mount{{
-				Type:   mount.TypeVolume,
-				Source: "ollama",
-				Target: "/root/.ollama",
-			}},
+			Binds:        []string{"ollama:/root/.ollama"},
+			/*
+				Mounts: []mount.Mount{{
+					Type:   mount.TypeVolume,
+					Source: "ollama",
+					Target: "/root/.ollama",
+				}},
+			*/
 		}
 	case false:
 		hostconfig = container.HostConfig{

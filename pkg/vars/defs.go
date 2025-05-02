@@ -34,7 +34,7 @@ const (
 
 var (
 	OpenaiClient = openai.NewClient(
-		option.WithBaseURL("http://localhost:8000/v1"),
+		option.WithBaseURL("http://localhost:11434/v1"),
 	)
 
 	GenerationClient = openai.NewClient(
