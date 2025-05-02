@@ -185,13 +185,12 @@ func (d *DebateofModels) Setup(ctx context.Context) error {
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
 
-	for i, model := range d.Models {
+	for i := range d.Models {
 		createResponse, err := CreateOllamaContainer(
 			d.DockerClient,
 			"800"+strconv.Itoa(i),
 			"",
 			ctx,
-			model,
 			d.ContainerImage,
 			d.GPU,
 		)
@@ -308,10 +307,10 @@ func (d *DebateofModels) Generate(ctx context.Context, maxtokens int64) (string,
 						openai.UserMessage(summarizePrompt),
 						//openai.UserMessage(s.FutureQuestions),
 					},
-					Seed:        0,
+					Seed:        openai.Int(0),
 					Model:       "mannix/llama3.1-8b-abliterated",
-					Temperature: vars.ModelTemperature,
-					MaxTokens:   maxtokens,
+					Temperature: openai.Float(vars.ModelTemperature),
+					MaxTokens:   openai.Int(maxtokens),
 				}
 
 				result, err = GenerateCompletion(ctx, param, "", openaiClient)

@@ -183,7 +183,6 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 		"8000",
 		"",
 		childctx,
-		s.Models[0],
 		s.ContainerImage,
 		s.GPU,
 	)

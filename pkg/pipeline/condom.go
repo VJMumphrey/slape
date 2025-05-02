@@ -13,7 +13,7 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-func CreateOllamaContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, modelName string, containerImage string, gpuTrue bool) (container.CreateResponse, error) {
+func CreateOllamaContainer(apiClient *client.Client, portNum string, name string, ctx context.Context, containerImage string, gpuTrue bool) (container.CreateResponse, error) {
 
 	portSet := nat.PortSet{
 		nat.Port("8000/tcp"): struct{}{}, // map 11434 TCP port
@@ -48,10 +48,12 @@ func CreateOllamaContainer(apiClient *client.Client, portNum string, name string
 	}
 
 	// TODO(v) add --jinja for function calling using the OpenAI API setup
-	var cmds []string
-	if !gpuTrue {
-		cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--mlock", "--no-webui", "-c", strconv.Itoa(vars.ContextLength), "-cb"}
-	}
+	/*
+		var cmds []string
+		if !gpuTrue {
+			cmds = []string{"-m", "/models/" + modelName, "--port", "8000", "--host", "0.0.0.0", "-fa", "--mlock", "--no-webui", "-c", strconv.Itoa(vars.ContextLength), "-cb"}
+		}
+	*/
 
 	var hostconfig container.HostConfig
 
@@ -81,21 +83,12 @@ func CreateOllamaContainer(apiClient *client.Client, portNum string, name string
 
 	var createResponse container.CreateResponse
 	var err error
-	if gpuTrue {
-		// create container
-		createResponse, err = apiClient.ContainerCreate(ctx, &container.Config{
-			ExposedPorts: portSet,
-			Image:        containerImage,
-			//Cmd:          cmds,
-		}, &hostconfig, nil, nil, name)
-	} else {
-		// create container
-		createResponse, err = apiClient.ContainerCreate(ctx, &container.Config{
-			ExposedPorts: portSet,
-			Image:        containerImage,
-			Cmd:          cmds,
-		}, &hostconfig, nil, nil, name)
-	}
+	// create container
+	createResponse, err = apiClient.ContainerCreate(ctx, &container.Config{
+		ExposedPorts: portSet,
+		Image:        containerImage,
+		//Cmd:          cmds,
+	}, &hostconfig, nil, nil, name)
 
 	return createResponse, err
 }

@@ -126,7 +126,7 @@ func (e *EmbeddingPipeline) Setup(ctx context.Context) error {
 		)
 	*/
 
-	embedcreateResponse, err := CreateContainer(
+	embedcreateResponse, err := CreateCPPContainer(
 		e.DockerClient,
 		"8082",
 		"",

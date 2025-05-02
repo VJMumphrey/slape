@@ -177,13 +177,12 @@ func (c *ChainofModels) Setup(ctx context.Context) error {
 	// worth while for big images
 	io.Copy(os.Stdout, reader)
 
-	for i, model := range c.Models {
+	for i := range c.Models {
 		createResponse, err := CreateOllamaContainer(
 			c.DockerClient,
 			"800"+strconv.Itoa(i),
 			"",
 			childctx,
-			model,
 			c.ContainerImage,
 			c.GPU,
 		)
