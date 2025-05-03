@@ -88,6 +88,8 @@ func main() {
 	logging.CreateLogFile()
 	defer logging.CloseLogging()
 
+	fmt.Println("[+] Server Starting")
+
 	// Default Mux for our server.
 	// For auth in the future we will want to setup a different set.
 	mux := http.NewServeMux()

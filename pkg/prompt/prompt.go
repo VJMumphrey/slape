@@ -13,6 +13,14 @@ type Node struct{}
 type Chain struct{}
 
 var (
+	// SummarizingPrompt is used to summarizing responses in slape.
+	SummarizingPrompt = "Given this answer %s, can you summarize it"
+
+	QuestioningPrompt = `
+    Given this answer, %s, can you generate five questions to ask someone else, that pertain to the question?
+    Your goal is to be concise while still maintaining the orginal message.
+    `
+
 	// ThinkingPrompt is used to control the models initial stage of thought.
 	// This should generate information about the given problem and allow for creatively solving "boxed" probelms.
 	ThinkingPrompt = `

@@ -121,7 +121,7 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 	if c.InternetSearch {
 		c.getInternetSearch(ctx)
 	} else {
-		c.InternetSearchResults = "None"
+		c.InternetSearchResults = []string{}
 	}
 	if c.Thinking {
 		c.getThoughts(ctx)
@@ -151,7 +151,7 @@ func (c *ChainofModels) ChainPipelineGenerateRequest(w http.ResponseWriter, req 
 		return
 	}
 
-	c.InternetSearchResults = ""
+	c.InternetSearchResults = []string{}
 	c.Thoughts = ""
 
 	w.Header().Set("Content-Type", "application/json")
@@ -215,13 +215,14 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 	var result string
 
 	for i, model := range c.containers {
+		fmt.Println("ContainerIndex ", i)
 		// start container
 		err := (c.DockerClient).ContainerStart(ctx, model.ID, container.StartOptions{})
 		if err != nil {
 			log.Println("Error Starting Container", err)
 			return "", err
 		}
-		log.Println("StartingContainer, ContainerIndex", i)
+		log.Println("ContainerIndex ", i)
 
 		for {
 			// sleep and give server guy a break
@@ -235,8 +236,6 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 		openaiClient := openai.NewClient(
 			option.WithBaseURL("http://localhost:800" + strconv.Itoa(i) + "/v1"),
 		)
-
-		log.Println("SystemPrompt", systemprompt, "Prompt", uprompt)
 
 		err = c.promptBuilder()
 		if err != nil {
@@ -267,13 +266,13 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 		if err != nil {
 			return "", err
 		}
-
+		// after we have our values set we can clear out old ones to re-used
 		c.FutureQuestions = "None"
 
 		if i != len(c.containers)-1 {
 			// Summarize the answer generate.
 			// This apparently makes it easier for the next models to digest the information.
-			summarizePrompt := fmt.Sprintf("Given this answer %s, can you summarize it", result)
+			summarizePrompt := fmt.Sprintf(prompt.SummarizingPrompt, result)
 			param = openai.ChatCompletionNewParams{
 				Messages: []openai.ChatCompletionMessageParamUnion{
 					openai.SystemMessage(prompt.SimplePrompt),
@@ -293,10 +292,16 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 			}
 
 			c.ConversationHistory = append(c.ConversationHistory, result)
+			err = c.promptBuilder()
+			if err != nil {
+				return "", err
+			}
 
 			// Ask the model to generate questions for the model to answer.
 			// Then store this answer in the contextbox for the next go around.
-			askFutureQuestions := fmt.Sprintf("Given this answer, %s, can you generate some questions to ask the next model that pertain to the question?", result)
+			qprompt := `Given this answer, %s, can you generate five questions to ask someone else, that pertain to the question?
+            Your goal is to be concise while still maintaining the orginal message.`
+			askFutureQuestions := fmt.Sprintf(qprompt, result)
 			param = openai.ChatCompletionNewParams{
 				Messages: []openai.ChatCompletionMessageParamUnion{
 					openai.SystemMessage(c.SystemPrompt),
@@ -316,6 +321,12 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 			}
 
 			c.FutureQuestions = result
+			err = c.promptBuilder()
+			if err != nil {
+				return "", err
+			}
+
+			//log.Println("SystemPrompt", systemprompt, "Prompt", uprompt)
 		}
 
 		log.Println("Stopping Container, ContainerIndex", i)
@@ -323,6 +334,14 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 	}
 
 	c.ConversationHistory = []string{}
+
+	// start container
+	err := (c.DockerClient).ContainerStart(ctx, c.containers[0].ID, container.StartOptions{})
+	if err != nil {
+		log.Println("Error Starting Container: ", err)
+		return result, err
+	}
+	log.Println("Starting Container For next Potential run", c.containers[0].ID)
 
 	return result, nil
 }

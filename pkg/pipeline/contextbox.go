@@ -9,6 +9,7 @@ import (
 
 	"github.com/StoneG24/slape/pkg/api"
 	"github.com/StoneG24/slape/pkg/internetsearch"
+	"github.com/StoneG24/slape/pkg/prompt"
 	"github.com/StoneG24/slape/pkg/vars"
 	"github.com/openai/openai-go"
 )
@@ -20,17 +21,15 @@ import (
 // This information should be kept within a pipeline for privacy and safety reasons.
 type ContextBox struct {
 	// Simple prompt components
-	SystemPrompt   string
-	Thoughts       string
-	Prompt         string
-	PreviousAnswer string
-	// Currently not in use
+	SystemPrompt        string
+	Thoughts            string
+	Prompt              string
+	PreviousAnswer      string
 	ConversationHistory []string
 	FutureQuestions     string
 
 	// These will come from the internet search package.
-	InternetSearchResults string
-	//VectorStore           *hnsw.Graph[string]
+	InternetSearchResults []string
 
 	// These will come from tool calls
 	ToolResults *[]string
@@ -51,24 +50,22 @@ func (c *ContextBox) promptBuilder() error {
 	// TODO(v) move to generation functions like thoughts
 	var additionalContex string
 	if len(c.InternetSearchResults) != 0 {
-		additionalContex += c.InternetSearchResults
+		additionalContex = strings.Join(c.InternetSearchResults, "\n")
 	} else {
 		additionalContex = "None"
 	}
 
-    var questions string
+	var questions string
 	if len(c.FutureQuestions) == 0 {
 		questions = "None"
 	} else {
-        questions = c.FutureQuestions
-    }
+		questions = c.FutureQuestions
+	}
 
-
-
-	fmt.Println(c.Thoughts, additionalContex, c.PreviousAnswer, questions)
+	log.Printf("Thoughts: %s\nAdditionalContext: %s\nPreviousAnswer: %s\nQuestions: %s\n", c.Thoughts, additionalContex, c.PreviousAnswer, questions)
 	c.SystemPrompt = fmt.Sprintf(c.SystemPrompt, c.Thoughts, additionalContex, c.PreviousAnswer, questions)
+	log.Println(c.SystemPrompt)
 
-	// TODO(v) do something different for debate where we have question/idea and ask the hats after.
 	return nil
 }
 
@@ -78,12 +75,14 @@ func (c *ContextBox) promptBuilder() error {
 func (c *ContextBox) getThoughts(ctx context.Context) {
 
 	fmt.Println("Thinking...")
+	err := c.promptBuilder()
+	log.Println(err)
 
-	prompt := vars.ThinkingPrompt + "\n**Internet Search Results:**\n" + c.InternetSearchResults
+	tprompt := vars.ThinkingPrompt + "\n**Internet Search Results:**\n" + strings.Join(c.InternetSearchResults, "\n")
 
 	param := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(prompt),
+			openai.SystemMessage(tprompt),
 			openai.UserMessage(c.Prompt),
 			//openai.UserMessage(s.FutureQuestions),
 		},
@@ -109,7 +108,26 @@ func (c *ContextBox) getThoughts(ctx context.Context) {
 		c.Thoughts = "None"
 	}
 
-	log.Println("Debug Thinking result", result)
+	sprompt := fmt.Sprintf(prompt.SummarizingPrompt, result)
+
+	param = openai.ChatCompletionNewParams{
+		Messages: []openai.ChatCompletionMessageParamUnion{
+			openai.SystemMessage(prompt.SimplePrompt),
+			openai.UserMessage(sprompt),
+			//openai.UserMessage(s.FutureQuestions),
+		},
+		Seed: openai.Int(0),
+		//Model:       c.Models[i],
+		Temperature: openai.Float(vars.ModelTemperature),
+		MaxTokens:   openai.Int(4092),
+	}
+
+	result, err = GenerateCompletion(ctx, param, "", vars.OpenaiClient)
+	if err != nil {
+		log.Println("Error Generating Thinking Summarization", err)
+	}
+
+	//log.Println("Debug Thinking result", result)
 
 	c.Thoughts = result
 
@@ -208,8 +226,7 @@ func (c *ContextBox) getInternetSearch(ctx context.Context) error {
 	log.Println("Internet Search result [nearest neighbors]", neighbors)
 
 	for _, neighbor := range neighbors {
-		c.InternetSearchResults += vecs.Elements[neighbor.Point.ID]
-		c.InternetSearchResults += "\n"
+		c.InternetSearchResults = append(c.InternetSearchResults, vecs.Elements[neighbor.Point.ID])
 	}
 
 	log.Println("Internet Search result ", c.InternetSearchResults)

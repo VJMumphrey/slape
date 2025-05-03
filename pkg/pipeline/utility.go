@@ -45,7 +45,7 @@ func processPrompt(mode string) (string, int64) {
 
 func PickImage() string {
 	gpuTrue := IsGPU()
-    log.Println(gpuTrue)
+	log.Println(gpuTrue)
 	if gpuTrue {
 		gpus, err := GatherGPUs()
 		if err != nil {

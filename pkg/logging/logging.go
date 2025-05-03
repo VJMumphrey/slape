@@ -2,9 +2,9 @@
 package logging
 
 import (
+	"errors"
 	"log"
 	"os"
-    "errors"
 
 	"github.com/StoneG24/slape/pkg/vars"
 )
@@ -20,10 +20,11 @@ func CreateLogFile() *os.File {
 		os.Mkdir("logs", 0744)
 	}
 
-    logFile, err := os.OpenFile("./logs/"+vars.Logfilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	logFile, err := os.OpenFile("./logs/"+vars.Logfilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Println("Error creating the log file")
 	}
+	log.Println("[+] Found the logs folder")
 
 	log.SetOutput(logFile)
 	return logFile
@@ -38,11 +39,11 @@ func CloseLogging() {
 		log.Println("Error trying to read ", vars.Logfilename)
 	}
 
-    // open the trunk file for appending
-    trunkFile, err := os.OpenFile("./logs/"+vars.Trunkfilename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
-    if err != nil {
-        log.Println("Error creating the trunk file")
-    }
+	// open the trunk file for appending
+	trunkFile, err := os.OpenFile("./logs/"+vars.Trunkfilename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
+	if err != nil {
+		log.Println("Error creating the trunk file")
+	}
 
 	// move to the big log file
 	_, err = trunkFile.Write(content)

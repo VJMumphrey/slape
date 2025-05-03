@@ -120,7 +120,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 	if s.InternetSearch {
 		s.getInternetSearch(ctx)
 	} else {
-		s.InternetSearchResults = "None"
+		s.InternetSearchResults = []string{}
 	}
 
 	if s.Thinking {
@@ -151,7 +151,7 @@ func (s *SimplePipeline) SimplePipelineGenerateRequest(w http.ResponseWriter, re
 		return
 	}
 
-	s.InternetSearchResults = ""
+	s.InternetSearchResults = []string{}
 	s.Thoughts = ""
 
 	w.Header().Set("Content-Type", "application/json")
@@ -164,19 +164,19 @@ func (s *SimplePipeline) Setup(ctx context.Context) error {
 	childctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
 	defer cancel()
 
-    /*
-	log.Println("PullingImage: ", s.ContainerImage)
+	/*
+		log.Println("PullingImage: ", s.ContainerImage)
 
-	reader, err := PullImage(s.DockerClient, childctx, s.ContainerImage)
-	if err != nil {
-		log.Println("Error Pulling Container Image: ", err)
-		return err
-	}
-	// prints out the status of the download
-	// worth while for big images
-	io.Copy(os.Stdout, reader)
-	defer reader.Close()
-    */
+		reader, err := PullImage(s.DockerClient, childctx, s.ContainerImage)
+		if err != nil {
+			log.Println("Error Pulling Container Image: ", err)
+			return err
+		}
+		// prints out the status of the download
+		// worth while for big images
+		io.Copy(os.Stdout, reader)
+		defer reader.Close()
+	*/
 
 	createResponse, err := CreateCPPContainer(
 		s.DockerClient,

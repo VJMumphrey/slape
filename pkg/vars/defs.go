@@ -21,15 +21,15 @@ const (
 	// This should be used to match the context length with the max generation length.
 	ContextLength      = 16348
 	MaxGenTokens       = 16348
-	MaxGenTokensSimple = 4096
-	MaxGenTokensCoT    = 8192
+	MaxGenTokensSimple = 2048
+	MaxGenTokensCoT    = 0.25 * MaxGenTokens
 	ModelTemperature   = 0.1
 
 	// A layer count above what the model has should load the entire model.
 	ModelLayers = 100
 
 	// Timeout for generation (mins)
-	GenerationTimeout = 10
+	GenerationTimeout = 20
 )
 
 var (
