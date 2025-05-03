@@ -32,33 +32,29 @@ act as a expert.
 1. We need to install some dependencies so that we can build and run the project. The first thing we need to install is Docker.
 Follow your OS specific instructions to install Docker.
 
-2. This project also uses other projects as submodules. To get these projects run the following command to clone the repo and get those dependencies.
-```bash
-git clone --recursive https://github.com/StoneG24/slape.git
-```
+- For Linux, [Docker Engine Install](https://docs.docker.com/engine/install/)
+- For Windows, [Docker Engine Install](https://docs.docker.com/desktop/setup/install/windows-install/)
 
-3. Create a folder named *models*. SLaPE will create this folder for you, along with checking if that folder exists on startup.
+2. Create a folder named *models*. SLaPE will create this folder for you, along with checking if that folder exists on startup.
 We also download an embedding model for use in the project. [Casual-Autopsy/snowflake-arctic-embed-l-v2.0-gguf](https://huggingface.co/Casual-Autopsy/snowflake-arctic-embed-l-v2.0-gguf)
 
 ### GPU Support
 
-After that, if you want to run the containers with a gpu, you'll need to install the nvidia continer toolkit along with the appropriate drivers if needed.
+After that, if you want to run the containers with a gpu, you'll need to install the NVIDIA Continer Toolkit along with the appropriate drivers if needed.
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest)
 
-Refer to the proper documentation for rocm.
+Refer to the proper documentation for ROCM.
 
 ## Building
-This command downloads everything and builds the app for you. A models folder is still needed in the folder that SLaPE is ran in.
+This command downloads the dependencies and builds the app for you. 
 ```bash
-go install github.com/StoneG24/slape@latest
+go build ./cmd/main.go
 ```
 ## Socket Interactions
 
 ### Linux
 
 To run the app you need to turn on the docker socket. This allows the app to talk to the socket and controll its components.
-
-For non-rootful use cases
 
 ```bash
 sudo systemctl start docker
@@ -70,13 +66,16 @@ To close the socket on linux,
 sudo systemctl stop docker
 ```
 
+SLaPE will tell you if it cannot find the docker socket for your system.
+
 ### Windows
 
 For windows this process is managed by docker desktop.
 
 ### Cleanup
 SLaPE cleans up its resources. In the event of a crash things may not clean up properly.
-To help with this, some commands are included to cleanup those resources. **NOTE** This assumes you are not running any other container setups with docker.
+To help with this, some commands are included to cleanup those resources.
+**NOTE** This assumes you are not running any other container setups with docker.
 If you are, then clean up the resources on an individual basis.
 
 This command will tell you how much of your disk is currently being used by docker
@@ -112,8 +111,8 @@ these live in [prompts](pkg/prompt/prompt.go).
 **NOTE** we also a have set of security prompts for use in demos in [security promtps](pkg/prompt/secprompts.go).
 
 This was choice was made to keep the logic simple and create a binary that could be bundled and moved to remote servers if needed.
-A replacement for this would be embedding a yaml file and reading the values at runtime. 
-This was originally to complex for the scope of the project.
+A replacement for this would be utilizing golangs templates to better format the prompts. 
+This removes the complexity of reading files and keeping SLaPE secure from outside attacks.
 
 ## Documentation
 Our code uses go doc comments as a way of effectively documenting our code.
@@ -134,11 +133,11 @@ go vet ./...
 go tool staticcheck ./...
 go tool govulncheck
 ```
-All of these binaries should have been installed with golang and this package.
+All of these binaries should have been installed with SLaPE as part of the *tool* directive in go.mod.
 
 ## Features
 We currently have several feautures to aid in the improvement of SLMs.
-We have optional Internet Search, along with an extra thinking step.
+We have an optional Internet Search, along with an extra thinking step.
 
 ### Thinking
 This is currently a prototype of a thought process meant to give the model extra time to consider characteristics and behaviors of a given problem.
