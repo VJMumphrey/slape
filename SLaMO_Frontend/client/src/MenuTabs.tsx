@@ -6,16 +6,25 @@ import { l } from "../../../../../AppData/Local/deno/npm/registry.npmjs.org/reac
 if (localStorage.getItem("StyleSetting") == null)
   localStorage.setItem("StyleSetting", "Dark");
 
-let themeColor: string | null = localStorage.getItem("StyleSetting");
-
 export default function MenuTabs() {
 
-  const [ CurrentTheme, setCurrentTheme ] = useState(themeColor==="Light" ? "\u2600" : "\u263D");
+  addEventListener("changedColorTheme", () => {
+    setThemeColor(localStorage.getItem("StyleSetting"));
+  });
 
-  function shutdownHandler() {
-    fetch("http://localhost:8080/shutdown", {
+  const [ ThemeColor, setThemeColor ] = useState(localStorage.getItem("StyleSetting"));
+  const [ CurrentTheme, setCurrentTheme ] = useState(localStorage.getItem("StyleSetting") === "Light" ? "\u2600" : "\u263D");
+
+  async function shutdownHandler() {
+    const response = await fetch("http://localhost:8080/shutdownpipes", {
       method: "GET",
     });
+
+    if(response.ok) {
+      alert("Shutting Down All Pipelines");
+    } else {
+      alert("Shutdown Failed!");
+    }
   }
   // You literally just have to do this. I have no idea why.
   const navigate = useNavigate();
@@ -33,34 +42,34 @@ export default function MenuTabs() {
   };
 
   const handleThemeButton = () => {
-    if (themeColor === "Light" )  {
+    if (ThemeColor === "Light" )  {
       localStorage.setItem("StyleSetting", "Dark");
       setCurrentTheme("\u263D");
     } else {
       localStorage.setItem("StyleSetting", "Light");
       setCurrentTheme("\u2600");
     }
-    globalThis.location.reload();
+    dispatchEvent(new Event("changedColorTheme"));
   }
 
   return (
-    <div className={`${themeColor}_top`}>
+    <div className={`${ThemeColor}_top`}>
       <button
-        className={`${themeColor}_tabButton`}
+        className={`${ThemeColor}_tabButton`}
         onClick={pipelinesEventHandler}
       >
         Pipelines
       </button>
-      <button className={`${themeColor}_tabButton`} onClick={logsEventHandler}>
+      <button className={`${ThemeColor}_tabButton`} onClick={logsEventHandler}>
         Logs
       </button>
       <button
-        className={`${themeColor}_tabButton`}
+        className={`${ThemeColor}_tabButton`}
         onClick={promptingEventHandler}
       >
         Prompting
       </button>
-      <button className={`${themeColor}_themeButton`} onClick={handleThemeButton}>
+      <button className={`${ThemeColor}_themeButton`} onClick={handleThemeButton}>
         {CurrentTheme}
       </button>
       <button className={`shutdown`} onClick={shutdownHandler}>

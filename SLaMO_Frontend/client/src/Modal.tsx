@@ -1,4 +1,4 @@
-import ReactNode from "react";
+import { useState, ReactNode } from "react";
 import "./modal.css";
 
 interface modalProperties {
@@ -8,22 +8,24 @@ interface modalProperties {
 }
 
 export default function Modal({isOpen, onClose, children}: modalProperties) {
+  if (localStorage.getItem("StyleSetting") == null)
+    localStorage.setItem("StyleSetting", "Dark");
+
+  addEventListener("changedColorTheme", () => {
+    setThemeColor(localStorage.getItem("StyleSetting"));
+  });
+
+  const [ ThemeColor, setThemeColor ] = useState(localStorage.getItem("StyleSetting"));
+
   if (!isOpen) {
     return null;
   }
 
-  if (localStorage.getItem("PromptSetting") == null)
-    localStorage.setItem("PromptSetting", "Automatic");
-  if (localStorage.getItem("StyleSetting") == null)
-    localStorage.setItem("StyleSetting", "Dark");
-
-  const themeColor: string | null = localStorage.getItem("StyleSetting");
-
   return (
     <>
-      <div className={`${themeColor}_overlay`}>
+      <div className={`${ThemeColor}_overlay`}>
         <div className="modal-content">
-          <button className={`${themeColor}_modal-close`} onClick={onClose}>
+          <button className={`${ThemeColor}_modal-close`} onClick={onClose}>
             &times;
           </button>
           {children}

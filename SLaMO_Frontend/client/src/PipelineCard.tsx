@@ -1,9 +1,8 @@
 import "./pipelineCard.css";
-import {useState} from "react";
+import {useState, ReactNode} from "react";
 import Modal from "./Modal.tsx";
 import {createPortal} from "react-dom";
 import DropDownButton from "./DropDownButton.tsx";
-import {ReactNode} from "react";
 
 interface pipelineProperties {
   pipeline: string;
@@ -17,10 +16,27 @@ export default function PipelineCard({
   description,
 }: pipelineProperties) {
 
+  if (localStorage.getItem("StyleSetting") == null)
+    localStorage.setItem("StyleSetting", "Dark");
+
   addEventListener("currentPipelineChange", () => {
-    if (pipeline === JSON.parse(localStorage.getItem("currentPipeline") as string))
+    if (pipeline === JSON.parse(localStorage.getItem("currentPipeline") as string)) {
       setCurrentlySelected(true);
-  })
+      setPipelineStatus(": Running");
+    } else {
+      setPipelineStatus("  ");
+    }
+  });
+
+  addEventListener("deselectedPipeline", () => {
+    setPipelineStatus(" ");
+  });
+
+  addEventListener("changedColorTheme", () => {
+    setThemeColor(localStorage.getItem("StyleSetting"));
+  });
+
+  const [ ThemeColor, setThemeColor ] = useState(localStorage.getItem("StyleSetting"));
 
   const [ModalOpen, setModalOpen] = useState(false);
   const [modelName, setmodelName] = useState("Phi 3");
@@ -29,13 +45,8 @@ export default function PipelineCard({
   const [AddModelsButtonStatus, setAddModelsButtonStatus] =
     useState("addModelActive");
   const [ CurrentlySelected, setCurrentlySelected ] = useState(pipeline === JSON.parse(localStorage.getItem("currentPipeline") as string));
+  const [ PipelineStatus, setPipelineStatus ] = useState(JSON.parse(localStorage.getItem("currentPipeline") as string) === pipeline ? ": Running" : "");
 
-  if (localStorage.getItem("PromptSetting") == null)
-    localStorage.setItem("PromptSetting", "Automatic");
-  if (localStorage.getItem("StyleSetting") == null)
-    localStorage.setItem("StyleSetting", "Dark");
-
-  const themeColor: string | null = localStorage.getItem("StyleSetting");
 
   const pipelineSettingsButtonHandler = () => {
     setModalOpen(true);
@@ -114,29 +125,50 @@ export default function PipelineCard({
     return <p className={className}>{`Current Models: ${modelsString}`}</p>;
   }
 
+  async function shutdownCurrentPipeline() {
+    setPipelineStatus(": Attempting Shutdown, Please Wait.");
+    const response = await fetch(`http://localhost:8080/${pipeline}/shutdown`, {method: "GET",});
+    if (response.ok) {
+      localStorage.removeItem("currentPipeline");
+      setCurrentlySelected(false);
+      setPipelineStatus("");
+      globalThis.dispatchEvent(new Event("deselectedPipeline"));
+    } else {
+      alert("Pipeline Failed to Shutdown. Please Try Again.");
+      setPipelineStatus(": Running");
+    }
+  }
+
   function determinePipelineClass(): string {
     if (CurrentlySelected) {
-      return "Selected_pipelineDiv";
+      return `${ThemeColor}_Selected_pipelineDiv`;
+    } else if (localStorage.getItem("currentPipeline")) {
+      return `${ThemeColor}_notSelected_pipelineDiv`;
     } else {
-      return `${themeColor}_pipelineDiv`;
+      return `${ThemeColor}_pipelineDiv`;
+    }
+  }
+
+  function determineCardButton(): ReactNode {
+    if (CurrentlySelected) {
+      return <button onClick={shutdownCurrentPipeline} className={`${ThemeColor}_shutdownPipelineButton`}>&times;</button>
+    } else if (localStorage.getItem("currentPipeline")) {
+      return <button className={`${ThemeColor}_notSelected_button`}>Select Models</button>
+    } else {
+      return <button className={`${ThemeColor}_pipelineButton`} onClick={pipelineSettingsButtonHandler}>Select Models</button>
     }
   }
 
   return (
     <div className={determinePipelineClass()} tabIndex={0}>
-      <h3 className="pipelineHeader">{displayName}</h3>
-      <button
-        className={`${themeColor}_pipelineButton`}
-        onClick={pipelineSettingsButtonHandler}
-      >
-        Settings
-      </button>
+      <h3 className="pipelineHeader">{displayName + PipelineStatus}</h3>
+      {determineCardButton()}
       {createPortal(
         <Modal isOpen={ModalOpen} onClose={modalCloseButtonHandler}>
           <p>
             {/* {displayCurrentModels("")} */}
             <button
-              className={`${themeColor}_${AddModelsButtonStatus}`}
+              className={`${ThemeColor}_${AddModelsButtonStatus}`}
               onClick={addModelHandler}
             >
               Add Model

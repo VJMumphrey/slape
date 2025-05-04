@@ -4,15 +4,25 @@ import PipelineCard from "./PipelineCard.tsx";
 import "./pipelines.css";
 
 export default function Pipelines() {
-
-  const [ CurrentPipeline, setCurrentPipeline ] = useState(null);
-
-  if (localStorage.getItem("PromptSetting") == null)
-    localStorage.setItem("PromptSetting", "Automatic");
   if (localStorage.getItem("StyleSetting") == null)
     localStorage.setItem("StyleSetting", "Dark");
 
-  const themeColor: string | null = localStorage.getItem("StyleSetting");
+  addEventListener("changedColorTheme", () => {
+    setThemeColor(localStorage.getItem("StyleSetting"));
+  });
+
+  addEventListener("currentPipelineChange", () => {
+    setCurrentPipeline(null);
+  });
+
+  addEventListener("deselectedPipeline", () => {
+    setCurrentPipeline("");
+  })
+
+  const [ ThemeColor, setThemeColor ] = useState(localStorage.getItem("StyleSetting"));
+
+  const [ CurrentPipeline, setCurrentPipeline ] = useState(null);
+
 
   const simplePipeline = {
     pipeline: "simple",
@@ -40,32 +50,42 @@ export default function Pipelines() {
   };
 
   async function savePipeline() {
-    if ((localStorage.getItem(`${CurrentPipeline}Models`) === null) || (JSON.parse(localStorage.getItem(`${CurrentPipeline}Models`) as string).length === 0)) {
-      alert("Please Select Models for this Pipeline First!");
-    } else {
-      localStorage.setItem("currentPipeline", JSON.stringify(CurrentPipeline));
-      dispatchEvent(new Event("currentPipelineChange"));
-      const modelsObjects: {name: string, fullName: string}[] = JSON.parse(localStorage.getItem(`${CurrentPipeline}Models`) as string)
-      const models: string[] = [];
-      modelsObjects.forEach((element) => {
-        models.push(element.fullName);
-      })
+    if (!localStorage.getItem("currentPipeline")) {
+      if ((localStorage.getItem(`${CurrentPipeline}Models`) === null) || (JSON.parse(localStorage.getItem(`${CurrentPipeline}Models`) as string).length === 0)) {
+        alert("Please Select Models for this Pipeline First!");
+      } else {
+        localStorage.setItem("currentPipeline", JSON.stringify(CurrentPipeline));
+        dispatchEvent(new Event("currentPipelineChange"));
+        const modelsObjects: {name: string, fullName: string}[] = JSON.parse(localStorage.getItem(`${CurrentPipeline}Models`) as string)
+        const models: string[] = [];
+        modelsObjects.forEach((element) => {
+          models.push(element.fullName);
+        })
 
-      await fetch(`http://localhost:8080/${CurrentPipeline}/setup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          models: models
-        }),
-      });
+        await fetch(`http://localhost:8080/${CurrentPipeline}/setup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            models: models
+          }),
+        });
+      }
+    }
+  }
+
+  function determineSubmitStatus(): string {
+    if (!localStorage.getItem("currentPipeline")) {
+      return `${ThemeColor}_saveButton`;
+    } else {
+      return `${ThemeColor}_Unselectable_saveButton`
     }
   }
 
   return (
     <>
-      <div className={`${themeColor}_background`}/>
+      <div className={`${ThemeColor}_background`}/>
       <MenuTabs />
       {/*To do this not stupid, add an onClick Property to PipelineCard that passes the onClick to the div of PipelineCard*/}
       <div className="cardContainer">
@@ -82,8 +102,8 @@ export default function Pipelines() {
           <PipelineCard {...embeddingPipeline}></PipelineCard>
         </div>
       </div>
-      <div className={`${themeColor}_footer`}>
-        <button className={`${themeColor}_saveButton`} onClick={savePipeline}>
+      <div className={`${ThemeColor}_footer`}>
+        <button className={determineSubmitStatus()} onClick={savePipeline}>
           Save Pipeline
         </button>
       </div>

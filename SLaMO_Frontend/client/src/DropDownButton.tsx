@@ -1,4 +1,5 @@
 import "./App.css";
+import {useState} from "react";
 interface dropDownSettings {
   className: string;
   value: string;
@@ -6,17 +7,23 @@ interface dropDownSettings {
   optionObject: {name: string; type: string | number}[];
 }
 
-const themeColor = localStorage.getItem("StyleSetting");
-
 export default function DropDownButton({
   className,
   value,
   callBack,
   optionObject,
 }: dropDownSettings) {
+    if (localStorage.getItem("StyleSetting") == null)
+      localStorage.setItem("StyleSetting", "Dark");
+
+    addEventListener("changedColorTheme", () => {
+      setThemeColor(localStorage.getItem("StyleSetting"));
+    });
+  
+    const [ ThemeColor, setThemeColor ] = useState(localStorage.getItem("StyleSetting"));
   return (
     <select
-      className={`${themeColor}_${className}`}
+      className={`${ThemeColor}_${className}`}
       value={value}
       onChange={(event) => {
         callBack(event.target.value);

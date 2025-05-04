@@ -6,20 +6,23 @@ import Markdown from "react-markdown";
 import DropDownButton from "./DropDownButton.tsx";
 
 export default function Prompt() {
+  if (localStorage.getItem("StyleSetting") == null)
+    localStorage.setItem("StyleSetting", "Dark");
+
+  addEventListener("changedColorTheme", () => {
+    setThemeColor(localStorage.getItem("StyleSetting"));
+  });
+
+  const [ ThemeColor, setThemeColor ] = useState(localStorage.getItem("StyleSetting"));
   const [PromptInfo, setPromptInfo] = useState(""); //used to contain the current value, and to set the new value
-  const [ResponseAnswer, setResponseAnswer] = useState("... Awaiting Response");
   const [PromptMode, setPromptMode] = useState("simple");
   const [ThinkingMode, setThinkingMode] = useState(false);
   const [InternetSearchMode, setInternetSearchMode] = useState(false);
   const [loadingAnimation, setloadingAnimation] = useState("");
   const [ShiftPressed, setShiftPressed] = useState(false);
-
-  if (localStorage.getItem("PromptSetting") == null)
-    localStorage.setItem("PromptSetting", "Automatic");
-  if (localStorage.getItem("StyleSetting") == null)
-    localStorage.setItem("StyleSetting", "Dark");
-
-  const themeColor: string | null = localStorage.getItem("StyleSetting");
+  const [PipelineSelected, setPipelineSelected] = useState(Boolean(localStorage.getItem("currentPipeline")));
+  const [ResponseAnswer, setResponseAnswer] = useState(PipelineSelected ? "...Awaiting Prompt" : "Please Select a Pipeline to begin Prompting!");
+  
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const footerDivRef = useRef<HTMLDivElement>(null);
@@ -84,13 +87,13 @@ export default function Prompt() {
 
   async function handleSubmit(event: {preventDefault: () => void}) {
       setPromptInfo(""); //clears the prompt box after submission
-      setloadingAnimation(<div className={`${themeColor}_spinner`} />);
+      setloadingAnimation(<div className={`${ThemeColor}_spinner`} />);
       setResponseAnswer(
         <>
-          <p className={`${themeColor}_leftTitle`}>Prompt:</p>
-          <p className={`${themeColor}_left`}>{`${PromptInfo}`}</p>{" "}
-          <p className={`${themeColor}_leftTitle`}>Response:</p>
-          <p className={`${themeColor}_left`}>{`Generating Response...`}</p>
+          <p className={`${ThemeColor}_leftTitle`}>Prompt:</p>
+          <p className={`${ThemeColor}_left`}>{`${PromptInfo}`}</p>{" "}
+          <p className={`${ThemeColor}_leftTitle`}>Response:</p>
+          <p className={`${ThemeColor}_left`}>{`Generating Response...`}</p>
         </>
       );
       event.preventDefault(); //makes sure the page doesn't reload when submitting the form
@@ -115,10 +118,10 @@ export default function Prompt() {
         setloadingAnimation("");
         setResponseAnswer(
           <>
-            <p className={`${themeColor}_leftTitle`}>Prompt:</p>
-            <p className={`${themeColor}_left`}>{`${PromptInfo}`}</p>{" "}
-            <p className={`${themeColor}_leftTitle`}>Response:</p>
-            <p className={`${themeColor}_left`}>
+            <p className={`${ThemeColor}_leftTitle`}>Prompt:</p>
+            <p className={`${ThemeColor}_left`}>{`${PromptInfo}`}</p>{" "}
+            <p className={`${ThemeColor}_leftTitle`}>Response:</p>
+            <p className={`${ThemeColor}_left`}>
               <Markdown>
                 {`${JSON.parse(JSON.stringify(await response.json())).answer}`}
               </Markdown>
@@ -130,15 +133,25 @@ export default function Prompt() {
       }
   }
 
+  function determinePipelineStatus(): string {
+    if (PipelineSelected && ResponseAnswer === "") {
+      return "...Awaiting Prompt";
+    } else if (PipelineSelected) {
+      return ResponseAnswer;
+    } else {
+      return "Please Select a Pipeline to begin Prompting!";
+    }
+  }
+
   useAutosizeTextArea(textAreaRef.current, footerDivRef.current, PromptInfo);
   return (
     <>
-      <div className={`${themeColor}_background`} />
+      <div className={`${ThemeColor}_background`} />
       <MenuTabs />
-      <div className={`${themeColor}_output`} ref={responseDivRef}>{ResponseAnswer}</div>
-      <div className={`${themeColor}_fixedBottom`} ref={footerDivRef}>
+      <div className={`${ThemeColor}_output`} ref={responseDivRef}>{determinePipelineStatus()}</div>
+      <div className={`${ThemeColor}_fixedBottom`} ref={footerDivRef}>
         <textarea
-          className={`${themeColor}_prompt`}
+          className={`${ThemeColor}_prompt`}
           value={PromptInfo}
           placeholder="Enter Prompt"
           onChange={(e) => setPromptInfo(e.target.value)} //access the current input and updates PromptInfo (e represents the event object)
@@ -159,7 +172,7 @@ export default function Prompt() {
         />
         <label>
           <input
-            className={`${themeColor}_thinkingBox`}
+            className={`${ThemeColor}_thinkingBox`}
             type="checkbox"
             checked={ThinkingMode}
             onChange={() => {
@@ -170,7 +183,7 @@ export default function Prompt() {
         </label>
         <label>
           <input
-            className={`${themeColor}_internetSearchBox`}
+            className={`${ThemeColor}_internetSearchBox`}
             type="checkbox"
             checked={InternetSearchMode}
             onChange={() => {
@@ -179,7 +192,7 @@ export default function Prompt() {
           />
           <span>Internet Search</span>
         </label>
-        <button className={`${themeColor}_promptSubmit`} onClick={(e) => handleSubmit(e)}>
+        <button className={`${ThemeColor}_promptSubmit`} onClick={(e) => handleSubmit(e)}>
           {" "}
           Submit
         </button>

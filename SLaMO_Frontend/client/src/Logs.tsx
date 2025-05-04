@@ -3,12 +3,14 @@ import {useState} from "react";
 import "./logs.css";
 
 export default function Logs() {
-  if (localStorage.getItem("PromptSetting") == null)
-    localStorage.setItem("PromptSetting", "Automatic");
   if (localStorage.getItem("StyleSetting") == null)
     localStorage.setItem("StyleSetting", "Dark");
 
-  const themeColor: string | null = localStorage.getItem("StyleSetting");
+  addEventListener("changedColorTheme", () => {
+    setThemeColor(localStorage.getItem("StyleSetting"));
+  });
+
+  const [ ThemeColor, setThemeColor ] = useState(localStorage.getItem("StyleSetting"));
   const [logText, setlogText] = useState("");
 
   async function readLogs(): Promise<void> {
@@ -29,9 +31,9 @@ export default function Logs() {
 
   return (
     <>
-      <div className={`${themeColor}_background`} />
+      <div className={`${ThemeColor}_background`} />
       <MenuTabs />
-      <pre className={`${themeColor}_logTruck`}>{logText}</pre>
+      <pre className={`${ThemeColor}_logTruck`}>{logText}</pre>
     </>
   );
 }
