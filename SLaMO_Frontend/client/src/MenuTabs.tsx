@@ -24,10 +24,6 @@ export default function MenuTabs() {
     navigate("/");
   };
 
-  const settingsEventHandler = () => {
-    navigate("/settings");
-  };
-
   const pipelinesEventHandler = () => {
     navigate("/pipelines");
   };

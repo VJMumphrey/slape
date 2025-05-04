@@ -44,6 +44,7 @@ export default function Pipelines() {
       alert("Please Select Models for this Pipeline First!");
     } else {
       localStorage.setItem("currentPipeline", JSON.stringify(CurrentPipeline));
+      dispatchEvent(new Event("currentPipelineChange"));
       const modelsObjects: {name: string, fullName: string}[] = JSON.parse(localStorage.getItem(`${CurrentPipeline}Models`) as string)
       const models: string[] = [];
       modelsObjects.forEach((element) => {

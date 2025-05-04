@@ -16,12 +16,19 @@ export default function PipelineCard({
   displayName,
   description,
 }: pipelineProperties) {
+
+  addEventListener("currentPipelineChange", () => {
+    if (pipeline === JSON.parse(localStorage.getItem("currentPipeline") as string))
+      setCurrentlySelected(true);
+  })
+
   const [ModalOpen, setModalOpen] = useState(false);
   const [modelName, setmodelName] = useState("Phi 3");
   const [ModelList, setModelList] = useState([]);
-  const [Models, setModels] = useState<object[]>([]);
+  const [Models, setModels] = useState<object[]>(localStorage.getItem(`${pipeline}Models`) ? JSON.parse(localStorage.getItem(`${pipeline}Models`) as string) : []);
   const [AddModelsButtonStatus, setAddModelsButtonStatus] =
     useState("addModelActive");
+  const [ CurrentlySelected, setCurrentlySelected ] = useState(pipeline === JSON.parse(localStorage.getItem("currentPipeline") as string));
 
   if (localStorage.getItem("PromptSetting") == null)
     localStorage.setItem("PromptSetting", "Automatic");
@@ -107,8 +114,16 @@ export default function PipelineCard({
     return <p className={className}>{`Current Models: ${modelsString}`}</p>;
   }
 
+  function determinePipelineClass(): string {
+    if (CurrentlySelected) {
+      return "Selected_pipelineDiv";
+    } else {
+      return `${themeColor}_pipelineDiv`;
+    }
+  }
+
   return (
-    <div className={`${themeColor}_pipelineDiv`} tabIndex={0}>
+    <div className={determinePipelineClass()} tabIndex={0}>
       <h3 className="pipelineHeader">{displayName}</h3>
       <button
         className={`${themeColor}_pipelineButton`}

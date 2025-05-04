@@ -162,6 +162,7 @@ div.Dark_fixedBottom {
     background-color: #1B1A55;
     align-content: center;
     color: white;
+    z-index: 3;
 }
 
 div.Pink_fixedBottom {

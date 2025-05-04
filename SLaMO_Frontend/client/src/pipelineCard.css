@@ -32,6 +32,24 @@
     background-color: #646cff;
 }
 
+.Selected_pipelineDiv {
+    text-align: left;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.25s;
+    transition: background 0.15s;
+    color: white;
+    margin: 10px 0px 10px 0px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0px;
+    grid-auto-rows: minmax(auto, auto);
+    background-color: #B75264;
+}
+
 
 
 
