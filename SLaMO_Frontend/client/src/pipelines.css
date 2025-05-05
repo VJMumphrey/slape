@@ -87,6 +87,19 @@
     color: white;
 }
 
+.Dark_Unselectable_saveButton {
+    grid-row: 2;
+    grid-column: 2;
+    margin-right: 30px;
+    background-color: #444444;
+    color: white;
+    border: none;
+}
+
+.Dark_Unselectable_saveButton:hover {
+    border: none;
+}
+
 .Pink_saveButton {
     grid-row: 2;
     grid-column: 2;
@@ -101,6 +114,20 @@
     margin-right: 30px;
     background-color: #697892;
     color: white;
+}
+
+.Light_Unselectable_saveButton {
+    grid-row: 2;
+    grid-column: 2;
+    margin-right: 30px;
+    background-color: #666666;
+    color: white;
+    border: none;
+}
+
+.Light_Unselectable_saveButton:hover {
+    border:none;
+    cursor: default;
 }
 
 .cardContainer {
