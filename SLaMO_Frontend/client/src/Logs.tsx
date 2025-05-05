@@ -11,7 +11,7 @@ export default function Logs() {
   });
 
   const [ ThemeColor, setThemeColor ] = useState(localStorage.getItem("StyleSetting"));
-  const [logText, setlogText] = useState("");
+  const [logText, setlogText] = useState(localStorage.getItem("logsCopy") ? localStorage.getItem("logsCopy") : "");
 
   async function readLogs(): Promise<void> {
     let responseBody;
@@ -22,12 +22,13 @@ export default function Logs() {
     if (response.ok) {
       responseBody = await response.json();
       setlogText(atob(responseBody.logs));
+      localStorage.setItem("logsCopy", atob(responseBody.logs));
     } else {
       alert("Error requesting logs");
     }
   }
 
-  setInterval(readLogs, 500);
+  setInterval(readLogs, 3000);
 
   return (
     <>
