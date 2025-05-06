@@ -3,13 +3,15 @@ import {useState} from "react";
 import "./logs.css";
 
 export default function Logs() {
-  if (localStorage.getItem("PromptSetting") == null)
-    localStorage.setItem("PromptSetting", "Automatic");
   if (localStorage.getItem("StyleSetting") == null)
     localStorage.setItem("StyleSetting", "Dark");
 
-  const themeColor: string | null = localStorage.getItem("StyleSetting");
-  const [logText, setlogText] = useState("");
+  addEventListener("changedColorTheme", () => {
+    setThemeColor(localStorage.getItem("StyleSetting"));
+  });
+
+  const [ ThemeColor, setThemeColor ] = useState(localStorage.getItem("StyleSetting"));
+  const [logText, setlogText] = useState(localStorage.getItem("logsCopy") ? localStorage.getItem("logsCopy") : "");
 
   async function readLogs(): Promise<void> {
     let responseBody;
@@ -20,18 +22,19 @@ export default function Logs() {
     if (response.ok) {
       responseBody = await response.json();
       setlogText(atob(responseBody.logs));
+      localStorage.setItem("logsCopy", atob(responseBody.logs));
     } else {
       alert("Error requesting logs");
     }
   }
 
-  setInterval(readLogs, 500);
+  setInterval(readLogs, 3000);
 
   return (
     <>
-      <div className={`${themeColor}_background`} />
+      <div className={`${ThemeColor}_background`} />
       <MenuTabs />
-      <pre className={`${themeColor}_logTruck`}>{logText}</pre>
+      <pre className={`${ThemeColor}_logTruck`}>{logText}</pre>
     </>
   );
 }
