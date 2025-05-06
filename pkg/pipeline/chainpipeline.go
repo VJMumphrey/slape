@@ -226,7 +226,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 
 		for {
 			// sleep and give server guy a break
-			time.Sleep(time.Duration(2 * time.Second))
+			time.Sleep(time.Duration(1 * time.Second))
 
 			if api.UpDog("800" + strconv.Itoa(i)) {
 				break
@@ -269,6 +269,7 @@ func (c *ChainofModels) Generate(ctx context.Context, uprompt string, systemprom
 		// after we have our values set we can clear out old ones to re-used
 		c.FutureQuestions = "None"
 
+		// if its not the last model summarize the response and generate more questions.
 		if i != len(c.containers)-1 {
 			// Summarize the answer generate.
 			// This apparently makes it easier for the next models to digest the information.
