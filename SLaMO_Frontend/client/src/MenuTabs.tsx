@@ -54,21 +54,23 @@ export default function MenuTabs() {
 
   return (
     <div className={`${ThemeColor}_top`}>
-      <button
-        className={`${ThemeColor}_tabButton`}
-        onClick={pipelinesEventHandler}
-      >
-        Pipelines
-      </button>
-      <button className={`${ThemeColor}_tabButton`} onClick={logsEventHandler}>
-        Logs
-      </button>
-      <button
-        className={`${ThemeColor}_tabButton`}
-        onClick={promptingEventHandler}
-      >
-        Prompting
-      </button>
+      <span className={"dropShadow"}>
+        <button
+          className={`${ThemeColor}_tabButton_Pipeline`}
+          onClick={pipelinesEventHandler}
+        >
+          Pipelines
+        </button>
+        <button className={`${ThemeColor}_tabButton_Log`} onClick={logsEventHandler}>
+          Logs
+        </button>
+        <button
+          className={`${ThemeColor}_tabButton_Prompt`}
+          onClick={promptingEventHandler}
+        >
+          Prompting
+        </button>
+      </span>
       <button className={`${ThemeColor}_themeButton`} onClick={handleThemeButton}>
         {CurrentTheme}
       </button>

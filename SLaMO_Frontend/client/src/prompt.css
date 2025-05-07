@@ -322,11 +322,19 @@ button.Light_promptSubmit
   font-weight: 500;
   font-family: inherit;
   margin-left: 45px;
-
+  transition: background-color 0.15s;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
 }
 
-button.Dark_promptSubmit
-{
+button.Light_promptSubmit:hover {
+    background-color: #596882;
+}
+
+button.Light_promptSubmit:active {
+    background-color: #7988A2;
+}
+
+button.Dark_promptSubmit {
   height: 45px;
   width: 125px;
   border-radius: 8px;
@@ -338,7 +346,15 @@ button.Dark_promptSubmit
   font-weight: 500;
   font-family: inherit;
   margin-left: 45px;
+  transition: background-color 0.15s;
+}
 
+button.Dark_promptSubmit:hover {
+    background-color: #6f76c2;
+}
+
+button.Dark_promptSubmit:active {
+    background-color: #4f56a2;
 }
 
 button.Pink_promptSubmit

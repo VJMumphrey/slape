@@ -85,6 +85,15 @@
     margin-right: 30px;
     background-color: #5f66b2;
     color: white;
+    transition: background-color 0.15s;
+}
+
+.Dark_saveButton:hover {
+    background-color: #6f76c2;
+}
+
+.Dark_saveButton:active {
+    background-color: #4f56a2;
 }
 
 .Dark_Unselectable_saveButton {
@@ -113,7 +122,17 @@
     grid-column: 2;
     margin-right: 30px;
     background-color: #697892;
+    transition: background-color 0.15s;
     color: white;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.Light_saveButton:hover {
+    background-color: #596882;
+}
+
+.Light_saveButton:active {
+    background-color: #7988a2;
 }
 
 .Light_Unselectable_saveButton {
