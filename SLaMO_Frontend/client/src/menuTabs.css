@@ -101,28 +101,6 @@
 .Dark_tabButton_Pipeline:active {
   background-color: #131C64;
 }
-.Dark_tabButton {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color 0.25s;
-  background-color: #232C74;
-  color: white;
-  transition: background-color 0.15s;
-}
-
-.Dark_tabButton:hover {
-  background-color: #333C84;
-}
-
-.Dark_tabButton:active {
-  background-color: #131C64;
-}
-
 
 .Light_tabButton_Prompt {
   border-radius: 0px 8px 8px 0px;
@@ -194,7 +172,7 @@
   display: inline-block;
   height: 41px;
   border-radius: 8px;
-  box-shadow: 2px px 8px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 2px 8px 0 rgba(0, 0, 0, 0.2);
 }
 
 .Pink_tabButton {
