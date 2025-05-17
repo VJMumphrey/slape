@@ -1,0 +1,244 @@
+.Dark_top {
+    position: fixed;
+    margin: auto;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 70px;
+    border: 3px solid;
+    border-color: #1B1A55;
+    background-color: #1B1A55;
+    align-content: center;
+  }
+
+.Pink_top {
+  position: fixed;
+  margin: auto;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  border: 3px solid;
+  border-color: #B75264;
+  background-color: #B75264;
+  align-content: center;
+}
+
+.Light_top {
+  position: fixed;
+  margin: auto;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  border: 3px solid;
+  border-color: #B3C8CF;
+  background-color: #B3C8CF;
+  align-content: center;
+}
+.Dark_tabButton_Prompt {
+  border-radius: 0px 8px 8px 0px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color: #232C74;
+  color: white;
+  transition: background-color 0.15s;
+}
+
+.Dark_tabButton_Prompt:hover {
+  background-color: #333C84;
+}
+
+.Dark_tabButton_Prompt:active {
+  background-color: #131C64;
+}
+
+.Dark_tabButton_Log {
+  border-radius: 0px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color: #232C74;
+  color: white;
+  transition: background-color 0.15s;
+}
+
+.Dark_tabButton_Log:hover {
+  background-color: #333C84;
+}
+
+.Dark_tabButton_Log:active {
+  background-color: #131C64;
+}
+
+.Dark_tabButton_Pipeline {
+  border-radius: 8px 0px 0px 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color: #232C74;
+  color: white;
+  transition: background-color 0.15s;
+}
+
+.Dark_tabButton_Pipeline:hover {
+  background-color: #333C84;
+}
+
+.Dark_tabButton_Pipeline:active {
+  background-color: #131C64;
+}
+
+.Light_tabButton_Prompt {
+  border-radius: 0px 8px 8px 0px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color: #89A8B2;
+  color: white;
+  transition: background-color 0.15s;
+}
+
+.Light_tabButton_Prompt:hover {
+  background-color: #7998a2;
+}
+
+.Light_tabButton_Prompt:active {
+  background-color: #99b8c2;
+}
+
+.Light_tabButton_Log {
+  border-radius: 0px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color: #89A8B2;
+  color: white;
+  transition: background-color 0.15s;
+}
+
+.Light_tabButton_Log:hover {
+  background-color: #7998a2;
+}
+
+.Light_tabButton_Log:active {
+  background-color: #99b8c2;
+}
+
+.Light_tabButton_Pipeline {
+  border-radius: 8px 0px 0px 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color: #89A8B2;
+  color: white;
+  transition: background-color 0.15s;
+}
+
+.Light_tabButton_Pipeline:hover {
+  background-color: #7998a2;
+}
+
+.Light_tabButton_Pipeline:active {
+  background-color: #99b8c2;
+}
+
+.dropShadow {
+  display: inline-block;
+  height: 41px;
+  border-radius: 8px;
+  box-shadow: 2px 2px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.Pink_tabButton {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color: #cb3b8d;
+  color: white;
+}
+
+.shutdown{
+  float: right;
+  margin-right: 15px;
+  background-color: rgba(252, 6, 6, 0.842);
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.shutdown:hover{
+  border-color: red;
+  background-color: red;
+}
+
+.Light_themeButton {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  width: 55px;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color:  #89A8B2;
+  color: white;
+  float: left;
+  margin-left: 15px;
+  transition: background-color 0.15s;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.Light_themeButton:hover {
+  background-color: #7998a2;
+}
+
+.Dark_themeButton {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  width: 55px;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  background-color:  #232C74;
+  color: #89A8B2;
+  float: left;
+  margin-left: 15px;
+  transition: background-color 0.15s;
+}
+
+.Dark_themeButton:hover {
+  background-color:  #333C84;
+}
