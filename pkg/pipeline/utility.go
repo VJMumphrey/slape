@@ -3,7 +3,7 @@ package pipeline
 import (
 	"log"
 
-	"github.com/StoneG24/slape/pkg/vars"
+	"github.com/VJMumphrey/slape/pkg/vars"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/gpu"
 )

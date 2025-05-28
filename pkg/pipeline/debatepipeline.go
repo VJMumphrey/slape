@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StoneG24/slape/pkg/api"
-	"github.com/StoneG24/slape/pkg/prompt"
-	"github.com/StoneG24/slape/pkg/vars"
+	"github.com/VJMumphrey/slape/pkg/api"
+	"github.com/VJMumphrey/slape/pkg/prompt"
+	"github.com/VJMumphrey/slape/pkg/vars"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/openai/openai-go"

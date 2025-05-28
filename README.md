@@ -123,7 +123,7 @@ To run the doc server locally run this command
 ```bash
 godoc -index -notes="BUG|TODO|NOTE"
 ```
-And travel to this url in your browser http://localhost:6060/pkg/github.com/StoneG24/slape/.
+And travel to this url in your browser http://localhost:6060/pkg/github.com/VJMumphrey/slape/.
 
 ## Security
 To run security checks on the repo run these commands,

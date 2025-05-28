@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/StoneG24/slape/pkg/vars"
+	"github.com/VJMumphrey/slape/pkg/vars"
 )
 
 // CreateLogFile is used to check and see if a logfile is already created.

@@ -23,10 +23,10 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/StoneG24/slape/pkg/api"
-	"github.com/StoneG24/slape/pkg/logging"
-	"github.com/StoneG24/slape/pkg/pipeline"
-	"github.com/StoneG24/slape/pkg/vars"
+	"github.com/VJMumphrey/slape/pkg/api"
+	"github.com/VJMumphrey/slape/pkg/logging"
+	"github.com/VJMumphrey/slape/pkg/pipeline"
+	"github.com/VJMumphrey/slape/pkg/vars"
 	"github.com/docker/docker/client"
 )
 

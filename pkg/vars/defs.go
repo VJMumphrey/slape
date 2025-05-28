@@ -1,7 +1,7 @@
 package vars
 
 import (
-	"github.com/StoneG24/slape/pkg/prompt"
+	"github.com/VJMumphrey/slape/pkg/prompt"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )

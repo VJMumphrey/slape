@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/StoneG24/slape/pkg/vars"
+	"github.com/VJMumphrey/slape/pkg/vars"
 )
 
 func UpDog(port string) bool {

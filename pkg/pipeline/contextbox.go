@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StoneG24/slape/pkg/api"
-	"github.com/StoneG24/slape/pkg/internetsearch"
-	"github.com/StoneG24/slape/pkg/prompt"
-	"github.com/StoneG24/slape/pkg/vars"
+	"github.com/VJMumphrey/slape/pkg/api"
+	"github.com/VJMumphrey/slape/pkg/internetsearch"
+	"github.com/VJMumphrey/slape/pkg/prompt"
+	"github.com/VJMumphrey/slape/pkg/vars"
 	"github.com/openai/openai-go"
 )
 
