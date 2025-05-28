@@ -3,40 +3,11 @@
 ## About
 
 An application designed to leverage the efficiency of small language models by implementing prompt engineering, inferencing techniques, and external tooling to increase their accuracy.
-
-We do this by creating what we call pipelines. Pipelines are a way of orchestrating models in a linear fashion to create better answers using multiple models versus one large model.
-This is a test to prove that small models (SLMs) can punch above their size and get the job done. Our project is useful in scenarios where there is little memory to work with.
-
-We currently have four pipelines.
-1. Simple
-2. Chain of Models
-3. Debate
-4. Embedding
-
-All pipelines, except Embedding, have access to the tools and functionality.
-
-### Simple Pipeline
-This pipeline is meant to be used to when only a single language model is desired. This is also benificial if you have a larger model and want to do things that traditional way.
-
-### Chain of Models
-This pipeline is meant to be used when you want to emulate a Chain of Thought process. This first model in the pipeline generates initial thoughts and answers the question.
-The final model generates the answer that is returned to the client. The intermediate models will operate on the previous answer, either affirming it or correcting it.
-
-### Debate of Models
-This pipeline is meant to be used when you want models to debate on a topic. It has been found that debate helps models to generate better answers.
-This is especially true when there is expert level knowledge present in the debate which usually challenging to attain when you can't run LLMs. With this pipeline, the SLMs can each
-act as a expert.
+This is done by incorporating them into small teams of five or less. This goal of this process is to develop a real-time team that works together to solve problems. This project is based off of the orignal project [Slape](https://github.com/StoneG24/slape). It captures some of the code and ideas from it but the some things will have to rewritten for this idea to work.
 
 ## Installation
 
-1. We need to install some dependencies so that we can build and run the project. The first thing we need to install is Docker.
-Follow your OS specific instructions to install Docker.
-
-- For Linux, [Docker Engine Install](https://docs.docker.com/engine/install/)
-- For Windows, [Docker Engine Install](https://docs.docker.com/desktop/setup/install/windows-install/)
-
-2. Create a folder named *models*. SLaPE will create this folder for you, along with checking if that folder exists on startup.
-We also download an embedding model for use in the project. [Casual-Autopsy/snowflake-arctic-embed-l-v2.0-gguf](https://huggingface.co/Casual-Autopsy/snowflake-arctic-embed-l-v2.0-gguf)
+Update again with documentation for k8s.
 
 ### GPU Support
 
@@ -50,54 +21,6 @@ This command downloads the dependencies and builds the app for you.
 ```bash
 go build ./cmd/main.go
 ```
-## Socket Interactions
-
-### Linux
-
-To run the app you need to turn on the docker socket. This allows the app to talk to the socket and controll its components.
-
-```bash
-sudo systemctl start docker
-```
-
-To close the socket on linux,
-
-```bash
-sudo systemctl stop docker
-```
-
-SLaPE will tell you if it cannot find the docker socket for your system.
-
-### Windows
-
-For windows this process is managed by docker desktop.
-
-### Cleanup
-SLaPE cleans up its resources. In the event of a crash things may not clean up properly.
-To help with this, some commands are included to cleanup those resources.
-**NOTE** This assumes you are not running any other container setups with docker.
-If you are, then clean up the resources on an individual basis.
-
-This command will tell you how much of your disk is currently being used by docker
-
-```bash
-docker system df
-```
-
-These commands are good for cleaning up these old docker resources. SLaPE should clean these up but, currently, if errors occur it won't.
-
-```bash
-docker container prune
-```
-
-```bash
-docker image prune
-```
-
-```bash
-docker builder prune
-```
-
 ## Configuration
 To configure the project we used a simple and unorthodox approach.
 Instead of using a yaml file, we used a go file that maintains global constants and variables in the program.
